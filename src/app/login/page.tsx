@@ -44,7 +44,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-cover bg-center bg-[url('/img_background.jpg')]">
       <Card className="shadow-xl w-full max-w-md">
         <CardHeader>
           <CardTitle>Login</CardTitle>

@@ -1,33 +1,91 @@
-import { PlusCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import AssetTable from '@/app/components/asset-table';
-import { assets } from '@/lib/data';
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+const formSchema = z.object({
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }),
+  password: z.string().min(1, {
+    message: "Password cannot be empty.",
+  }),
+});
 
 export default function Home() {
+  const router = useRouter();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Dummy login logic for now
+    console.log(values);
+    router.push('/master-data-pegawai');
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">New SIMANJA</h1>
-        <p className="text-muted-foreground">Welcome to your new Asset Management System.</p>
-      </header>
-      <main>
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>All Assets</CardTitle>
-              <CardDescription>A list of all assets in your inventory.</CardDescription>
-            </div>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Asset
-            </Button>
-          </CardHeader>
-          <CardContent className="p-0">
-            <AssetTable assets={assets} />
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background">
+      <Card className="shadow-xl w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+          <CardDescription>Masukan kredensial Anda untuk mengakses akun.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="nama@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full mt-4">
+                Login
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </main>
   );
 }

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +46,13 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-cover bg-center bg-[url('/img_background.jpg')]">
+      <Image
+        src="/ic_hero.png"
+        alt="Website Icon"
+        width={100}
+        height={100}
+        className="mb-6"
+      />
       <Card className="shadow-xl w-full max-w-md">
         <CardHeader>
           <CardTitle>Login</CardTitle>

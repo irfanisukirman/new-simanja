@@ -46,8 +46,16 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, values);
-
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
+        values,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
       const result = response.data;
 
       if (response.status === 200 && result.code === 200) {
@@ -55,6 +63,7 @@ export default function LoginPage() {
         localStorage.setItem('userName', result.data.user.name);
 
         toast({
+          variant: "success",
           title: "Login Berhasil!",
           description: `Selamat datang kembali, ${result.data.user.name}.`,
         });

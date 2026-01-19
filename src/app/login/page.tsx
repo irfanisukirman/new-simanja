@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
   email: z.string().email({
@@ -29,6 +31,8 @@ const formSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,9 +43,44 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Dummy login logic for now
-    console.log(values);
-    router.push('/master-data-pegawai');
+    setIsLoading(true);
+    try {
+      const response = await fetch('https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.code === 200) {
+        localStorage.setItem('token', result.data.token);
+        localStorage.setItem('userName', result.data.user.name);
+
+        toast({
+          title: "Login Berhasil!",
+          description: `Selamat datang kembali, ${result.data.user.name}.`,
+        });
+
+        router.push('/master-data-pegawai');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: result.message || "Email atau password salah.",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Terjadi Kesalahan",
+        description: "Tidak dapat terhubung ke server. Silakan coba lagi nanti.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -68,7 +107,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="nama@example.com" {...field} />
+                      <Input placeholder="nama@example.com" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -81,14 +120,14 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isLoading} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full mt-4">
-                Login
+              <Button type="submit" className="w-full mt-4" disabled={isLoading}>
+                {isLoading ? 'Memproses...' : 'Login'}
               </Button>
             </form>
           </Form>

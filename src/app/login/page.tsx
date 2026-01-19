@@ -49,9 +49,9 @@ export default function LoginPage() {
       <Image
         src="/ic_hero.png"
         alt="Website Icon"
-        width={100}
-        height={100}
-        className="mb-6"
+        width={216}
+        height={216}
+        className="mb-8"
       />
       <Card className="shadow-xl w-full max-w-md">
         <CardHeader>

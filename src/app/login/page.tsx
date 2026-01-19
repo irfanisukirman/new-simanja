@@ -64,7 +64,7 @@ export default function LoginPage() {
           description: `Selamat datang kembali, ${result.data.user.name}.`,
         });
 
-        router.push('/master-data-pegawai');
+        // router.push('/master-data-pegawai');
       } else {
         toast({
           variant: "destructive",

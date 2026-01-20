@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,6 +62,8 @@ export default function LoginPage() {
       if (response.status === 200 && result.code === 200) {
         localStorage.setItem('token', result.data.token);
         localStorage.setItem('userName', result.data.user.name);
+        localStorage.setItem('userEmail', result.data.user.email);
+        localStorage.setItem('role', result.data.user.role);
 
         toast({
           variant: "success",
@@ -68,7 +71,7 @@ export default function LoginPage() {
           description: `Selamat datang kembali, ${result.data.user.name}.`,
         });
 
-        // router.push('/master-data-pegawai');
+        router.push('/master-data-pegawai');
       } else {
         toast({
           variant: "destructive",

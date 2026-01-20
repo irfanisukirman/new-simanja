@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,6 +7,7 @@ import * as z from "zod";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState } from "react";
+import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,26 +47,31 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(values),
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`,
+        values,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      const result = response.data;
 
-      const result = await response.json();
-
-      if (response.ok && result.code === 200) {
+      if (response.status === 200 && result.code === 200) {
         localStorage.setItem('token', result.data.token);
         localStorage.setItem('userName', result.data.user.name);
+        localStorage.setItem('userEmail', result.data.user.email);
+        localStorage.setItem('role', result.data.user.role);
 
         toast({
+          variant: "success",
           title: "Login Berhasil!",
           description: `Selamat datang kembali, ${result.data.user.name}.`,
         });
 
-        // router.push('/master-data-pegawai');
+        router.push('/master-data-pegawai');
       } else {
         toast({
           variant: "destructive",
@@ -73,11 +80,19 @@ export default function LoginPage() {
         });
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Terjadi Kesalahan",
-        description: "Tidak dapat terhubung ke server. Silakan coba lagi nanti.",
-      });
+      if (axios.isAxiosError(error) && error.response) {
+        toast({
+          variant: "destructive",
+          title: "Login Gagal",
+          description: error.response.data.message || "Email atau password salah.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Terjadi Kesalahan",
+          description: "Tidak dapat terhubung ke server. Silakan coba lagi nanti.",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

@@ -14,21 +14,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
-  DialogClose
+  DialogClose,
+  DialogDescription
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,12 +99,15 @@ export default function MasterDataPegawaiPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-
   // States for edit functionality
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPegawai, setSelectedPegawai] = useState<Pegawai | null>(null);
   const [editedPegawaiData, setEditedPegawaiData] = useState<Partial<Pegawai>>({});
   const [showEditPassword, setShowEditPassword] = useState(false);
+
+  // States for delete functionality
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [pegawaiToDelete, setPegawaiToDelete] = useState<Pegawai | null>(null);
 
 
   const fetchPegawai = useCallback(async () => {
@@ -123,7 +115,7 @@ export default function MasterDataPegawaiPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, {
-        headers: { Authorization: `Bearer ${token}`},
+        headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true"},
       });
       setPegawaiList(response.data.data);
     } catch (error: any) {
@@ -181,7 +173,7 @@ export default function MasterDataPegawaiPage() {
         };
 
         await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${selectedPegawai.id}`, payload, {
-            headers: { Authorization: `Bearer ${token}`},
+            headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true"},
         });
 
         toast({
@@ -216,7 +208,7 @@ export default function MasterDataPegawaiPage() {
       }];
 
       await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, payload, {
-         headers: { Authorization: `Bearer ${token}`},
+         headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true"},
       });
 
       toast({
@@ -240,12 +232,13 @@ export default function MasterDataPegawaiPage() {
     }
   };
   
-  const handleDelete = async (pegawaiId: number) => {
+  const handleConfirmDelete = async () => {
+    if (!pegawaiToDelete) return;
     setIsDeleting(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${pegawaiId}`, {
-        headers: { Authorization: `Bearer ${token}`},
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${pegawaiToDelete.id}`, {
+        headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true"},
       });
 
       toast({
@@ -255,6 +248,7 @@ export default function MasterDataPegawaiPage() {
       });
 
       fetchPegawai();
+      setIsDeleteDialogOpen(false);
 
     } catch (error: any) {
       toast({
@@ -266,6 +260,7 @@ export default function MasterDataPegawaiPage() {
       setIsDeleting(false);
     }
   };
+
 
   return (
     <div className="flex flex-1 flex-col">
@@ -374,7 +369,7 @@ export default function MasterDataPegawaiPage() {
                 <TableHead className="w-[150px] text-center text-foreground font-semibold">Aksi</TableHead>
               </TableRow>
             </TableHeader>
-            {/* <TableBody>
+            <TableBody>
               {pegawaiList.map((pegawai, index) => (
                 <TableRow key={pegawai.id}>
                   <TableCell className="text-center">{index + 1}</TableCell>
@@ -389,36 +384,22 @@ export default function MasterDataPegawaiPage() {
                       <Button size="icon" variant="ghost" className="hover:bg-yellow-500 hover:text-white" onClick={() => handleEditClick(pegawai)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button size="icon" variant="ghost" className="hover:bg-destructive hover:text-destructive-foreground">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tindakan ini tidak dapat dibatalkan. Data pegawai '{pegawai.nama}' akan dihapus secara permanen.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
-                            <AlertDialogAction 
-                              className="bg-destructive hover:bg-destructive/90"
-                              onClick={() => handleDelete(pegawai.id)}
-                              disabled={isDeleting}
-                            >
-                              {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Hapus"}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => {
+                          setPegawaiToDelete(pegawai);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody> */}
+            </TableBody>
           </Table>
           )}
         </div>
@@ -487,6 +468,33 @@ export default function MasterDataPegawaiPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Apakah Anda yakin?</DialogTitle>
+                <DialogDescription>
+                  Tindakan ini tidak dapat dibatalkan. Data pegawai '{pegawaiToDelete?.nama}' akan dihapus secara permanen.
+                </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button type="button" variant="secondary" disabled={isDeleting}>
+                    Batal
+                    </Button>
+                </DialogClose>
+                <Button
+                    variant="destructive"
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                >
+                    {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Hapus
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <footer className="mt-auto border-t">
         <div className="p-4 text-center text-sm text-muted-foreground">
@@ -495,4 +503,5 @@ export default function MasterDataPegawaiPage() {
       </footer>
     </div>
   );
-}
+
+    

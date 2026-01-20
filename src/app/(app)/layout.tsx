@@ -67,7 +67,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             />
           </Link>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className='pl-2 pr-2'>
           <SidebarMenu>
             {/* <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Dashboard" isActive={pathname === '/dashboard'}>

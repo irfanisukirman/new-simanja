@@ -502,8 +502,4 @@ export default function MasterDataPegawaiPage() {
       </footer>
     </div>
   );
-    
-
-    
-
-    
+}

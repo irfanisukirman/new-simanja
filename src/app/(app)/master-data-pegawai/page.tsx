@@ -16,7 +16,8 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-  DialogDescription
+  DialogDescription,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -96,18 +97,17 @@ export default function MasterDataPegawaiPage() {
   const [newPegawai, setNewPegawai] = useState(initialNewPegawaiState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // States for edit functionality
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPegawai, setSelectedPegawai] = useState<Pegawai | null>(null);
   const [editedPegawaiData, setEditedPegawaiData] = useState<Partial<Pegawai>>({});
-  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // States for delete functionality
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [pegawaiToDelete, setPegawaiToDelete] = useState<Pegawai | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
 
   const fetchPegawai = useCallback(async () => {
@@ -153,7 +153,6 @@ export default function MasterDataPegawaiPage() {
   const handleEditClick = (pegawai: Pegawai) => {
     setSelectedPegawai(pegawai);
     setEditedPegawaiData(pegawai);
-    setShowEditPassword(false);
     setIsEditDialogOpen(true);
   };
   
@@ -503,5 +502,6 @@ export default function MasterDataPegawaiPage() {
       </footer>
     </div>
   );
+    
 
     

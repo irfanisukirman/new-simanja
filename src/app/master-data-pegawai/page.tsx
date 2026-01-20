@@ -125,7 +125,7 @@ export default function MasterDataPegawaiPage() {
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}`},
       });
-      setPegawaiList(response.data.data);
+      setPegawaiList(response.data.data || []);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -180,8 +180,8 @@ export default function MasterDataPegawaiPage() {
             role: editedPegawaiData.role,
         };
 
-        await axios.put(`https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/users/${selectedPegawai.id}`, payload, {
-            headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+        await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${selectedPegawai.id}`, payload, {
+            headers: { Authorization: `Bearer ${token}`},
         });
 
         toast({
@@ -216,8 +216,8 @@ export default function MasterDataPegawaiPage() {
         password: hashedPassword,
       }];
 
-      await axios.post("https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/users", payload, {
-         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users`, payload, {
+         headers: { Authorization: `Bearer ${token}`},
       });
 
       toast({
@@ -245,8 +245,8 @@ export default function MasterDataPegawaiPage() {
     setIsDeleting(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`Cannot find module 'bcryptjs' or its corresponding type declarations./api/users/${pegawaiId}`, {
-        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/${pegawaiId}`, {
+        headers: { Authorization: `Bearer ${token}`},
       });
 
       toast({

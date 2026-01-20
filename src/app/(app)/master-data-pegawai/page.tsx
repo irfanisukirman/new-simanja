@@ -374,7 +374,7 @@ export default function MasterDataPegawaiPage() {
                 <TableHead className="w-[150px] text-center text-foreground font-semibold">Aksi</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            {/* <TableBody>
               {pegawaiList.map((pegawai, index) => (
                 <TableRow key={pegawai.id}>
                   <TableCell className="text-center">{index + 1}</TableCell>
@@ -418,7 +418,7 @@ export default function MasterDataPegawaiPage() {
                   </TableCell>
                 </TableRow>
               ))}
-            </TableBody>
+            </TableBody> */}
           </Table>
           )}
         </div>

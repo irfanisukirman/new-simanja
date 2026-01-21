@@ -32,6 +32,7 @@ export const useAuth = () => {
       localStorage.removeItem('role');
       
       toast({
+        variant: "success",
         title: "Logout Berhasil",
         description: "Anda telah keluar dari akun.",
       });

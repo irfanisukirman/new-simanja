@@ -538,7 +538,7 @@ export default function BarangKeluarPage() {
                               <CommandItem
                                 key={pegawai.id}
                                 value={pegawai.id.toString()}
-                                onSelect={(currentValue) => {
+                                onSelect={(currentValue: string) => {
                                   setSelectedPegawaiId(currentValue === selectedPegawaiId ? "" : currentValue)
                                   setComboboxOpen(false)
                                 }}

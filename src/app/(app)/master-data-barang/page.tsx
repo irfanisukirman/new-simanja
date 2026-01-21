@@ -233,9 +233,9 @@ export default function MasterDataBarangPage() {
       });
 
       toast({
+        variant: "success",
         title: "Berhasil!",
         description: "Barang telah berhasil dihapus.",
-        className: "bg-green-500 text-white",
       });
 
       if (searchKeyword) {
@@ -283,9 +283,9 @@ export default function MasterDataBarangPage() {
         });
 
         toast({
+            variant: "success",
             title: "Berhasil!",
             description: "Barang telah berhasil diperbarui.",
-            className: "bg-green-500 text-white",
         });
         
         setIsEditDialogOpen(false);
@@ -375,9 +375,9 @@ export default function MasterDataBarangPage() {
       XLSX.writeFile(workbook, `${exportFileName || 'data_barang'}.xlsx`);
 
       toast({
+        variant: "success",
         title: "Ekspor Berhasil",
         description: "Data barang telah berhasil diekspor ke Excel.",
-        className: "bg-green-500 text-white"
       });
       setIsExportDialogOpen(false);
 

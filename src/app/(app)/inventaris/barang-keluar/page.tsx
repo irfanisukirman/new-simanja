@@ -331,7 +331,7 @@ export default function BarangKeluarPage() {
                 Export
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Export Data</DialogTitle>
             </DialogHeader>
@@ -444,7 +444,7 @@ export default function BarangKeluarPage() {
                 Tambah Data
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => e.preventDefault()}>
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Form Pengeluaran Barang</DialogTitle>
               </DialogHeader>
@@ -574,8 +574,8 @@ export default function BarangKeluarPage() {
               <TableHead className="text-center text-foreground font-semibold">Penerima</TableHead>
               <TableHead className="text-center text-foreground font-semibold">Satuan</TableHead>
               <TableHead className="text-center text-foreground font-semibold">Jumlah</TableHead>
-              <TableHead className="text-center text-foreground font-semibold">Harga Satuan</TableHead>
-              <TableHead className="text-center text-foreground font-semibold">Total Harga</TableHead>
+              <TableHead className="text-right text-foreground font-semibold">Harga Satuan</TableHead>
+              <TableHead className="text-right text-foreground font-semibold">Total Harga</TableHead>
               <TableHead className="w-[150px] text-center text-foreground font-semibold">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -595,8 +595,8 @@ export default function BarangKeluarPage() {
                   <TableCell className="text-center">{item.penerima}</TableCell>
                   <TableCell className="text-center">{item.satuan}</TableCell>
                   <TableCell className="text-center">{item.qty}</TableCell>
-                  <TableCell className="text-center">{formatCurrency(parseFloat(item.harga_satuan))}</TableCell>
-                  <TableCell className="text-center">{formatCurrency(parseFloat(item.total_harga))}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(parseFloat(item.harga_satuan))}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(parseFloat(item.total_harga))}</TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
                       <Button size="icon" variant="ghost" className="hover:bg-yellow-500 hover:text-white">
@@ -666,5 +666,3 @@ export default function BarangKeluarPage() {
     </div>
   );
 }
-
-    

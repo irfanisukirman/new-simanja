@@ -343,11 +343,11 @@ export default function SchedulingPage() {
             Jadwal Pemantauan Rutin Gedung
           </h1>
         </div>
-        <div className="flex items-center justify-between pt-2 pb-4">
-        <Input
+        <div className="flex items-center pt-2 pb-4">
+        {/* <Input
                 placeholder="Cari berdasarkan nama lokasi atau pegawai..."
                 className="max-w-sm"
-            />
+            /> */}
             {/* <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="ml-auto">
@@ -389,6 +389,7 @@ export default function SchedulingPage() {
                 Dashboard
                 </Link>
             </Button> */}
+            <div className="ml-auto">
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
                <Button onClick={() => { form.reset(); setIsModalOpen(true); }}>
@@ -518,7 +519,8 @@ export default function SchedulingPage() {
                 </form>
               </Form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+            </div>
         </div>
 
         {/* Filter Section */}

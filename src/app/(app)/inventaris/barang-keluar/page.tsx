@@ -318,14 +318,16 @@ export default function BarangKeluarPage() {
           </h1>
         </div>
         <div className="flex justify-end gap-2 pt-2 pb-4">
-           <Dialog>
+           {/* <Dialog modal={false}>
             <DialogTrigger asChild>
               <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" />
                   Export
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent 
+              className="sm:max-w-md"
+            >
               <DialogHeader>
                 <DialogTitle>Export Data</DialogTitle>
               </DialogHeader>
@@ -398,7 +400,7 @@ export default function BarangKeluarPage() {
                               <CommandItem
                                 key={pegawai.id}
                                 value={pegawai.id.toString()}
-                                onSelect={(currentValue) => {
+                                onSelect={(currentValue: string) => {
                                   setSelectedPegawaiId(currentValue === selectedPegawaiId ? "" : currentValue)
                                   setComboboxOpen(false)
                                 }}
@@ -430,7 +432,7 @@ export default function BarangKeluarPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
            <Button asChild>
              <Link href="/inventaris/barang-keluar/tambah">
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -552,4 +554,5 @@ export default function BarangKeluarPage() {
       </footer>
     </div>
   );
-}
+
+    

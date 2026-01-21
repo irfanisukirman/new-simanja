@@ -15,7 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose
+  DialogClose,
+  DialogTrigger
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Pencil, PlusCircle, Trash2, FileDown, CalendarIcon, Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
@@ -81,6 +83,12 @@ interface ItemOut {
   total_harga: string;
 }
 
+interface MasterBarang {
+  item_id: number;
+  item_name: string;
+  current_stock: number;
+}
+
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -104,12 +112,25 @@ export default function BarangKeluarPage() {
     from: new Date(),
     to: addDays(new Date(), 7),
   })
-  const [comboboxOpen, setComboboxOpen] = useState(false)
-  const [selectedPegawaiId, setSelectedPegawaiId] = useState<string>("")
   const [pegawaiList, setPegawaiList] = useState<Pegawai[]>([])
   const [isLoadingPegawai, setIsLoadingPegawai] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false);
+  const [exportPegawaiComboboxOpen, setExportPegawaiComboboxOpen] = useState(false);
+  const [exportSelectedPegawaiId, setExportSelectedPegawaiId] = useState("");
+
+  // State for Add Item Dialog
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [masterBarang, setMasterBarang] = useState<MasterBarang[]>([]);
+  const [isLoadingMasterBarang, setIsLoadingMasterBarang] = useState(false);
+  const [addTanggal, setAddTanggal] = useState<Date | undefined>(new Date());
+  const [addSelectedBarangId, setAddSelectedBarangId] = useState("");
+  const [addSelectedPegawaiId, setAddSelectedPegawaiId] = useState("");
+  const [addQty, setAddQty] = useState<number | string>("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [addBarangComboboxOpen, setAddBarangComboboxOpen] = useState(false);
+  const [addPegawaiComboboxOpen, setAddPegawaiComboboxOpen] = useState(false);
+
 
   const handleAuthError = useCallback((error: any) => {
     if (error.response?.status === 401) {
@@ -167,13 +188,35 @@ export default function BarangKeluarPage() {
     }
   }, [toast, handleAuthError]);
 
+  const fetchMasterBarang = useCallback(async () => {
+    setIsLoadingMasterBarang(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items?limit=9999`, {
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+      });
+      setMasterBarang(response.data.data);
+    } catch (error: any) {
+      if (!handleAuthError(error)) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Mengambil Data Master Barang",
+          description: error.response?.data?.message || "Terjadi kesalahan pada server.",
+        });
+      }
+    } finally {
+      setIsLoadingMasterBarang(false);
+    }
+  }, [toast, handleAuthError]);
+
   useEffect(() => {
     fetchItemsOut(currentPage);
   }, [currentPage, fetchItemsOut]);
   
    useEffect(() => {
     fetchPegawai();
-  }, [fetchPegawai]);
+    fetchMasterBarang();
+  }, [fetchPegawai, fetchMasterBarang]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -209,7 +252,7 @@ export default function BarangKeluarPage() {
   };
 
   const handleExport = async () => {
-    if (!exportDateRange?.from || !exportDateRange?.to || !selectedPegawaiId) {
+    if (!exportDateRange?.from || !exportDateRange?.to || !exportSelectedPegawaiId) {
       toast({
         variant: "destructive",
         title: "Input Tidak Lengkap",
@@ -228,13 +271,13 @@ export default function BarangKeluarPage() {
         params: {
           start_date: startDate,
           end_date: endDate,
-          pegawai_id: selectedPegawaiId,
+          pegawai_id: exportSelectedPegawaiId,
         },
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
       });
 
       const items = response.data.data;
-      const selectedPegawai = pegawaiList.find(p => p.id.toString() === selectedPegawaiId);
+      const selectedPegawai = pegawaiList.find(p => p.id.toString() === exportSelectedPegawaiId);
 
       const exportData = {
           items: items,
@@ -275,6 +318,58 @@ export default function BarangKeluarPage() {
     }
   };
 
+    const handleAddItem = async () => {
+    if (!addTanggal || !addSelectedBarangId || !addSelectedPegawaiId || !addQty) {
+      toast({
+        variant: "destructive",
+        title: "Input Tidak Lengkap",
+        description: "Harap isi semua kolom yang diperlukan.",
+      });
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const token = localStorage.getItem("token");
+      const payload = {
+        tanggal: format(addTanggal, 'yyyy-MM-dd'),
+        item_id: parseInt(addSelectedBarangId),
+        pegawai_id: parseInt(addSelectedPegawaiId),
+        qty: typeof addQty === 'string' ? parseInt(addQty) : addQty,
+      };
+
+      await axios.post(`https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items-out`, payload, {
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+      });
+
+      toast({
+        variant: "success",
+        title: "Berhasil!",
+        description: "Data pengeluaran barang berhasil ditambahkan.",
+      });
+      
+      setIsAddDialogOpen(false);
+      setAddTanggal(new Date());
+      setAddSelectedBarangId("");
+      setAddSelectedPegawaiId("");
+      setAddQty("");
+      
+      fetchItemsOut(currentPage);
+
+    } catch (error: any) {
+      if (!handleAuthError(error)) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Menambah Data",
+          description: error.response?.data?.message || "Terjadi kesalahan pada server.",
+        });
+      }
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+
   const generatePagination = (currentPage: number, totalPages: number) => {
     if (totalPages <= 10) {
         return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -284,7 +379,6 @@ export default function BarangKeluarPage() {
     pages.add(1);
     pages.add(totalPages);
 
-    // Add pages around the current page
     for (let i = -2; i <= 2; i++) {
         const page = currentPage + i;
         if (page > 1 && page < totalPages) {
@@ -292,7 +386,6 @@ export default function BarangKeluarPage() {
         }
     }
     
-    // Add ellipsis placeholders
     const sortedPages = Array.from(pages).sort((a, b) => a - b);
     const paginatedItems: (number | string)[] = [];
     
@@ -318,7 +411,7 @@ export default function BarangKeluarPage() {
           </h1>
         </div>
         <div className="flex justify-end gap-2 pt-2 pb-4">
-           {/* <Dialog modal={false}>
+           <Dialog modal={false}>
             <DialogTrigger asChild>
               <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" />
@@ -374,16 +467,16 @@ export default function BarangKeluarPage() {
                 </div>
                  <div className="grid grid-cols-1 items-center gap-2">
                   <Label htmlFor="pegawai-export">Penerima</Label>
-                   <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                   <Popover open={exportPegawaiComboboxOpen} onOpenChange={setExportPegawaiComboboxOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
                         role="combobox"
-                        aria-expanded={comboboxOpen}
+                        aria-expanded={exportPegawaiComboboxOpen}
                         className="w-full justify-between"
                       >
-                        {selectedPegawaiId
-                          ? pegawaiList.find((pegawai) => pegawai.id.toString() === selectedPegawaiId)?.nama
+                        {exportSelectedPegawaiId
+                          ? pegawaiList.find((pegawai) => pegawai.id.toString() === exportSelectedPegawaiId)?.nama
                           : "Pilih penerima..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -401,14 +494,14 @@ export default function BarangKeluarPage() {
                                 key={pegawai.id}
                                 value={pegawai.id.toString()}
                                 onSelect={(currentValue: string) => {
-                                  setSelectedPegawaiId(currentValue === selectedPegawaiId ? "" : currentValue)
-                                  setComboboxOpen(false)
+                                  setExportSelectedPegawaiId(currentValue === exportSelectedPegawaiId ? "" : currentValue)
+                                  setExportPegawaiComboboxOpen(false)
                                 }}
                               >
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    selectedPegawaiId === pegawai.id.toString() ? "opacity-100" : "opacity-0"
+                                    exportSelectedPegawaiId === pegawai.id.toString() ? "opacity-100" : "opacity-0"
                                   )}
                                 />
                                 {pegawai.nama}
@@ -432,13 +525,160 @@ export default function BarangKeluarPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog> */}
-           <Button asChild>
-             <Link href="/inventaris/barang-keluar/tambah">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Tambah Data
-              </Link>
-            </Button>
+          </Dialog>
+          
+           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Tambah Data
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Tambah Barang Keluar</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="tanggal" className="text-right">Tanggal</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal col-span-3",
+                              !addTanggal && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {addTanggal ? format(addTanggal, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={addTanggal}
+                            onSelect={setAddTanggal}
+                            initialFocus
+                            locale={id}
+                          />
+                        </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="nama_barang" className="text-right">Nama Barang</Label>
+                     <Popover open={addBarangComboboxOpen} onOpenChange={setAddBarangComboboxOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={addBarangComboboxOpen}
+                            className="w-full justify-between col-span-3"
+                          >
+                            {addSelectedBarangId
+                              ? masterBarang.find((barang) => barang.item_id.toString() === addSelectedBarangId)?.item_name
+                              : "Pilih barang..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0 col-span-3">
+                          <Command>
+                            <CommandInput placeholder="Cari barang..." />
+                            <CommandList>
+                              <ScrollArea className="h-[200px]">
+                              <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
+                              <CommandGroup>
+                                {isLoadingMasterBarang ? <p className="p-2 text-center text-sm">Memuat...</p> : 
+                                masterBarang.map((barang) => (
+                                  <CommandItem
+                                    key={barang.item_id}
+                                    value={barang.item_id.toString()}
+                                    onSelect={(currentValue) => {
+                                      setAddSelectedBarangId(currentValue === addSelectedBarangId ? "" : currentValue)
+                                      setAddBarangComboboxOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        addSelectedBarangId === barang.item_id.toString() ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {barang.item_name} (Stok: {barang.current_stock})
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                              </ScrollArea>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                  </div>
+                   <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="penerima" className="text-right">Penerima</Label>
+                    <Popover open={addPegawaiComboboxOpen} onOpenChange={setAddPegawaiComboboxOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={addPegawaiComboboxOpen}
+                            className="w-full justify-between col-span-3"
+                          >
+                            {addSelectedPegawaiId
+                              ? pegawaiList.find((pegawai) => pegawai.id.toString() === addSelectedPegawaiId)?.nama
+                              : "Pilih penerima..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0 col-span-3">
+                          <Command>
+                            <CommandInput placeholder="Cari penerima..." />
+                            <CommandList>
+                              <ScrollArea className="h-[200px]">
+                              <CommandEmpty>Penerima tidak ditemukan.</CommandEmpty>
+                              <CommandGroup>
+                                {isLoadingPegawai ? <p className="p-2 text-center text-sm">Memuat...</p> : 
+                                pegawaiList.map((pegawai) => (
+                                  <CommandItem
+                                    key={pegawai.id}
+                                    value={pegawai.id.toString()}
+                                    onSelect={(currentValue) => {
+                                      setAddSelectedPegawaiId(currentValue === addSelectedPegawaiId ? "" : currentValue)
+                                      setAddPegawaiComboboxOpen(false)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        addSelectedPegawaiId === pegawai.id.toString() ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {pegawai.nama}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                              </ScrollArea>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="qty" className="text-right">Jumlah</Label>
+                    <Input id="qty" type="number" placeholder="0" className="col-span-3" value={addQty} onChange={(e) => setAddQty(e.target.value)} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary" disabled={isAdding}>Batal</Button>
+                  </DialogClose>
+                  <Button onClick={handleAddItem} disabled={isAdding}>
+                    {isAdding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Simpan
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
         </div>
         <div className="rounded-md border">
           {isLoading ? (
@@ -554,5 +794,4 @@ export default function BarangKeluarPage() {
       </footer>
     </div>
   );
-
-    
+}

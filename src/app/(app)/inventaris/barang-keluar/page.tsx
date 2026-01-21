@@ -14,7 +14,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog"
@@ -29,13 +28,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Pencil, PlusCircle, Trash2, FileDown, CalendarIcon, Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import Link from "next/link"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
@@ -63,28 +61,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
 import { Card } from "@/components/ui/card"
-
-const itemOutSchema = z.object({
-  tanggal: z.date({ required_error: "Tanggal harus diisi." }),
-  barang_id: z.string().min(1, "Nama barang harus dipilih."),
-  pegawai_id: z.string().min(1, "Penerima harus dipilih."),
-  satuan: z.string().min(1, "Satuan harus dipilih."),
-  qty: z.coerce.number().min(1, "Jumlah harus lebih dari 0."),
-  keterangan: z.string().optional(),
-});
-
 
 interface Pegawai {
   id: number;
@@ -103,14 +80,6 @@ interface ItemOut {
   harga_satuan: string;
   total_harga: string;
 }
-
-interface MasterBarang {
-    item_id: number;
-    item_name: string;
-    unit: string;
-    // tambahkan properti lain jika diperlukan
-}
-
 
 const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -131,7 +100,6 @@ export default function BarangKeluarPage() {
   const [totalPages, setTotalPages] = useState(0);
 
   // State for forms and dialogs
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [exportDateRange, setExportDateRange] = useState<DateRange | undefined>({
     from: new Date(),
     to: addDays(new Date(), 7),
@@ -140,36 +108,8 @@ export default function BarangKeluarPage() {
   const [selectedPegawaiId, setSelectedPegawaiId] = useState<string>("")
   const [pegawaiList, setPegawaiList] = useState<Pegawai[]>([])
   const [isLoadingPegawai, setIsLoadingPegawai] = useState(false)
-  const [masterBarangList, setMasterBarangList] = useState<MasterBarang[]>([]);
-  const [isLoadingMasterBarang, setIsLoadingMasterBarang] = useState(false);
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [barangComboboxOpen, setBarangComboboxOpen] = useState(false);
-  const [pegawaiComboboxOpen, setPegawaiComboboxOpen] = useState(false);
-
-  const form = useForm<z.infer<typeof itemOutSchema>>({
-    resolver: zodResolver(itemOutSchema),
-    defaultValues: {
-      tanggal: new Date(),
-      barang_id: "",
-      pegawai_id: "",
-      satuan: "",
-      qty: 1,
-      keterangan: "",
-    },
-  });
-
-   const selectedBarangName = form.watch("barang_id");
-   useEffect(() => {
-    if (selectedBarangName) {
-        const selectedBarangData = masterBarangList.find(b => b.item_name === selectedBarangName);
-        if (selectedBarangData && selectedBarangData.unit) {
-            form.setValue("satuan", selectedBarangData.unit);
-        }
-    }
-   }, [selectedBarangName, masterBarangList, form]);
-
 
   const handleAuthError = useCallback((error: any) => {
     if (error.response?.status === 401) {
@@ -227,99 +167,19 @@ export default function BarangKeluarPage() {
     }
   }, [toast, handleAuthError]);
 
-    const fetchMasterBarang = useCallback(async () => {
-        setIsLoadingMasterBarang(true);
-        try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get("https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items?limit=9999", {
-                headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
-            });
-            setMasterBarangList(response.data.data);
-        } catch (error: any) {
-            if (!handleAuthError(error)) {
-                toast({
-                    variant: "destructive",
-                    title: "Gagal Mengambil Data Master Barang",
-                    description: error.response?.data?.message || "Terjadi kesalahan pada server.",
-                });
-            }
-        } finally {
-            setIsLoadingMasterBarang(false);
-        }
-    }, [toast, handleAuthError]);
-
   useEffect(() => {
     fetchItemsOut(currentPage);
   }, [currentPage, fetchItemsOut]);
   
    useEffect(() => {
     fetchPegawai();
-    fetchMasterBarang();
-  }, [fetchPegawai, fetchMasterBarang]);
+  }, [fetchPegawai]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
-
-  const onSubmit = async (values: z.infer<typeof itemOutSchema>) => {
-    setIsSubmitting(true);
-    
-    const selectedBarang = masterBarangList.find(b => b.item_name === values.barang_id);
-    const selectedPegawai = pegawaiList.find(p => p.nama === values.pegawai_id);
-
-    if (!selectedBarang || !selectedPegawai) {
-        toast({
-            variant: "destructive",
-            title: "Data Tidak Valid",
-            description: "Barang atau pegawai yang dipilih tidak ditemukan."
-        });
-        setIsSubmitting(false);
-        return;
-    }
-
-    const payload = {
-        tanggal: format(values.tanggal, "yyyy-MM-dd"),
-        barang_id: selectedBarang.item_id,
-        pegawai_id: selectedPegawai.id,
-        satuan: values.satuan,
-        qty: values.qty,
-        keterangan: values.keterangan || ""
-    };
-
-    try {
-        const token = localStorage.getItem("token");
-        await axios.post('https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items-out', payload, {
-            headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
-        });
-
-        toast({
-            variant: "success",
-            title: "Berhasil!",
-            description: "Data pengeluaran barang berhasil dicatat.",
-        });
-
-        setIsAddDialogOpen(false);
-        form.reset();
-        if (currentPage === 1) {
-            fetchItemsOut(1);
-        } else {
-            setCurrentPage(1);
-        }
-    } catch (error: any) {
-        if (!handleAuthError(error)) {
-            toast({
-                variant: "destructive",
-                title: "Gagal Mencatat Barang Keluar",
-                description: error.response?.data?.message || "Terjadi kesalahan pada server.",
-            });
-        }
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-
 
   const handleDelete = async (itemId: number) => {
     setIsDeleting(true);
@@ -538,7 +398,7 @@ export default function BarangKeluarPage() {
                               <CommandItem
                                 key={pegawai.id}
                                 value={pegawai.id.toString()}
-                                onSelect={(currentValue: string) => {
+                                onSelect={(currentValue) => {
                                   setSelectedPegawaiId(currentValue === selectedPegawaiId ? "" : currentValue)
                                   setComboboxOpen(false)
                                 }}
@@ -571,238 +431,12 @@ export default function BarangKeluarPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button onClick={() => setIsAddDialogOpen(true)}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Tambah Data
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
-                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <DialogHeader>
-                      <DialogTitle>Form Pengeluaran Barang</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                       <FormField
-                        control={form.control}
-                        name="tanggal"
-                        render={({ field }) => (
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Tanggal</Label>
-                            <div className="col-span-3">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant={"outline"}
-                                      className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      <CalendarIcon className="mr-2 h-4 w-4" />
-                                      {field.value ? format(field.value, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                  <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                               <FormMessage className="mt-1" />
-                            </div>
-                          </div>
-                        )}
-                      />
-
-                      <FormField
-                        name="barang_id"
-                        control={form.control}
-                        render={({ field }) => (
-                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Nama Barang</Label>
-                            <div className="col-span-3">
-                             <Popover open={barangComboboxOpen} onOpenChange={setBarangComboboxOpen}>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant="outline"
-                                      role="combobox"
-                                      className={cn(
-                                        "w-full justify-between",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      {field.value || "Pilih barang..."}
-                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[375px] p-0">
-                                  <Command>
-                                    <CommandInput placeholder="Cari barang..." />
-                                    <CommandList>
-                                      <ScrollArea className="h-[200px]">
-                                        <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
-                                        <CommandGroup>
-                                          {isLoadingMasterBarang ? <p className="p-2 text-center text-sm">Memuat...</p> :
-                                            masterBarangList.map((barang) => (
-                                              <CommandItem
-                                                value={barang.item_name}
-                                                key={barang.item_id}
-                                                onSelect={() => {
-                                                  form.setValue("barang_id", barang.item_name)
-                                                  setBarangComboboxOpen(false);
-                                                }}
-                                              >
-                                                <Check
-                                                  className={cn(
-                                                    "mr-2 h-4 w-4",
-                                                    barang.item_name === field.value ? "opacity-100" : "opacity-0"
-                                                  )}
-                                                />
-                                                {barang.item_name}
-                                              </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                      </ScrollArea>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage className="mt-1" />
-                            </div>
-                          </div>
-                        )}
-                      />
-
-                      <FormField
-                        name="pegawai_id"
-                        control={form.control}
-                        render={({ field }) => (
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Penerima</Label>
-                            <div className="col-span-3">
-                              <Popover open={pegawaiComboboxOpen} onOpenChange={setPegawaiComboboxOpen}>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant="outline"
-                                      role="combobox"
-                                      className={cn(
-                                        "w-full justify-between",
-                                        !field.value && "text-muted-foreground"
-                                      )}
-                                    >
-                                      {field.value || "Pilih penerima..."}
-                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[375px] p-0">
-                                  <Command>
-                                    <CommandInput placeholder="Cari penerima..." />
-                                    <CommandList>
-                                      <ScrollArea className="h-[200px]">
-                                        <CommandEmpty>Penerima tidak ditemukan.</CommandEmpty>
-                                        <CommandGroup>
-                                          {isLoadingPegawai ? <p className="p-2 text-center text-sm">Memuat...</p> :
-                                            pegawaiList.map((pegawai) => (
-                                              <CommandItem
-                                                value={pegawai.nama}
-                                                key={pegawai.id}
-                                                onSelect={() => {
-                                                    form.setValue("pegawai_id", pegawai.nama);
-                                                    setPegawaiComboboxOpen(false);
-                                                }}
-                                              >
-                                                <Check
-                                                  className={cn(
-                                                    "mr-2 h-4 w-4",
-                                                    pegawai.nama === field.value ? "opacity-100" : "opacity-0"
-                                                  )}
-                                                />
-                                                {pegawai.nama}
-                                              </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                      </ScrollArea>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage className="mt-1" />
-                            </div>
-                          </div>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="satuan"
-                        render={({ field }) => (
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Satuan</Label>
-                            <div className="col-span-3">
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Pilih Satuan" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Rim">Rim</SelectItem>
-                                  <SelectItem value="Buah">Buah</SelectItem>
-                                  <SelectItem value="Pak">Pak</SelectItem>
-                                  <SelectItem value="Pcs">Pcs</SelectItem>
-                                  <SelectItem value="Unit">Unit</SelectItem>
-                                  <SelectItem value="Batang">Batang</SelectItem>
-                                  <SelectItem value="Kaleng">Kaleng</SelectItem>
-                                  <SelectItem value="Botol">Botol</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage className="mt-1" />
-                            </div>
-                          </div>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="qty"
-                        render={({ field }) => (
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label className="text-right">Jumlah</Label>
-                            <div className="col-span-3">
-                              <FormControl>
-                                <Input type="number" placeholder="cth: 5" {...field} />
-                              </FormControl>
-                              <FormMessage className="mt-1" />
-                            </div>
-                          </div>
-                        )}
-                      />
-                    </div>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button type="button" variant="secondary" disabled={isSubmitting}>Batal</Button>
-                      </DialogClose>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Simpan
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+           <Button asChild>
+             <Link href="/inventaris/barang-keluar/tambah">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Tambah Data
+              </Link>
+            </Button>
         </div>
         <div className="rounded-md border">
           {isLoading ? (

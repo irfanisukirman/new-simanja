@@ -464,7 +464,15 @@ export default function BarangKeluarPage() {
                   Export
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent
+              className="sm:max-w-md"
+              onPointerDownOutside={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest('.rdp')) {
+                    e.preventDefault();
+                }
+              }}
+            >
               <DialogHeader>
                 <DialogTitle>Export Data</DialogTitle>
               </DialogHeader>

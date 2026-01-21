@@ -458,7 +458,7 @@ export default function BarangKeluarPage() {
           </h1>
         </div>
         <div className="flex justify-end gap-2 pt-2 pb-4">
-           <Dialog modal={false}>
+           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" />
@@ -538,7 +538,7 @@ export default function BarangKeluarPage() {
                               <CommandItem
                                 key={pegawai.id}
                                 value={pegawai.id.toString()}
-                                onSelect={(currentValue: string) => {
+                                onSelect={(currentValue) => {
                                   setSelectedPegawaiId(currentValue === selectedPegawaiId ? "" : currentValue)
                                   setComboboxOpen(false)
                                 }}
@@ -571,7 +571,7 @@ export default function BarangKeluarPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setIsAddDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -919,5 +919,3 @@ export default function BarangKeluarPage() {
     </div>
   );
 }
-
-    

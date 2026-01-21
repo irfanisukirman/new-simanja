@@ -504,7 +504,8 @@ export default function BarangKeluarPage() {
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                    <PopoverContent className="w-auto p-0"
+  align="start">
                       <Calendar
                         initialFocus
                         mode="range"
@@ -545,7 +546,7 @@ export default function BarangKeluarPage() {
                               <CommandItem
                                 key={pegawai.id}
                                 value={pegawai.id.toString()}
-                                onSelect={(currentValue: string) => {
+                                onSelect={(currentValue) => {
                                   setSelectedPegawaiId(currentValue === selectedPegawaiId ? "" : currentValue)
                                   setComboboxOpen(false)
                                 }}
@@ -585,7 +586,12 @@ export default function BarangKeluarPage() {
                   Tambah Data
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
+              <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest('.rdp')) {
+                    e.preventDefault();
+                }
+              }}>
                  <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>

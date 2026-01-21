@@ -1,5 +1,3 @@
-
-
 "use client"
 
 import {
@@ -172,8 +170,8 @@ export default function MasterDataBarangPage() {
         const headers = { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' };
         
         const url = search 
-          ? `https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items/search?keyword=${search}&page=${page}&limit=${ITEMS_PER_PAGE}`
-          : `https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items?page=${page}&limit=${ITEMS_PER_PAGE}`;
+          ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/search?keyword=${search}&page=${page}&limit=${ITEMS_PER_PAGE}`
+          : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?page=${page}&limit=${ITEMS_PER_PAGE}`;
         
         const response = await axios.get(url, { headers });
 
@@ -228,7 +226,7 @@ export default function MasterDataBarangPage() {
     setIsDeleting(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items/${itemId}`, {
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/${itemId}`, {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
       });
 
@@ -278,7 +276,7 @@ export default function MasterDataBarangPage() {
             unit_price: editedItemData.unit_price,
         };
 
-        const response = await axios.put(`https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items/${selectedItem.item_id}`, payload, {
+        const response = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/${selectedItem.item_id}`, payload, {
              headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
         });
 
@@ -322,7 +320,7 @@ export default function MasterDataBarangPage() {
     try {
       const token = localStorage.getItem("token");
       // Fetch all data for export, assuming API supports a no-pagination param or high limit
-      const response = await axios.get("https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items?limit=9999", {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?limit=9999`, {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
       });
       const allItems = response.data.data;
@@ -420,7 +418,6 @@ export default function MasterDataBarangPage() {
 
     return paginatedItems;
   };
-
 
   return (
     <div className="relative flex min-h-screen flex-col">

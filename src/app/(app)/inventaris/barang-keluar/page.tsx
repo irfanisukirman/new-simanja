@@ -469,7 +469,7 @@ export default function BarangKeluarPage() {
               onPointerDownOutside={(e) => {
                 const target = e.target as HTMLElement;
                 if (target.closest('.rdp')) {
-                    e.preventDefault();
+                  e.preventDefault();
                 }
               }}
             >
@@ -586,12 +586,15 @@ export default function BarangKeluarPage() {
                   Tambah Data
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-lg" onPointerDownOutside={(e) => {
-                const target = e.target as HTMLElement;
-                if (target.closest('.rdp')) {
+              <DialogContent
+                className="sm:max-w-lg"
+                onPointerDownOutside={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest('.rdp')) {
                     e.preventDefault();
-                }
-              }}>
+                  }
+                }}
+              >
                  <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>

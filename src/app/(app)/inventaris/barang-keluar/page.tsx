@@ -418,7 +418,7 @@ export default function BarangKeluarPage() {
                   Export
               </Button>
             </DialogTrigger>
-            <DialogContent 
+            <DialogContent
               className="sm:max-w-md"
             >
               <DialogHeader>
@@ -467,7 +467,7 @@ export default function BarangKeluarPage() {
                 </div>
                  <div className="grid grid-cols-1 items-center gap-2">
                   <Label htmlFor="pegawai-export">Penerima</Label>
-                   <Popover open={exportPegawaiComboboxOpen} onOpenChange={setExportPegawaiComboboxOpen}>
+                   <Popover open={exportPegawaiComboboxOpen} onOpenChange={setExportPegawaiComboboxOpen} modal={true}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -481,7 +481,7 @@ export default function BarangKeluarPage() {
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                       <Command>
                         <CommandInput placeholder="Cari penerima..." />
                         <CommandList>
@@ -565,7 +565,7 @@ export default function BarangKeluarPage() {
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="nama_barang" className="text-right">Nama Barang</Label>
-                     <Popover open={addBarangComboboxOpen} onOpenChange={setAddBarangComboboxOpen}>
+                     <Popover open={addBarangComboboxOpen} onOpenChange={setAddBarangComboboxOpen} modal={true}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -579,7 +579,7 @@ export default function BarangKeluarPage() {
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0 col-span-3">
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                           <Command>
                             <CommandInput placeholder="Cari barang..." />
                             <CommandList>
@@ -612,7 +612,7 @@ export default function BarangKeluarPage() {
                   </div>
                    <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="penerima" className="text-right">Penerima</Label>
-                    <Popover open={addPegawaiComboboxOpen} onOpenChange={setAddPegawaiComboboxOpen}>
+                    <Popover open={addPegawaiComboboxOpen} onOpenChange={setAddPegawaiComboboxOpen} modal={true}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -626,7 +626,7 @@ export default function BarangKeluarPage() {
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0 col-span-3">
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                           <Command>
                             <CommandInput placeholder="Cari penerima..." />
                             <CommandList>

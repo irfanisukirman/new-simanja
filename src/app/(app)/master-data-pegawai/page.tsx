@@ -176,9 +176,9 @@ export default function MasterDataPegawaiPage() {
         });
 
         toast({
+            variant: "success",
             title: "Berhasil!",
             description: "Data pegawai berhasil diperbarui.",
-            className: "bg-green-500 text-white",
         });
 
         setIsEditDialogOpen(false);
@@ -211,9 +211,9 @@ export default function MasterDataPegawaiPage() {
       });
 
       toast({
+        variant: "success",
         title: "Berhasil!",
         description: "Data pegawai baru telah berhasil ditambahkan.",
-        className: "bg-green-500 text-white",
       });
       
       setIsAddDialogOpen(false);
@@ -241,9 +241,9 @@ export default function MasterDataPegawaiPage() {
       });
 
       toast({
+        variant: "success",
         title: "Berhasil!",
         description: "Data pegawai telah berhasil dihapus.",
-        className: "bg-green-500 text-white",
       });
 
       fetchPegawai();

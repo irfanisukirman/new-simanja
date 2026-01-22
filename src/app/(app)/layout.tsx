@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   CalendarClock,
@@ -34,10 +34,18 @@ import { Providers } from '@/components/providers';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isBmdMenuOpen, setIsBmdMenuOpen] = useState(false);
   const [isSchedulingMenuOpen, setIsSchedulingMenuOpen] = useState(false);
   const [isInventarisMenuOpen, setIsInventarisMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.replace('/login');
+    }
+  }, [router, pathname]);
 
   useEffect(() => {
     const role = localStorage.getItem('role');

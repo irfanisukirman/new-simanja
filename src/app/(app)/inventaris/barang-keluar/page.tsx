@@ -411,7 +411,7 @@ export default function BarangKeluarPage() {
           </h1>
         </div>
         <div className="flex justify-end gap-2 pt-2 pb-4">
-           <Dialog modal={false}>
+           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" />
@@ -527,7 +527,7 @@ export default function BarangKeluarPage() {
             </DialogContent>
           </Dialog>
           
-           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} modal={false}>
+           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -795,3 +795,5 @@ export default function BarangKeluarPage() {
     </div>
   );
 }
+
+    

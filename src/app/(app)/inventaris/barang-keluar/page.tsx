@@ -133,6 +133,7 @@ export default function BarangKeluarPage() {
   const [isLoadingPegawai, setIsLoadingPegawai] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [exportPegawaiComboboxOpen, setExportPegawaiComboboxOpen] = useState(false);
   const [exportSelectedPegawaiId, setExportSelectedPegawaiId] = useState("");
 
@@ -314,6 +315,7 @@ export default function BarangKeluarPage() {
       const printWindow = window.open('/print/bend29', '_blank');
       if (printWindow) {
         printWindow.focus();
+        setIsExportDialogOpen(false);
       } else {
          toast({
           variant: "destructive",
@@ -468,7 +470,7 @@ export default function BarangKeluarPage() {
           </h1>
         </div>
         <div className="flex justify-end gap-2 pt-2 pb-4">
-           <Dialog>
+           <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" />

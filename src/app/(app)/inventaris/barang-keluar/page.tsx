@@ -485,7 +485,6 @@ export default function BarangKeluarPage() {
                       <Command>
                         <CommandInput placeholder="Cari penerima..." />
                         <CommandList>
-                          <ScrollArea className="h-[200px]">
                           <CommandEmpty>Penerima tidak ditemukan.</CommandEmpty>
                           <CommandGroup>
                             {isLoadingPegawai ? <p className="p-2 text-center text-sm">Memuat...</p> : 
@@ -508,7 +507,6 @@ export default function BarangKeluarPage() {
                               </CommandItem>
                             ))}
                           </CommandGroup>
-                          </ScrollArea>
                         </CommandList>
                       </Command>
                     </PopoverContent>
@@ -585,7 +583,6 @@ export default function BarangKeluarPage() {
                           <Command>
                             <CommandInput placeholder="Cari barang..." />
                             <CommandList>
-                              <ScrollArea className="h-[200px]">
                               <CommandEmpty>Barang tidak ditemukan.</CommandEmpty>
                               <CommandGroup>
                                 {isLoadingMasterBarang ? <p className="p-2 text-center text-sm">Memuat...</p> : 
@@ -608,7 +605,6 @@ export default function BarangKeluarPage() {
                                   </CommandItem>
                                 ))}
                               </CommandGroup>
-                              </ScrollArea>
                             </CommandList>
                           </Command>
                         </PopoverContent>
@@ -634,7 +630,6 @@ export default function BarangKeluarPage() {
                           <Command>
                             <CommandInput placeholder="Cari penerima..." />
                             <CommandList>
-                              <ScrollArea className="h-[200px]">
                               <CommandEmpty>Penerima tidak ditemukan.</CommandEmpty>
                               <CommandGroup>
                                 {isLoadingPegawai ? <p className="p-2 text-center text-sm">Memuat...</p> : 
@@ -657,7 +652,6 @@ export default function BarangKeluarPage() {
                                   </CommandItem>
                                 ))}
                               </CommandGroup>
-                              </ScrollArea>
                             </CommandList>
                           </Command>
                         </PopoverContent>

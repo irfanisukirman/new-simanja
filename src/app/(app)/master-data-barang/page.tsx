@@ -47,7 +47,7 @@ import { Pencil, PlusCircle, Trash2, FileDown, CalendarIcon, Loader2, Search } f
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
+import { CustomCalendar } from "@/components/ui/calendar-custom"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -549,8 +549,7 @@ export default function MasterDataBarangPage() {
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
-                              <Calendar
-                                mode="single"
+                              <CustomCalendar
                                 selected={date}
                                 onSelect={setDate}
                                 initialFocus
@@ -746,8 +745,7 @@ export default function MasterDataBarangPage() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
+                      <CustomCalendar
                         selected={date}
                         onSelect={setDate}
                         initialFocus

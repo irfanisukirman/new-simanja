@@ -54,7 +54,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
+import { CustomCalendar } from "@/components/ui/calendar-custom"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
@@ -434,8 +434,7 @@ export default function SchedulingPage() {
                                     </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
-                                    <Calendar
-                                        mode="single"
+                                    <CustomCalendar
                                         selected={field.value}
                                         onSelect={field.onChange}
                                         disabled={(date) => date.getDay() !== 1 && date.getDay() !== 4}

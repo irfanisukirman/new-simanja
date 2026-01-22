@@ -36,7 +36,7 @@ import { Label } from "@/components/ui/label"
 import { Pencil, PlusCircle, Trash2, FileDown, CalendarIcon, Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { Calendar } from "@/components/ui/calendar"
+import { CustomCalendar } from "@/components/ui/calendar-custom"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -453,7 +453,7 @@ export default function BarangKeluarPage() {
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
+                      <CustomCalendar
                         initialFocus
                         mode="range"
                         defaultMonth={exportDateRange?.from}
@@ -555,7 +555,7 @@ export default function BarangKeluarPage() {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
-                          <Calendar
+                          <CustomCalendar
                             mode="single"
                             selected={addTanggal}
                             onSelect={setAddTanggal}

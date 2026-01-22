@@ -33,10 +33,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Pencil, PlusCircle, Trash2, FileDown, CalendarIcon, Check, ChevronsUpDown, Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Pencil, PlusCircle, Trash2, FileDown, Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { CustomCalendar } from "@/components/ui/calendar-custom"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -96,6 +96,23 @@ const formatCurrency = (value: number) => {
         minimumFractionDigits: 0
     }).format(value);
 }
+
+const months = [
+  { value: "0", label: "Januari" }, { value: "1", label: "Februari" },
+  { value: "2", label: "Maret" }, { value: "3", label: "April" },
+  { value: "4", label: "Mei" }, { value: "5", label: "Juni" },
+  { value: "6", label: "Juli" }, { value: "7", label: "Agustus" },
+  { value: "8", label: "September" }, { value: "9", label: "Oktober" },
+  { value: "10", label: "November" }, { value: "11", label: "Desember" },
+];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 21 }, (_, i) => (currentYear - 10 + i).toString());
+
+const getDaysInMonth = (year: number, month: number) => {
+  return new Date(year, month + 1, 0).getDate();
+};
+
 
 export default function BarangKeluarPage() {
   const { toast } = useToast();
@@ -369,6 +386,46 @@ export default function BarangKeluarPage() {
     }
   };
 
+  const handleAddDateChange = (part: 'day' | 'month' | 'year', value: string) => {
+    const currentDate = addTanggal || new Date();
+    let day = currentDate.getDate();
+    let month = currentDate.getMonth();
+    let year = currentDate.getFullYear();
+
+    if (part === 'day') day = parseInt(value);
+    if (part === 'month') month = parseInt(value);
+    if (part === 'year') year = parseInt(value);
+
+    const daysInMonth = getDaysInMonth(year, month);
+    if (day > daysInMonth) {
+        day = daysInMonth;
+    }
+
+    setAddTanggal(new Date(year, month, day));
+  };
+  
+  const handleExportDateChange = (type: 'from' | 'to', part: 'day' | 'month' | 'year', value: string) => {
+    const targetDate = (type === 'from' ? exportDateRange?.from : exportDateRange?.to) || new Date();
+    let day = targetDate.getDate();
+    let month = targetDate.getMonth();
+    let year = targetDate.getFullYear();
+
+    if (part === 'day') day = parseInt(value);
+    if (part === 'month') month = parseInt(value);
+    if (part === 'year') year = parseInt(value);
+    
+    const daysInMonth = getDaysInMonth(year, month);
+    if (day > daysInMonth) {
+        day = daysInMonth;
+    }
+    
+    const newDate = new Date(year, month, day);
+
+    setExportDateRange(prev => ({
+        ...prev,
+        [type]: newDate
+    }));
+  };
 
   const generatePagination = (currentPage: number, totalPages: number) => {
     if (totalPages <= 10) {
@@ -419,51 +476,62 @@ export default function BarangKeluarPage() {
               </Button>
             </DialogTrigger>
             <DialogContent
-              className="sm:max-w-md"
+              className="sm:max-w-xl"
             >
               <DialogHeader>
                 <DialogTitle>Export Data</DialogTitle>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-1 items-center gap-2">
-                  <Label htmlFor="tanggal-export">Rentang Tanggal</Label>
-                   <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="date"
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !exportDateRange && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {exportDateRange?.from ? (
-                          exportDateRange.to ? (
-                            <>
-                              {format(exportDateRange.from, "LLL dd, y", { locale: id })} -{" "}
-                              {format(exportDateRange.to, "LLL dd, y", { locale: id })}
-                            </>
-                          ) : (
-                            format(exportDateRange.from, "LLL dd, y", { locale: id })
-                          )
-                        ) : (
-                          <span>Pilih rentang tanggal</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CustomCalendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={exportDateRange?.from}
-                        selected={exportDateRange}
-                        onSelect={setExportDateRange}
-                        numberOfMonths={2}
-                        locale={id}
-                      />
-                    </PopoverContent>
-                  </Popover>
+                   <Label htmlFor="tanggal-export">Rentang Tanggal</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label className="text-xs text-muted-foreground">Dari Tanggal</Label>
+                            <div className="grid grid-cols-3 gap-2 mt-1">
+                                <Select onValueChange={(value) => handleExportDateChange('from', 'day', value)} value={String(exportDateRange?.from?.getDate())}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {Array.from({ length: getDaysInMonth(exportDateRange?.from?.getFullYear() ?? currentYear, exportDateRange?.from?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <Select onValueChange={(value) => handleExportDateChange('from', 'month', value)} value={String(exportDateRange?.from?.getMonth())}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <Select onValueChange={(value) => handleExportDateChange('from', 'year', value)} value={String(exportDateRange?.from?.getFullYear())}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="text-xs text-muted-foreground">Sampai Tanggal</Label>
+                            <div className="grid grid-cols-3 gap-2 mt-1">
+                                 <Select onValueChange={(value) => handleExportDateChange('to', 'day', value)} value={String(exportDateRange?.to?.getDate())}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {Array.from({ length: getDaysInMonth(exportDateRange?.to?.getFullYear() ?? currentYear, exportDateRange?.to?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <Select onValueChange={(value) => handleExportDateChange('to', 'month', value)} value={String(exportDateRange?.to?.getMonth())}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <Select onValueChange={(value) => handleExportDateChange('to', 'year', value)} value={String(exportDateRange?.to?.getFullYear())}>
+                                    <SelectTrigger><SelectValue/></SelectTrigger>
+                                    <SelectContent>
+                                        {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                  <div className="grid grid-cols-1 items-center gap-2">
                   <Label htmlFor="pegawai-export">Penerima</Label>
@@ -539,29 +607,26 @@ export default function BarangKeluarPage() {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="tanggal" className="text-right">Tanggal</Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal col-span-3",
-                              !addTanggal && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {addTanggal ? format(addTanggal, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <CustomCalendar
-                            mode="single"
-                            selected={addTanggal}
-                            onSelect={setAddTanggal}
-                            initialFocus
-                            locale={id}
-                          />
-                        </PopoverContent>
-                    </Popover>
+                    <div className="grid grid-cols-3 gap-2 col-span-3">
+                         <Select onValueChange={(value) => handleAddDateChange('day', value)} value={String(addTanggal?.getDate())}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                {Array.from({ length: getDaysInMonth(addTanggal?.getFullYear() ?? currentYear, addTanggal?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select onValueChange={(value) => handleAddDateChange('month', value)} value={String(addTanggal?.getMonth())}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Select onValueChange={(value) => handleAddDateChange('year', value)} value={String(addTanggal?.getFullYear())}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="nama_barang" className="text-right">Nama Barang</Label>
@@ -789,5 +854,7 @@ export default function BarangKeluarPage() {
     </div>
   );
 }
+
+    
 
     

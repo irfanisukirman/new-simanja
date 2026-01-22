@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -43,14 +44,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Pencil, PlusCircle, Trash2, FileDown, CalendarIcon, Loader2, Search } from "lucide-react"
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { Pencil, PlusCircle, Trash2, FileDown, Loader2, Search } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CustomCalendar } from "@/components/ui/calendar-custom"
 import { format } from "date-fns"
-import { id } from "date-fns/locale"
-import { cn } from "@/lib/utils"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
 import * as XLSX from "xlsx"
@@ -109,7 +106,6 @@ const formatStatusForExport = (status: string) => {
   }
 };
 
-
 const exportColumnsDefault = {
   item_code: { label: "Kode Barang", selected: true },
   item_name: { label: "Nama Barang", selected: true },
@@ -122,13 +118,28 @@ const exportColumnsDefault = {
   status: { label: "Status", selected: true },
 }
 
+const months = [
+  { value: "0", label: "Januari" }, { value: "1", label: "Februari" },
+  { value: "2", label: "Maret" }, { value: "3", label: "April" },
+  { value: "4", label: "Mei" }, { value: "5", label: "Juni" },
+  { value: "6", label: "Juli" }, { value: "7", label: "Agustus" },
+  { value: "8", label: "September" }, { value: "9", label: "Oktober" },
+  { value: "10", label: "November" }, { value: "11", label: "Desember" },
+];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 21 }, (_, i) => (currentYear - 10 + i).toString());
+
+const getDaysInMonth = (year: number, month: number) => {
+  return new Date(year, month + 1, 0).getDate();
+};
 
 export default function MasterDataBarangPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [date, setDate] = useState<Date>()
+  const [date, setDate] = useState<Date | undefined>(new Date())
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -207,7 +218,7 @@ export default function MasterDataBarangPage() {
     if (item.procurement_date) {
         setDate(new Date(item.procurement_date));
     } else {
-        setDate(undefined);
+        setDate(new Date());
     }
     setIsEditDialogOpen(true);
   };
@@ -244,9 +255,7 @@ export default function MasterDataBarangPage() {
               fetchData(1, '');
           }
       } else {
-          // Optimistic UI update for smoother experience
           setItems(prevItems => prevItems.filter(item => item.item_id !== itemId));
-          // Smart refetch after deletion
           const isLastItemOnPage = items.length === 1 && currentPage > 1;
           if (isLastItemOnPage) {
             setCurrentPage(prev => prev - 1);
@@ -276,7 +285,7 @@ export default function MasterDataBarangPage() {
             unit_price: editedItemData.unit_price,
         };
 
-        const response = await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/${selectedItem.item_id}`, payload, {
+        await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/${selectedItem.item_id}`, payload, {
              headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
         });
 
@@ -287,7 +296,7 @@ export default function MasterDataBarangPage() {
         });
         
         setIsEditDialogOpen(false);
-        fetchData(currentPage, searchKeyword); // Refresh list without resetting page/search
+        fetchData(currentPage, searchKeyword); 
 
     } catch (error: any) {
         handleApiError(error, "Update Item");
@@ -319,7 +328,6 @@ export default function MasterDataBarangPage() {
     setIsExporting(true);
     try {
       const token = localStorage.getItem("token");
-      // Fetch all data for export, assuming API supports a no-pagination param or high limit
       const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?limit=9999`, {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
       });
@@ -346,21 +354,19 @@ export default function MasterDataBarangPage() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Data Barang");
 
-      // auto-size columns
       const cols = Object.keys(dataToExport[0] || {});
       const colWidths = cols.map(col => ({
         wch: Math.max(
           col.length,
           ...dataToExport.map((row: any) => String(row[col]).length)
-        ) + 2 // add extra padding
+        ) + 2 
       }));
       worksheet["!cols"] = colWidths;
       
-      // Format price column as number
       const priceColIndex = activeColumns.findIndex(([key]) => key === 'unit_price');
       if (priceColIndex !== -1) {
           const priceCol = XLSX.utils.encode_col(priceColIndex);
-          for (let i = 2; i <= dataToExport.length + 1; i++) { // Start from row 2 (after header)
+          for (let i = 2; i <= dataToExport.length + 1; i++) { 
               const cellRef = `${priceCol}${i}`;
               if (worksheet[cellRef]) {
                   worksheet[cellRef].t = 'n';
@@ -368,7 +374,6 @@ export default function MasterDataBarangPage() {
               }
           }
       }
-
 
       XLSX.writeFile(workbook, `${exportFileName || 'data_barang'}.xlsx`);
 
@@ -386,6 +391,24 @@ export default function MasterDataBarangPage() {
     }
   }
 
+  const handleDateChange = (part: 'day' | 'month' | 'year', value: string) => {
+    const currentDate = date || new Date();
+    let day = currentDate.getDate();
+    let month = currentDate.getMonth();
+    let year = currentDate.getFullYear();
+
+    if (part === 'day') day = parseInt(value);
+    if (part === 'month') month = parseInt(value);
+    if (part === 'year') year = parseInt(value);
+
+    const daysInMonth = getDaysInMonth(year, month);
+    if (day > daysInMonth) {
+        day = daysInMonth;
+    }
+    setDate(new Date(year, month, day));
+  };
+
+
   const generatePagination = (currentPage: number, totalPages: number) => {
     if (totalPages <= 10) {
         return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -395,7 +418,6 @@ export default function MasterDataBarangPage() {
     pages.add(1);
     pages.add(totalPages);
 
-    // Add pages around the current page
     for (let i = -2; i <= 2; i++) {
         const page = currentPage + i;
         if (page > 1 && page < totalPages) {
@@ -403,7 +425,6 @@ export default function MasterDataBarangPage() {
         }
     }
     
-    // Add ellipsis placeholders
     const sortedPages = Array.from(pages).sort((a, b) => a - b);
     const paginatedItems: (number | string)[] = [];
     
@@ -535,27 +556,26 @@ export default function MasterDataBarangPage() {
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="procurement-date" className="text-right">Tgl. Pengadaan</Label>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full justify-start text-left font-normal col-span-3",
-                                  !date && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {date ? format(date, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                              <CustomCalendar
-                                selected={date}
-                                onSelect={setDate}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
+                          <div className="grid grid-cols-3 gap-2 col-span-3">
+                              <Select onValueChange={(value) => handleDateChange('day', value)} value={String(date?.getDate())}>
+                                  <SelectTrigger><SelectValue/></SelectTrigger>
+                                  <SelectContent>
+                                      {Array.from({ length: getDaysInMonth(date?.getFullYear() ?? currentYear, date?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                              <Select onValueChange={(value) => handleDateChange('month', value)} value={String(date?.getMonth())}>
+                                  <SelectTrigger><SelectValue/></SelectTrigger>
+                                  <SelectContent>
+                                      {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                              <Select onValueChange={(value) => handleDateChange('year', value)} value={String(date?.getFullYear())}>
+                                  <SelectTrigger><SelectValue/></SelectTrigger>
+                                  <SelectContent>
+                                      {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                          </div>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="initial-stock" className="text-right">Stok Awal</Label>
@@ -731,27 +751,26 @@ export default function MasterDataBarangPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit-procurement-date" className="text-right">Tgl. Pengadaan</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal col-span-3",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP", { locale: id }) : <span>Pilih tanggal</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <CustomCalendar
-                        selected={date}
-                        onSelect={setDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <div className="grid grid-cols-3 gap-2 col-span-3">
+                      <Select onValueChange={(value) => handleDateChange('day', value)} value={String(date?.getDate())}>
+                          <SelectTrigger><SelectValue/></SelectTrigger>
+                          <SelectContent>
+                              {Array.from({ length: getDaysInMonth(date?.getFullYear() ?? currentYear, date?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <Select onValueChange={(value) => handleDateChange('month', value)} value={String(date?.getMonth())}>
+                          <SelectTrigger><SelectValue/></SelectTrigger>
+                          <SelectContent>
+                              {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <Select onValueChange={(value) => handleDateChange('year', value)} value={String(date?.getFullYear())}>
+                          <SelectTrigger><SelectValue/></SelectTrigger>
+                          <SelectContent>
+                              {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit-initial-stock" className="text-right">Stok Awal</Label>
@@ -785,3 +804,5 @@ export default function MasterDataBarangPage() {
     </div>
   );
 }
+
+    

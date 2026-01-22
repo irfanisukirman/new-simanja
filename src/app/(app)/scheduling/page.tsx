@@ -52,16 +52,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CustomCalendar } from "@/components/ui/calendar-custom"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Eye, Pencil, PlusCircle, Trash2, FileDown, CalendarIcon, LayoutDashboard, Loader2, ChevronDown } from "lucide-react"
+import { Eye, Pencil, PlusCircle, Trash2, FileDown, LayoutDashboard, Loader2, ChevronDown } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -150,6 +148,22 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+const months = [
+  { value: "0", label: "Januari" }, { value: "1", label: "Februari" },
+  { value: "2", label: "Maret" }, { value: "3", label: "April" },
+  { value: "4", label: "Mei" }, { value: "5", label: "Juni" },
+  { value: "6", label: "Juli" }, { value: "7", label: "Agustus" },
+  { value: "8", label: "September" }, { value: "9", label: "Oktober" },
+  { value: "10", label: "November" }, { value: "11", label: "Desember" },
+];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 21 }, (_, i) => (currentYear - 10 + i).toString());
+
+const getDaysInMonth = (year: number, month: number) => {
+  return new Date(year, month + 1, 0).getDate();
+};
+
 export default function SchedulingPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -166,6 +180,7 @@ export default function SchedulingPage() {
   const form = useForm<z.infer<typeof scheduleFormSchema>>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: {
+      tanggal: new Date(),
       assignments: Array.from({ length: 5 }, () => ({ picId: "", locationId: "" })),
     },
   });
@@ -227,18 +242,17 @@ export default function SchedulingPage() {
 
     socket.on("scheduleUpdated", () => {
       console.log("📡 Jadwal berubah – memicu fetch");
-      setRefetch(prev => !prev);   // trigger refresh
+      setRefetch(prev => !prev);
     });
 
     socket.on("disconnect", () => {
       console.log("Socket.io terputus");
     });
 
-    // Cleanup
     return () => {
-      socket.disconnect();   // <--- tidak return value apa pun
+      socket.disconnect();
     };
-  }, []); // <--- kosong, hanya jalan sekali
+  }, []);
 
   useEffect(() => {
     fetchData(currentPage);
@@ -284,7 +298,7 @@ export default function SchedulingPage() {
         toast({ title: "Jadwal Berhasil Disimpan", className: "bg-green-500 text-white" });
         setIsModalOpen(false);
         form.reset();
-        setRefetch(prev => !prev); // Trigger refetch
+        setRefetch(prev => !prev);
     } catch (error: any) {
         handleApiError(error, "Menyimpan Jadwal");
     } finally {
@@ -308,7 +322,6 @@ export default function SchedulingPage() {
     pages.add(1);
     pages.add(totalPages);
 
-    // Add pages around the current page
     for (let i = -2; i <= 2; i++) {
         const page = currentPage + i;
         if (page > 1 && page < totalPages) {
@@ -316,7 +329,6 @@ export default function SchedulingPage() {
         }
     }
     
-    // Add ellipsis placeholders
     const sortedPages = Array.from(pages).sort((a, b) => a - b);
     const paginatedItems: (number | string)[] = [];
     
@@ -344,51 +356,6 @@ export default function SchedulingPage() {
           </h1>
         </div>
         <div className="flex items-center pt-2 pb-4">
-        {/* <Input
-                placeholder="Cari berdasarkan nama lokasi atau pegawai..."
-                className="max-w-sm"
-            /> */}
-            {/* <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="ml-auto">
-                        Status Pengerjaan <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuCheckboxItem>Tampilkan Semua</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>Selesai</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>Proses</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>Antrian</DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                        Status Monitoring <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Filter by Kondisi</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuCheckboxItem>Tampilkan Semua</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>Baik</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>Perlu Perbaikan</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>Rusak Ringan</DropdownMenuCheckboxItem>
-                    <DropdownMenuCheckboxItem>Rusak Berat</DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-            <Button variant="outline">
-                <FileDown className="mr-2 h-4 w-4" />
-                Export
-            </Button> */}
-            {/* <Button asChild className="bg-green-600 text-white hover:bg-green-700">
-                <Link href="/scheduling/dashboard">
-                <LayoutDashboard className="mr-2 h-4 w-4" />
-                Dashboard
-                </Link>
-            </Button> */}
             <div className="ml-auto">
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
@@ -414,34 +381,47 @@ export default function SchedulingPage() {
                             render={({ field }) => (
                                 <FormItem className="flex flex-col">
                                 <FormLabel>Tanggal</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                        variant={"outline"}
-                                        className={cn(
-                                            "w-full pl-3 text-left font-normal",
-                                            !field.value && "text-muted-foreground"
-                                        )}
-                                        >
-                                        {field.value ? (
-                                            format(field.value, "PPP", { locale: id })
-                                        ) : (
-                                            <span>Pilih tanggal</span>
-                                        )}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                    <CustomCalendar
-                                        selected={field.value}
-                                        onSelect={field.onChange}
-                                        disabled={(date) => date.getDay() !== 1 && date.getDay() !== 4}
-                                        initialFocus
-                                    />
-                                    </PopoverContent>
-                                </Popover>
+                                 <div className="grid grid-cols-3 gap-2">
+                                    <Select
+                                        onValueChange={(value) => {
+                                            const currentDate = field.value || new Date();
+                                            const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), parseInt(value));
+                                            field.onChange(newDate);
+                                        }}
+                                        value={String(field.value?.getDate())}
+                                    >
+                                        <SelectTrigger><SelectValue/></SelectTrigger>
+                                        <SelectContent>
+                                            {Array.from({ length: getDaysInMonth(field.value?.getFullYear() ?? currentYear, field.value?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            const currentDate = field.value || new Date();
+                                            const newDate = new Date(currentDate.getFullYear(), parseInt(value), currentDate.getDate());
+                                            field.onChange(newDate);
+                                        }}
+                                        value={String(field.value?.getMonth())}
+                                    >
+                                        <SelectTrigger><SelectValue/></SelectTrigger>
+                                        <SelectContent>
+                                            {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            const currentDate = field.value || new Date();
+                                            const newDate = new Date(parseInt(value), currentDate.getMonth(), currentDate.getDate());
+                                            field.onChange(newDate);
+                                        }}
+                                        value={String(field.value?.getFullYear())}
+                                    >
+                                        <SelectTrigger><SelectValue/></SelectTrigger>
+                                        <SelectContent>
+                                            {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -522,11 +502,6 @@ export default function SchedulingPage() {
             </div>
         </div>
 
-        {/* Filter Section */}
-        {/* <div className="flex items-center gap-2 py-4">
-            
-        </div> */}
-
         <div className="rounded-md border">
         {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -579,24 +554,6 @@ export default function SchedulingPage() {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        {/* <DialogContent className="max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Eviden & Catatan untuk {item.nama_lokasi}</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <Image
-                              src={`https://picsum.photos/seed/${item.id}/600/400`}
-                              alt={`Eviden for ${item.nama_lokasi}`}
-                              width={600}
-                              height={400}
-                              className="rounded-md"
-                            />
-                            <div>
-                               <h3 className="font-semibold mb-2">Catatan:</h3>
-                               <p>{item.catatan || "Tidak ada catatan."}</p>
-                            </div>
-                          </div>
-                        </DialogContent> */}
                       </Dialog>
                       <Button size="icon" variant="ghost" className="hover:bg-yellow-500 hover:text-white">
                         <Pencil className="h-4 w-4" />
@@ -664,3 +621,5 @@ export default function SchedulingPage() {
     </div>
   );
 }
+
+    

@@ -50,7 +50,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { useRouter } from "next/navigation"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
@@ -116,7 +115,6 @@ const getDaysInMonth = (year: number, month: number) => {
 
 export default function BarangKeluarPage() {
   const { toast } = useToast();
-  const router = useRouter();
 
   // State for main data table
   const [items, setItems] = useState<ItemOut[]>([]);
@@ -157,11 +155,12 @@ export default function BarangKeluarPage() {
         title: "Sesi Habis",
         description: "Sesi Anda telah berakhir. Silakan login kembali.",
       });
-      router.push("/login");
+      localStorage.clear();
+      window.location.href = "/login";
       return true;
     }
     return false;
-  }, [toast, router]);
+  }, [toast]);
 
   const fetchItemsOut = useCallback(async (page: number) => {
     setIsLoading(true);
@@ -661,6 +660,7 @@ export default function BarangKeluarPage() {
                                       setAddSelectedBarangId(currentValue === addSelectedBarangId ? "" : currentValue)
                                       setAddBarangComboboxOpen(false)
                                     }}
+                                    className="cursor-pointer"
                                   >
                                     <Check
                                       className={cn(
@@ -708,6 +708,7 @@ export default function BarangKeluarPage() {
                                       setAddSelectedPegawaiId(currentValue === addSelectedPegawaiId ? "" : currentValue)
                                       setAddPegawaiComboboxOpen(false)
                                     }}
+                                    className="cursor-pointer"
                                   >
                                     <Check
                                       className={cn(
@@ -856,7 +857,5 @@ export default function BarangKeluarPage() {
     </div>
   );
 }
-
-    
 
     

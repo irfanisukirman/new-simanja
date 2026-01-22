@@ -46,7 +46,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { Pencil, PlusCircle, Trash2, FileDown, Loader2, Search } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
@@ -136,7 +135,6 @@ const getDaysInMonth = (year: number, month: number) => {
 
 export default function MasterDataBarangPage() {
   const { toast } = useToast();
-  const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = useState<Date | undefined>(new Date())
@@ -161,7 +159,7 @@ export default function MasterDataBarangPage() {
             description: "Sesi Anda telah berakhir. Silakan login kembali.",
         });
         localStorage.clear();
-        router.push("/login");
+        window.location.href = "/login";
         return true;
     }
     
@@ -172,7 +170,7 @@ export default function MasterDataBarangPage() {
     });
 
     return false;
-  }, [toast, router]);
+  }, [toast]);
   
   const fetchData = useCallback(async (page: number, search: string) => {
     setIsLoading(true);

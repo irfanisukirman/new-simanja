@@ -214,10 +214,10 @@ export default function Bend29Page() {
           <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
               <div className="col-span-1">
                   <p>Daerah / Unit Umum</p>
-                  <p>Cimahi, {formatDate(today || new Date())}</p>
+                  <p>Cimahi, {today ? formatDate(today) : ''}</p>
               </div>
               <div className="col-span-1 text-right">
-                   <p>Dibuat di Cimahi, {formatDate(today || new Date())}</p>
+                   <p>Dibuat di Cimahi, {today ? formatDate(today) : ''}</p>
               </div>
           </div>
 

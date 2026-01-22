@@ -11,9 +11,5 @@ export default function PrintLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="id" suppressHydrationWarning>
-      <body>{children}</body>
-    </html>
-  );
+  return <>{children}</>;
 }

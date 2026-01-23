@@ -795,6 +795,4 @@ export default function MasterDataBarangPage() {
       </footer>
     </div>
   );
-}
-
-    
+}    

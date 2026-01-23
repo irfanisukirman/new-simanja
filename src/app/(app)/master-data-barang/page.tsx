@@ -450,7 +450,7 @@ export default function MasterDataBarangPage() {
             <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Cari berdasarkan nama atau kode barang..."
+                  placeholder="Cari berdasarkan nama..."
                   className="w-full md:w-[500px] pl-10"
                   value={searchKeyword}
                   onChange={handleSearchChange}
@@ -517,10 +517,6 @@ export default function MasterDataBarangPage() {
                       <DialogTitle>Form Data Barang Baru</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="item-code" className="text-right">Kode Barang</Label>
-                        <Input id="item-code" placeholder="cth: ATK-003" className="col-span-3" />
-                      </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="item-name" className="text-right">Nama Barang</Label>
                         <Input id="item-name" placeholder="cth: Pulpen Boxy" className="col-span-3" />
@@ -605,7 +601,6 @@ export default function MasterDataBarangPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px] text-center text-foreground font-semibold">No</TableHead>
-                <TableHead className="text-center text-foreground font-semibold">Kode Barang</TableHead>
                 <TableHead className="text-center text-foreground font-semibold">Nama Barang</TableHead>
                 <TableHead className="text-center text-foreground font-semibold">Kategori</TableHead>
                 <TableHead className="text-center text-foreground font-semibold">Tgl. Pengadaan</TableHead>
@@ -619,7 +614,6 @@ export default function MasterDataBarangPage() {
               {items.length > 0 ? items.map((item, index) => (
                 <TableRow key={item.item_id}>
                   <TableCell className="text-center">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
-                  <TableCell className="text-center">{item.item_code}</TableCell>
                   <TableCell className="text-center">{item.item_name}</TableCell>
                   <TableCell className="text-center">{item.category}</TableCell>
                   <TableCell className="text-center">{item.procurement_date ? format(new Date(item.procurement_date), "dd-MM-yyyy") : "-"}</TableCell>

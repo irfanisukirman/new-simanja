@@ -86,14 +86,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenuButton>
             </SidebarMenuItem> */}
 
-             <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Master Data Pegawai" isActive={pathname === '/master-data-pegawai'}>
-                  <Link href="/master-data-pegawai">
-                    <Users />
-                    <span>Master Data Pegawai</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+            {userRole !== 'staff_barang' && userRole !== 'staff_gudang' && (
+              <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Master Data Pegawai" isActive={pathname === '/master-data-pegawai'}>
+                    <Link href="/master-data-pegawai">
+                      <Users />
+                      <span>Master Data Pegawai</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Master Data Barang" isActive={pathname === '/master-data-barang'}>
@@ -207,14 +209,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                  </SidebarMenu>
               </CollapsibleContent>
             </Collapsible> */}
-             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Data Jadwal" isActive={pathname === '/scheduling'}>
-                <Link href="/scheduling">
-                  <CalendarClock />
-                  <span>Jadwal</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {userRole !== 'staff_barang' && userRole !== 'staff_gudang' && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Data Jadwal" isActive={pathname === '/scheduling'}>
+                  <Link href="/scheduling">
+                    <CalendarClock />
+                    <span>Jadwal</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
 
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Barang Keluar" isActive={pathname === '/inventaris/barang-keluar'}>

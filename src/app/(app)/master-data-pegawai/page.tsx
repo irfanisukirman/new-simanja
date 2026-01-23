@@ -109,6 +109,23 @@ export default function MasterDataPegawaiPage() {
   const [pegawaiToDelete, setPegawaiToDelete] = useState<Pegawai | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const handleApiError = useCallback((error: any, context: string) => {
+    if (error.response?.status === 401) {
+      toast({
+        variant: "destructive",
+        title: "Sesi Habis",
+        description: "Sesi Anda telah berakhir. Silakan login kembali.",
+      });
+      localStorage.clear();
+      window.location.href = "/login";
+      return;
+    }
+    toast({
+      variant: "destructive",
+      title: `Gagal ${context}`,
+      description: error.response?.data?.message || "Terjadi kesalahan pada server.",
+    });
+  }, [toast]);
 
   const fetchPegawai = useCallback(async () => {
     setIsLoading(true);
@@ -119,15 +136,11 @@ export default function MasterDataPegawaiPage() {
       });
       setPegawaiList(response.data.data);
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Gagal Mengambil Data Pegawai",
-        description: error.response?.data?.message || "Terjadi kesalahan pada server.",
-      });
+      handleApiError(error, "Mengambil Data Pegawai");
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, handleApiError]);
 
   useEffect(() => {
     fetchPegawai();
@@ -185,11 +198,7 @@ export default function MasterDataPegawaiPage() {
         fetchPegawai();
 
     } catch (error: any) {
-        toast({
-            variant: "destructive",
-            title: "Gagal Memperbarui Data",
-            description: error.response?.data?.message || "Terjadi kesalahan pada server.",
-        });
+        handleApiError(error, "Memperbarui Data");
     } finally {
         setIsUpdating(false);
     }
@@ -221,11 +230,7 @@ export default function MasterDataPegawaiPage() {
       fetchPegawai();
 
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Gagal Menyimpan Data",
-        description: error.response?.data?.message || "Terjadi kesalahan pada server.",
-      });
+      handleApiError(error, "Menyimpan Data");
     } finally {
       setIsSubmitting(false);
     }
@@ -250,11 +255,7 @@ export default function MasterDataPegawaiPage() {
       setIsDeleteDialogOpen(false);
 
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Gagal Menghapus Data",
-        description: error.response?.data?.message || "Terjadi kesalahan pada server.",
-      });
+      handleApiError(error, "Menghapus Data");
     } finally {
       setIsDeleting(false);
     }
@@ -503,3 +504,5 @@ export default function MasterDataPegawaiPage() {
     </div>
   );
 }
+
+    

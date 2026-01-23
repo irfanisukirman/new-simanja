@@ -50,7 +50,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { useRouter } from "next/navigation"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
@@ -116,7 +115,6 @@ const getDaysInMonth = (year: number, month: number) => {
 
 export default function BarangKeluarPage() {
   const { toast } = useToast();
-  const router = useRouter();
 
   // State for main data table
   const [items, setItems] = useState<ItemOut[]>([]);
@@ -157,11 +155,12 @@ export default function BarangKeluarPage() {
         title: "Sesi Habis",
         description: "Sesi Anda telah berakhir. Silakan login kembali.",
       });
-      router.push("/login");
+      localStorage.clear();
+      window.location.href = "/login";
       return true;
     }
     return false;
-  }, [toast, router]);
+  }, [toast]);
 
   const fetchItemsOut = useCallback(async (page: number) => {
     setIsLoading(true);
@@ -487,29 +486,91 @@ export default function BarangKeluarPage() {
                 <div className="grid grid-cols-1 items-center gap-2">
                    <Label htmlFor="tanggal-export">Rentang Tanggal</Label>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label className="text-xs text-muted-foreground">Dari Tanggal</Label>
-                            <div className="grid grid-cols-3 gap-2 mt-1">
-                                <Select onValueChange={(value) => handleExportDateChange('from', 'day', value)} value={String(exportDateRange?.from?.getDate())}>
-                                    <SelectTrigger><SelectValue/></SelectTrigger>
-                                    <SelectContent>
-                                        {Array.from({ length: getDaysInMonth(exportDateRange?.from?.getFullYear() ?? currentYear, exportDateRange?.from?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <Select onValueChange={(value) => handleExportDateChange('from', 'month', value)} value={String(exportDateRange?.from?.getMonth())}>
-                                    <SelectTrigger><SelectValue/></SelectTrigger>
-                                    <SelectContent>
-                                        {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                                <Select onValueChange={(value) => handleExportDateChange('from', 'year', value)} value={String(exportDateRange?.from?.getFullYear())}>
-                                    <SelectTrigger><SelectValue/></SelectTrigger>
-                                    <SelectContent>
-                                        {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
+                    <div>
+  <Label className="text-xs text-muted-foreground">
+    Dari Tanggal
+  </Label>
+
+  <div className="grid grid-cols-3 gap-2 mt-1">
+    {/* DAY */}
+    <Select
+      value={
+        exportDateRange?.from
+          ? String(exportDateRange.from.getDate())
+          : ""
+      }
+      onValueChange={(v) =>
+        handleExportDateChange("from", "day", v)
+      }
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Hari" />
+      </SelectTrigger>
+      <SelectContent>
+        {Array.from(
+          {
+            length: getDaysInMonth(
+              exportDateRange?.from?.getFullYear() ?? currentYear,
+              exportDateRange?.from?.getMonth() ?? 0
+            ),
+          },
+          (_, i) => i + 1
+        ).map((d) => (
+          <SelectItem key={d} value={String(d)}>
+            {d}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+
+    {/* MONTH */}
+    <Select
+      value={
+        exportDateRange?.from
+          ? String(exportDateRange.from.getMonth())
+          : ""
+      }
+      onValueChange={(v) =>
+        handleExportDateChange("from", "month", v)
+      }
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Bulan" />
+      </SelectTrigger>
+      <SelectContent>
+        {months.map((m) => (
+          <SelectItem key={m.value} value={m.value}>
+            {m.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+
+    {/* YEAR */}
+    <Select
+      value={
+        exportDateRange?.from
+          ? String(exportDateRange.from.getFullYear())
+          : ""
+      }
+      onValueChange={(v) =>
+        handleExportDateChange("from", "year", v)
+      }
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="Tahun" />
+      </SelectTrigger>
+      <SelectContent>
+        {years.map((y) => (
+          <SelectItem key={y} value={String(y)}>
+            {y}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+</div>
+
                         <div>
                             <Label className="text-xs text-muted-foreground">Sampai Tanggal</Label>
                             <div className="grid grid-cols-3 gap-2 mt-1">
@@ -661,6 +722,7 @@ export default function BarangKeluarPage() {
                                       setAddSelectedBarangId(currentValue === addSelectedBarangId ? "" : currentValue)
                                       setAddBarangComboboxOpen(false)
                                     }}
+                                    className="cursor-pointer"
                                   >
                                     <Check
                                       className={cn(
@@ -708,6 +770,7 @@ export default function BarangKeluarPage() {
                                       setAddSelectedPegawaiId(currentValue === addSelectedPegawaiId ? "" : currentValue)
                                       setAddPegawaiComboboxOpen(false)
                                     }}
+                                    className="cursor-pointer"
                                   >
                                     <Check
                                       className={cn(
@@ -856,7 +919,5 @@ export default function BarangKeluarPage() {
     </div>
   );
 }
-
-    
 
     

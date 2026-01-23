@@ -73,7 +73,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { useRouter } from "next/navigation"
 
 interface Schedule {
   id: number;
@@ -166,7 +165,6 @@ const getDaysInMonth = (year: number, month: number) => {
 
 export default function SchedulingPage() {
   const { toast } = useToast();
-  const router = useRouter();
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [pics, setPics] = useState<Pic[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -193,7 +191,7 @@ export default function SchedulingPage() {
             description: "Sesi Anda telah berakhir. Silakan login kembali.",
         });
         localStorage.clear();
-        router.push("/login");
+        window.location.href = "/login";
         return true;
     }
     
@@ -204,7 +202,7 @@ export default function SchedulingPage() {
     });
 
     return false;
-  }, [toast, router]);
+  }, [toast]);
 
   const fetchData = useCallback(async (page: number) => {
     setIsLoading(true);

@@ -16,7 +16,8 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose
+  DialogClose,
+  DialogDescription
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -44,7 +45,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Pencil, PlusCircle, Trash2, FileDown, Loader2, Search } from "lucide-react"
+import { Pencil, PlusCircle, Trash2, FileDown, Loader2, Search, FileUp } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { format } from "date-fns"
 import axios from "axios"
@@ -150,6 +151,10 @@ export default function MasterDataBarangPage() {
   const [exportFileName, setExportFileName] = useState("data_barang");
   const [selectedExportColumns, setSelectedExportColumns] = useState(exportColumnsDefault);
   const [editedItemData, setEditedItemData] = useState<Partial<Item>>({});
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
 
   const handleApiError = useCallback((error: any, context: string = "general") => {
     if (error.response?.status === 401) {
@@ -438,6 +443,46 @@ export default function MasterDataBarangPage() {
     return paginatedItems;
   };
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const allowedTypes = [
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+        "application/vnd.ms-excel", // .xls
+        "text/csv" // .csv
+      ];
+      if (allowedTypes.includes(file.type)) {
+        setImportFile(file);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Format File Tidak Didukung",
+          description: "Silakan pilih file dengan format .xlsx, .xls, atau .csv",
+        });
+        setImportFile(null);
+        event.target.value = ""; // Reset the input
+      }
+    } else {
+        setImportFile(null);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+        toast({
+            variant: "destructive",
+            title: "Tidak ada file terpilih",
+            description: "Silakan pilih file untuk diimpor."
+        });
+        return;
+    }
+    // For now, just show a toast
+    toast({
+        title: "Fitur Dalam Pengembangan",
+        description: `Memproses file: ${importFile.name}`
+    });
+  };
+
   return (
     <div className="relative flex min-h-screen flex-col">
       <div className="flex-1 space-y-4 p-4 pt-6 md:p-8 pb-24">
@@ -457,6 +502,50 @@ export default function MasterDataBarangPage() {
                 />
             </div>
             <div className="flex gap-2">
+                 <Dialog open={isImportDialogOpen} onOpenChange={(isOpen) => {
+                    setIsImportDialogOpen(isOpen);
+                    if (!isOpen) {
+                        setImportFile(null);
+                    }
+                 }}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <FileUp className="mr-2 h-4 w-4" />
+                      Import
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Import Data Barang</DialogTitle>
+                       <DialogDescription>
+                        Pilih file Excel (.xlsx, .xls) atau .csv untuk mengimpor data barang secara massal.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <Input 
+                          id="import-file" 
+                          type="file"
+                          accept=".xlsx,.xls,.csv"
+                          onChange={handleFileSelect}
+                        />
+                        {importFile && (
+                            <div className="text-sm text-muted-foreground">
+                                File terpilih: <span className="font-medium text-foreground">{importFile.name}</span>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                         <Button type="button" variant="secondary" disabled={isImporting}>Batal</Button>
+                      </DialogClose>
+                      <Button onClick={handleImport} disabled={isImporting || !importFile}>
+                        {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Import
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline">
@@ -796,3 +885,5 @@ export default function MasterDataBarangPage() {
     </div>
   );
 }    
+
+    

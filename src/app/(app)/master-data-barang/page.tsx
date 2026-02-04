@@ -354,7 +354,7 @@ export default function MasterDataBarangPage() {
         unit: newItemData.unit,
         procurement_date: format(newDate, "yyyy-MM-dd"),
         initial_stock: parseInt(newItemData.initial_stock),
-        unit_price: parseFloat(newItemData.unit_price),
+        unit_price: parseInt(newItemData.unit_price),
         remarks: newItemData.remarks
       };
 

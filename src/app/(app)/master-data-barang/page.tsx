@@ -66,6 +66,11 @@ interface Item {
     status: string;
 }
 
+interface Category {
+    category_id: number;
+    category_name: string;
+}
+
 const ITEMS_PER_PAGE = 10;
 
 const formatCurrency = (value: string | number) => {
@@ -137,7 +142,9 @@ const getDaysInMonth = (year: number, month: number) => {
 export default function MasterDataBarangPage() {
   const { toast } = useToast();
   const [items, setItems] = useState<Item[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -146,6 +153,7 @@ export default function MasterDataBarangPage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFileName, setExportFileName] = useState("data_barang");
@@ -154,6 +162,16 @@ export default function MasterDataBarangPage() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+
+  // Add Item State
+  const [newItemData, setNewItemData] = useState({
+    item_name: "",
+    category_name: "",
+    unit: "",
+    initial_stock: "",
+    unit_price: ""
+  });
+  const [newDate, setNewDate] = useState<Date>(new Date());
 
   const handleApiError = useCallback((error: any, context: string = "general") => {
     if (error.response?.status === 401) {
@@ -176,6 +194,21 @@ export default function MasterDataBarangPage() {
     return false;
   }, [toast]);
   
+  const fetchCategories = useCallback(async () => {
+    setIsLoadingCategories(true);
+    try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/categories`, {
+            headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+        });
+        setCategories(response.data.data || []);
+    } catch (error: any) {
+        handleApiError(error, "Fetch Kategori");
+    } finally {
+        setIsLoadingCategories(false);
+    }
+  }, [handleApiError]);
+
   const fetchData = useCallback(async (page: number, search: string) => {
     setIsLoading(true);
     try {
@@ -199,9 +232,13 @@ export default function MasterDataBarangPage() {
   }, [handleApiError]);
 
   useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
     const handler = setTimeout(() => {
         fetchData(currentPage, searchKeyword);
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => {
       clearTimeout(handler);
@@ -228,11 +265,15 @@ export default function MasterDataBarangPage() {
   const handleEditFormChange = (field: keyof Item, value: any) => {
     setEditedItemData(prev => ({ ...prev, [field]: value }));
   };
+
+  const handleAddItemFormChange = (field: string, value: any) => {
+    setNewItemData(prev => ({ ...prev, [field]: value }));
+  };
   
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const keyword = event.target.value;
     setSearchKeyword(keyword);
-    setCurrentPage(1); // Always reset to page 1 on new search
+    setCurrentPage(1);
   };
 
   const handleDelete = async (itemId: number) => {
@@ -249,22 +290,7 @@ export default function MasterDataBarangPage() {
         description: "Barang telah berhasil dihapus.",
       });
 
-      if (searchKeyword) {
-          setSearchKeyword('');
-          if (currentPage !== 1) {
-              setCurrentPage(1);
-          } else {
-              fetchData(1, '');
-          }
-      } else {
-          setItems(prevItems => prevItems.filter(item => item.item_id !== itemId));
-          const isLastItemOnPage = items.length === 1 && currentPage > 1;
-          if (isLastItemOnPage) {
-            setCurrentPage(prev => prev - 1);
-          } else {
-            fetchData(currentPage, '');
-          }
-      }
+      fetchData(currentPage, searchKeyword);
 
     } catch (error: any) {
       handleApiError(error, "Delete Item");
@@ -304,6 +330,47 @@ export default function MasterDataBarangPage() {
         handleApiError(error, "Update Item");
     } finally {
         setIsUpdating(false);
+    }
+  };
+
+  const handleAddItem = async () => {
+    setIsAdding(true);
+    try {
+      const token = localStorage.getItem("token");
+      const payload = {
+        item_name: newItemData.item_name,
+        category_name: newItemData.category_name,
+        unit: newItemData.unit,
+        procurement_date: format(newDate, "yyyy-MM-dd"),
+        initial_stock: parseInt(newItemData.initial_stock),
+        unit_price: newItemData.unit_price,
+      };
+
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items`, payload, {
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+      });
+
+      toast({
+        variant: "success",
+        title: "Berhasil!",
+        description: "Barang baru berhasil ditambahkan.",
+      });
+
+      fetchData(1, searchKeyword);
+      // Reset form
+      setNewItemData({
+        item_name: "",
+        category_name: "",
+        unit: "",
+        initial_stock: "",
+        unit_price: ""
+      });
+      setNewDate(new Date());
+
+    } catch (error: any) {
+      handleApiError(error, "Tambah Barang");
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -355,28 +422,6 @@ export default function MasterDataBarangPage() {
       const worksheet = XLSX.utils.json_to_sheet(dataToExport);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Data Barang");
-
-      const cols = Object.keys(dataToExport[0] || {});
-      const colWidths = cols.map(col => ({
-        wch: Math.max(
-          col.length,
-          ...dataToExport.map((row: any) => String(row[col]).length)
-        ) + 2 
-      }));
-      worksheet["!cols"] = colWidths;
-      
-      const priceColIndex = activeColumns.findIndex(([key]) => key === 'unit_price');
-      if (priceColIndex !== -1) {
-          const priceCol = XLSX.utils.encode_col(priceColIndex);
-          for (let i = 2; i <= dataToExport.length + 1; i++) { 
-              const cellRef = `${priceCol}${i}`;
-              if (worksheet[cellRef]) {
-                  worksheet[cellRef].t = 'n';
-                  worksheet[cellRef].z = '#,##0';
-              }
-          }
-      }
-
       XLSX.writeFile(workbook, `${exportFileName || 'data_barang'}.xlsx`);
 
       toast({
@@ -393,8 +438,8 @@ export default function MasterDataBarangPage() {
     }
   }
 
-  const handleDateChange = (part: 'day' | 'month' | 'year', value: string) => {
-    const currentDate = date || new Date();
+  const handleDateChange = (target: 'edit' | 'add', part: 'day' | 'month' | 'year', value: string) => {
+    const currentDate = (target === 'edit' ? date : newDate) || new Date();
     let day = currentDate.getDate();
     let month = currentDate.getMonth();
     let year = currentDate.getFullYear();
@@ -404,91 +449,52 @@ export default function MasterDataBarangPage() {
     if (part === 'year') year = parseInt(value);
 
     const daysInMonth = getDaysInMonth(year, month);
-    if (day > daysInMonth) {
-        day = daysInMonth;
-    }
-    setDate(new Date(year, month, day));
+    if (day > daysInMonth) day = daysInMonth;
+    
+    const nextDate = new Date(year, month, day);
+    if (target === 'edit') setDate(nextDate);
+    else setNewDate(nextDate);
   };
 
-
   const generatePagination = (currentPage: number, totalPages: number) => {
-    if (totalPages <= 10) {
-        return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
+    if (totalPages <= 10) return Array.from({ length: totalPages }, (_, i) => i + 1);
     const pages = new Set<number>();
     pages.add(1);
     pages.add(totalPages);
-
     for (let i = -2; i <= 2; i++) {
         const page = currentPage + i;
-        if (page > 1 && page < totalPages) {
-            pages.add(page);
-        }
+        if (page > 1 && page < totalPages) pages.add(page);
     }
-    
     const sortedPages = Array.from(pages).sort((a, b) => a - b);
     const paginatedItems: (number | string)[] = [];
-    
     let lastPage = 0;
     for (const page of sortedPages) {
-        if (lastPage !== 0 && page - lastPage > 1) {
-            paginatedItems.push('...');
-        }
+        if (lastPage !== 0 && page - lastPage > 1) paginatedItems.push('...');
         paginatedItems.push(page);
         lastPage = page;
     }
-
     return paginatedItems;
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      const allowedTypes = [
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
-        "application/vnd.ms-excel", // .xls
-        "text/csv" // .csv
-      ];
-      if (allowedTypes.includes(file.type)) {
-        setImportFile(file);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Format File Tidak Didukung",
-          description: "Silakan pilih file dengan format .xlsx, .xls, atau .csv",
-        });
-        setImportFile(null);
-        event.target.value = ""; // Reset input
-      }
+      setImportFile(file);
     } else {
         setImportFile(null);
     }
   };
 
   const handleImport = async () => {
-    if (!importFile) {
-        toast({
-            variant: "destructive",
-            title: "Tidak ada file terpilih",
-            description: "Silakan pilih file untuk diimpor."
-        });
-        return;
-    }
-    // Placeholder logic
-    toast({
-        title: "Fitur Dalam Pengembangan",
-        description: `Memproses file: ${importFile.name}`
-    });
+    if (!importFile) return;
+    toast({ title: "Fitur Dalam Pengembangan", description: `Memproses file: ${importFile.name}` });
   };
 
   return (
     <div className="relative flex min-h-screen flex-col">
       <div className="flex-1 space-y-4 p-4 pt-6 md:p-8 pb-24">
         <div className="flex items-center justify-between space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-          Master Data Barang
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Master Data Barang</h1>
         </div>
          <div className="flex justify-between items-center pt-2 pb-4">
             <div className="relative">
@@ -501,81 +507,43 @@ export default function MasterDataBarangPage() {
                 />
             </div>
             <div className="flex gap-2">
-                 <Dialog open={isImportDialogOpen} onOpenChange={(isOpen) => {
-                    setIsImportDialogOpen(isOpen);
-                    if (!isOpen) {
-                        setImportFile(null);
-                    }
-                 }}>
+                 <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <FileUp className="mr-2 h-4 w-4" />
-                      Import
-                    </Button>
+                    <Button variant="outline"><FileUp className="mr-2 h-4 w-4" />Import</Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                       <DialogTitle>Import Data Barang</DialogTitle>
-                       <DialogDescription>
-                        Pilih file Excel (.xlsx, .xls) atau .csv untuk mengimpor data barang secara massal.
-                      </DialogDescription>
+                       <DialogDescription>Pilih file Excel (.xlsx, .xls) atau .csv.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <Input 
-                          id="import-file" 
-                          type="file"
-                          accept=".xlsx,.xls,.csv"
-                          onChange={handleFileSelect}
-                        />
-                        {importFile && (
-                            <div className="text-sm text-muted-foreground">
-                                File terpilih: <span className="font-medium text-foreground">{importFile.name}</span>
-                            </div>
-                        )}
+                        <Input id="import-file" type="file" accept=".xlsx,.xls,.csv" onChange={handleFileSelect} />
+                        {importFile && <div className="text-sm text-muted-foreground">File terpilih: <span className="font-medium text-foreground">{importFile.name}</span></div>}
                     </div>
                     <DialogFooter>
-                      <DialogClose asChild>
-                         <Button type="button" variant="secondary" disabled={isImporting}>Batal</Button>
-                      </DialogClose>
-                      <Button onClick={handleImport} disabled={isImporting || !importFile}>
-                        {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Import
-                      </Button>
+                      <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
+                      <Button onClick={handleImport} disabled={!importFile}>Import</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
 
                 <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <FileDown className="mr-2 h-4 w-4" />
-                      Export
-                    </Button>
+                    <Button variant="outline"><FileDown className="mr-2 h-4 w-4" />Export</Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Export Data Barang ke Excel</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>Export Data Barang ke Excel</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid grid-cols-1 items-center gap-2">
                         <Label htmlFor="export-filename">Nama File</Label>
-                        <Input 
-                          id="export-filename" 
-                          value={exportFileName}
-                          onChange={(e) => setExportFileName(e.target.value)}
-                          placeholder="Contoh: data_barang_2024"
-                        />
+                        <Input id="export-filename" value={exportFileName} onChange={(e) => setExportFileName(e.target.value)} />
                       </div>
                        <div className="grid grid-cols-1 items-center gap-2">
-                          <Label>Pilih Kolom untuk Diekspor</Label>
+                          <Label>Pilih Kolom</Label>
                           <div className="grid grid-cols-2 gap-2 rounded-md border p-4 max-h-48 overflow-y-auto">
                             {Object.entries(selectedExportColumns).map(([key, value]) => (
                               <div key={key} className="flex items-center space-x-2">
-                                <Checkbox 
-                                  id={`col-${key}`}
-                                  checked={value.selected}
-                                  onCheckedChange={() => handleExportColumnChange(key as keyof typeof exportColumnsDefault)}
-                                />
+                                <Checkbox id={`col-${key}`} checked={value.selected} onCheckedChange={() => handleExportColumnChange(key as keyof typeof exportColumnsDefault)} />
                                 <Label htmlFor={`col-${key}`} className="font-normal cursor-pointer text-sm">{value.label}</Label>
                               </div>
                             ))}
@@ -583,96 +551,78 @@ export default function MasterDataBarangPage() {
                       </div>
                     </div>
                     <DialogFooter>
-                      <DialogClose asChild>
-                         <Button type="button" variant="secondary" disabled={isExporting}>Batal</Button>
-                      </DialogClose>
-                      <Button onClick={handleExport} disabled={isExporting}>
-                        {isExporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Export
-                      </Button>
+                      <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
+                      <Button onClick={handleExport} disabled={isExporting}>Export</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+
                 <Dialog>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Tambah Barang
-                    </Button>
-                  </DialogTrigger>
+                  <DialogTrigger asChild><Button><PlusCircle className="mr-2 h-4 w-4" />Tambah Barang</Button></DialogTrigger>
                   <DialogContent className="sm:max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle>Form Data Barang Baru</DialogTitle>
-                    </DialogHeader>
+                    <DialogHeader><DialogTitle>Form Data Barang Baru</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="item-name" className="text-right">Nama Barang</Label>
-                        <Input id="item-name" placeholder="cth: Pulpen Boxy" className="col-span-3" />
+                        <Input id="item-name" placeholder="cth: Pulpen Boxy" className="col-span-3" value={newItemData.item_name} onChange={(e) => handleAddItemFormChange('item_name', e.target.value)} />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="category" className="text-right">Kategori</Label>
-                        <Select>
+                        <Select value={newItemData.category_name} onValueChange={(val) => handleAddItemFormChange('category_name', val)}>
                             <SelectTrigger className="col-span-3">
-                              <SelectValue placeholder="Pilih Kategori" />
+                              <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Pilih Kategori"} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Alat Tulis Kantor">Alat Tulis Kantor</SelectItem>
-                              <SelectItem value="Bahan Bangunan">Bahan Bangunan</SelectItem>
-                              <SelectItem value="Elektronik">Elektronik</SelectItem>
-                              <SelectItem value="Lainnya">Lainnya</SelectItem>
+                              {categories.map((cat) => (
+                                <SelectItem key={cat.category_id} value={cat.category_name}>{cat.category_name}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="unit" className="text-right">Satuan</Label>
-                        <Select>
-                            <SelectTrigger className="col-span-3">
-                              <SelectValue placeholder="Pilih Satuan" />
-                            </SelectTrigger>
+                        <Select value={newItemData.unit} onValueChange={(val) => handleAddItemFormChange('unit', val)}>
+                            <SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Satuan" /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Rim">Rim</SelectItem>
                               <SelectItem value="Buah">Buah</SelectItem>
                               <SelectItem value="Pak">Pak</SelectItem>
+                              <SelectItem value="Botol">Botol</SelectItem>
+                              <SelectItem value="pcs">Pcs</SelectItem>
                             </SelectContent>
                           </Select>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="procurement-date" className="text-right">Tgl. Pengadaan</Label>
                           <div className="grid grid-cols-3 gap-2 col-span-3">
-                              <Select onValueChange={(value) => handleDateChange('day', value)} value={String(date?.getDate())}>
+                              <Select onValueChange={(value) => handleDateChange('add', 'day', value)} value={String(newDate.getDate())}>
                                   <SelectTrigger><SelectValue/></SelectTrigger>
                                   <SelectContent>
-                                      {Array.from({ length: getDaysInMonth(date?.getFullYear() ?? currentYear, date?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
+                                      {Array.from({ length: getDaysInMonth(newDate.getFullYear(), newDate.getMonth()) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
                                   </SelectContent>
                               </Select>
-                              <Select onValueChange={(value) => handleDateChange('month', value)} value={String(date?.getMonth())}>
+                              <Select onValueChange={(value) => handleDateChange('add', 'month', value)} value={String(newDate.getMonth())}>
                                   <SelectTrigger><SelectValue/></SelectTrigger>
-                                  <SelectContent>
-                                      {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                                  </SelectContent>
+                                  <SelectContent>{months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                               </Select>
-                              <Select onValueChange={(value) => handleDateChange('year', value)} value={String(date?.getFullYear())}>
+                              <Select onValueChange={(value) => handleDateChange('add', 'year', value)} value={String(newDate.getFullYear())}>
                                   <SelectTrigger><SelectValue/></SelectTrigger>
-                                  <SelectContent>
-                                      {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                                  </SelectContent>
+                                  <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
                               </Select>
                           </div>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="initial-stock" className="text-right">Stok Awal</Label>
-                        <Input id="initial-stock" type="number" placeholder="cth: 100" className="col-span-3" />
+                        <Input id="initial-stock" type="number" className="col-span-3" value={newItemData.initial_stock} onChange={(e) => handleAddItemFormChange('initial_stock', e.target.value)} />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="unit-price" className="text-right">Harga Satuan</Label>
-                        <Input id="unit-price" type="number" placeholder="cth: 50000" className="col-span-3" />
+                        <Input id="unit-price" type="number" className="col-span-3" value={newItemData.unit_price} onChange={(e) => handleAddItemFormChange('unit_price', e.target.value)} />
                       </div>
                     </div>
                     <DialogFooter>
-                      <DialogClose asChild>
-                        <Button type="button" variant="secondary">Batal</Button>
-                      </DialogClose>
-                      <Button type="submit">Simpan</Button>
+                      <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
+                      <Button type="button" onClick={handleAddItem} disabled={isAdding}>{isAdding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Simpan</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -681,9 +631,7 @@ export default function MasterDataBarangPage() {
        
         <div className="rounded-md border">
           {isLoading && !isDeleting && !isUpdating ? (
-            <div className="h-96 flex justify-center items-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <div className="h-96 flex justify-center items-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : (
           <Table>
             <TableHeader>
@@ -710,45 +658,21 @@ export default function MasterDataBarangPage() {
                   <TableCell className="text-center">{getStatusBadge(item.status)}</TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
-                       <Button size="icon" variant="ghost" className="hover:bg-yellow-500 hover:text-white" onClick={() => handleEditClick(item)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                       <Button size="icon" variant="ghost" className="hover:bg-yellow-500 hover:text-white" onClick={() => handleEditClick(item)}><Pencil className="h-4 w-4" /></Button>
                       <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button size="icon" variant="ghost" className="hover:bg-destructive hover:text-destructive-foreground">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
+                        <AlertDialogTrigger asChild><Button size="icon" variant="ghost" className="hover:bg-destructive hover:text-destructive-foreground"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
                         <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tindakan ini akan menghapus data barang '{item.item_name}' dari daftar. Data tidak terhapus permanen dari sistem.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
+                          <AlertDialogHeader><AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle><AlertDialogDescription>Hapus data '{item.item_name}'?</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isDeleting}>Batal</AlertDialogCancel>
-                            <AlertDialogAction 
-                              className="bg-destructive hover:bg-destructive/90" 
-                              onClick={() => handleDelete(item.item_id)}
-                              disabled={isDeleting}
-                            >
-                              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                              Hapus
-                            </AlertDialogAction>
+                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleDelete(item.item_id)}>Hapus</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
-              )) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center h-24">
-                    {searchKeyword ? 'Tidak ada barang yang cocok dengan pencarian Anda.' : 'Tidak ada data barang.'}
-                  </TableCell>
-                </TableRow>
-              )}
+              )) : <TableRow><TableCell colSpan={8} className="text-center h-24">Data tidak ditemukan.</TableCell></TableRow>}
             </TableBody>
           </Table>
           )}
@@ -758,127 +682,76 @@ export default function MasterDataBarangPage() {
           <div className="flex justify-center pt-4">
             <Pagination>
               <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} href="#" className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''} />
-                </PaginationItem>
+                <PaginationItem><PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} href="#" className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''} /></PaginationItem>
                 {generatePagination(currentPage, totalPages).map((page, index) => (
                   <PaginationItem key={index}>
-                    {typeof page === 'number' ? (
-                      <PaginationLink href="#" isActive={currentPage === page} onClick={() => handlePageChange(page)}>
-                        {page}
-                      </PaginationLink>
-                    ) : (
-                      <PaginationEllipsis />
-                    )}
+                    {typeof page === 'number' ? <PaginationLink href="#" isActive={currentPage === page} onClick={() => handlePageChange(page)}>{page}</PaginationLink> : <PaginationEllipsis />}
                   </PaginationItem>
                 ))}
-                <PaginationItem>
-                  <PaginationNext onClick={() => handlePageChange(currentPage + 1)} href="#" className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}/>
-                </PaginationItem>
+                <PaginationItem><PaginationNext onClick={() => handlePageChange(currentPage + 1)} href="#" className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}/></PaginationItem>
               </PaginationContent>
             </Pagination>
           </div>
         )}
 
-         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Edit Data Barang</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Edit Data Barang</DialogTitle></DialogHeader>
             {selectedItem && (
               <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Nama Barang</Label><Input value={editedItemData.item_name || ''} onChange={(e) => handleEditFormChange('item_name', e.target.value)} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-item-code" className="text-right">Kode Barang</Label>
-                  <Input id="edit-item-code" value={editedItemData.item_code || ''} className="col-span-3" disabled />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-item-name" className="text-right">Nama Barang</Label>
-                  <Input id="edit-item-name" value={editedItemData.item_name || ''} onChange={(e) => handleEditFormChange('item_name', e.target.value)} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-category" className="text-right">Kategori</Label>
+                  <Label className="text-right">Kategori</Label>
                   <Select value={editedItemData.category_name} onValueChange={(value) => handleEditFormChange('category_name', value)}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Pilih Kategori" />
-                    </SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Alat Tulis Kantor">Alat Tulis Kantor</SelectItem>
-                      <SelectItem value="Bahan Bangunan">Bahan Bangunan</SelectItem>
-                      <SelectItem value="Elektronik">Elektronik</SelectItem>
-                       <SelectItem value="Belanja Bahan Pokok">Belanja Bahan Pokok</SelectItem>
-                      <SelectItem value="Lainnya">Lainnya</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.category_id} value={cat.category_name}>{cat.category_name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-unit" className="text-right">Satuan</Label>
+                  <Label className="text-right">Satuan</Label>
                   <Select value={editedItemData.unit} onValueChange={(value) => handleEditFormChange('unit', value)}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Pilih Satuan" />
-                    </SelectTrigger>
+                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Satuan" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Rim">Rim</SelectItem>
-                      <SelectItem value="Buah">Buah</SelectItem>
-                      <SelectItem value="Pak">Pak</SelectItem>
-                      <SelectItem value="Unit">Unit</SelectItem>
-                      <SelectItem value="Batang">Batang</SelectItem>
-                      <SelectItem value="Kaleng">Kaleng</SelectItem>
-                      <SelectItem value="Botol">Botol</SelectItem>
-                      <SelectItem value="pcs">Pcs</SelectItem>
+                      <SelectItem value="Rim">Rim</SelectItem><SelectItem value="Buah">Buah</SelectItem><SelectItem value="Pak">Pak</SelectItem>
+                      <SelectItem value="Unit">Unit</SelectItem><SelectItem value="Botol">Botol</SelectItem><SelectItem value="pcs">Pcs</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-procurement-date" className="text-right">Tgl. Pengadaan</Label>
+                  <Label className="text-right">Tgl. Pengadaan</Label>
                   <div className="grid grid-cols-3 gap-2 col-span-3">
-                      <Select onValueChange={(value) => handleDateChange('day', value)} value={String(date?.getDate())}>
+                      <Select onValueChange={(value) => handleDateChange('edit', 'day', value)} value={String(date?.getDate())}>
                           <SelectTrigger><SelectValue/></SelectTrigger>
-                          <SelectContent>
-                              {Array.from({ length: getDaysInMonth(date?.getFullYear() ?? currentYear, date?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}
-                          </SelectContent>
+                          <SelectContent>{Array.from({ length: getDaysInMonth(date?.getFullYear() ?? currentYear, date?.getMonth() ?? 0) }, (_, i) => i + 1).map(d => <SelectItem key={d} value={String(d)}>{d}</SelectItem>)}</SelectContent>
                       </Select>
-                      <Select onValueChange={(value) => handleDateChange('month', value)} value={String(date?.getMonth())}>
+                      <Select onValueChange={(value) => handleDateChange('edit', 'month', value)} value={String(date?.getMonth())}>
                           <SelectTrigger><SelectValue/></SelectTrigger>
-                          <SelectContent>
-                              {months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
-                          </SelectContent>
+                          <SelectContent>{months.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
                       </Select>
-                      <Select onValueChange={(value) => handleDateChange('year', value)} value={String(date?.getFullYear())}>
+                      <Select onValueChange={(value) => handleDateChange('edit', 'year', value)} value={String(date?.getFullYear())}>
                           <SelectTrigger><SelectValue/></SelectTrigger>
-                          <SelectContent>
-                              {years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}
-                          </SelectContent>
+                          <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
                       </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-initial-stock" className="text-right">Stok Awal</Label>
-                  <Input id="edit-initial-stock" type="number" value={editedItemData.initial_stock || 0} onChange={(e) => handleEditFormChange('initial_stock', parseInt(e.target.value, 10))} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-unit-price" className="text-right">Harga Satuan</Label>
-                  <Input id="edit-unit-price" type="number" value={editedItemData.unit_price || 0} onChange={(e) => handleEditFormChange('unit_price', e.target.value)} className="col-span-3" />
-                </div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Stok Awal</Label><Input type="number" value={editedItemData.initial_stock || 0} onChange={(e) => handleEditFormChange('initial_stock', parseInt(e.target.value, 10))} className="col-span-3" /></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Harga Satuan</Label><Input type="number" value={editedItemData.unit_price || 0} onChange={(e) => handleEditFormChange('unit_price', e.target.value)} className="col-span-3" /></div>
               </div>
             )}
             <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary" disabled={isUpdating}>Batal</Button>
-              </DialogClose>
-              <Button onClick={handleUpdate} disabled={isUpdating}>
-                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Simpan Perubahan
-              </Button>
+              <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
+              <Button onClick={handleUpdate} disabled={isUpdating}>{isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Simpan Perubahan</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
       <footer className="sticky bottom-0 z-10 w-full bg-background/95 backdrop-blur-sm">
         <Card className="rounded-none border-0 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
-            <div className="p-4 text-center text-sm text-muted-foreground">
-                <p>© 2026 BPSDM Provinsi Jawa Barat. Developed by Irfan Irawan Sukirman. SIMANJA. All rights reserved.</p>
-            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground"><p>© 2026 BPSDM Provinsi Jawa Barat. SIMANJA. All rights reserved.</p></div>
         </Card>
       </footer>
     </div>

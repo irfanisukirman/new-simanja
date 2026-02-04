@@ -57,7 +57,7 @@ interface Item {
     item_id: number;
     item_code: string;
     item_name: string;
-    category: string;
+    category_name: string;
     unit: string;
     procurement_date: string;
     initial_stock: number;
@@ -109,7 +109,7 @@ const formatStatusForExport = (status: string) => {
 const exportColumnsDefault = {
   item_code: { label: "Kode Barang", selected: true },
   item_name: { label: "Nama Barang", selected: true },
-  category: { label: "Kategori", selected: true },
+  category_name: { label: "Kategori", selected: true },
   unit: { label: "Satuan", selected: true },
   procurement_date: { label: "Tgl. Pengadaan", selected: true },
   initial_stock: { label: "Stok Awal", selected: true },
@@ -154,7 +154,6 @@ export default function MasterDataBarangPage() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [isImporting, setIsImporting] = useState(false);
-
 
   const handleApiError = useCallback((error: any, context: string = "general") => {
     if (error.response?.status === 401) {
@@ -281,7 +280,7 @@ export default function MasterDataBarangPage() {
         const token = localStorage.getItem("token");
         const payload = {
             item_name: editedItemData.item_name,
-            category: editedItemData.category,
+            category_name: editedItemData.category_name,
             unit: editedItemData.unit,
             procurement_date: date ? format(date, "yyyy-MM-dd") : undefined,
             initial_stock: editedItemData.initial_stock,
@@ -460,7 +459,7 @@ export default function MasterDataBarangPage() {
           description: "Silakan pilih file dengan format .xlsx, .xls, atau .csv",
         });
         setImportFile(null);
-        event.target.value = ""; // Reset the input
+        event.target.value = ""; // Reset input
       }
     } else {
         setImportFile(null);
@@ -476,7 +475,7 @@ export default function MasterDataBarangPage() {
         });
         return;
     }
-    // For now, just show a toast
+    // Placeholder logic
     toast({
         title: "Fitur Dalam Pengembangan",
         description: `Memproses file: ${importFile.name}`
@@ -704,7 +703,7 @@ export default function MasterDataBarangPage() {
                 <TableRow key={item.item_id}>
                   <TableCell className="text-center">{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</TableCell>
                   <TableCell className="text-center">{item.item_name}</TableCell>
-                  <TableCell className="text-center">{item.category}</TableCell>
+                  <TableCell className="text-center">{item.category_name}</TableCell>
                   <TableCell className="text-center">{item.procurement_date ? format(new Date(item.procurement_date), "dd-MM-yyyy") : "-"}</TableCell>
                   <TableCell className="text-center">{item.initial_stock}</TableCell>
                   <TableCell className="text-center font-bold">{item.current_stock}</TableCell>
@@ -799,7 +798,7 @@ export default function MasterDataBarangPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit-category" className="text-right">Kategori</Label>
-                  <Select value={editedItemData.category} onValueChange={(value) => handleEditFormChange('category', value)}>
+                  <Select value={editedItemData.category_name} onValueChange={(value) => handleEditFormChange('category_name', value)}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Pilih Kategori" />
                     </SelectTrigger>
@@ -884,6 +883,4 @@ export default function MasterDataBarangPage() {
       </footer>
     </div>
   );
-}    
-
-    
+}

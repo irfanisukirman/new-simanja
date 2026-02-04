@@ -52,6 +52,7 @@ import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
 import * as XLSX from "xlsx"
 import { Card } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
 
 interface Item {
     item_id: number;
@@ -166,10 +167,11 @@ export default function MasterDataBarangPage() {
   // Add Item State
   const [newItemData, setNewItemData] = useState({
     item_name: "",
-    category_name: "",
+    category_id: "",
     unit: "",
     initial_stock: "",
-    unit_price: ""
+    unit_price: "",
+    remarks: "Saldo awal tahun"
   });
   const [newDate, setNewDate] = useState<Date>(new Date());
 
@@ -334,16 +336,26 @@ export default function MasterDataBarangPage() {
   };
 
   const handleAddItem = async () => {
+    if (!newItemData.item_name || !newItemData.category_id || !newItemData.unit || !newItemData.initial_stock || !newItemData.unit_price) {
+      toast({
+        variant: "destructive",
+        title: "Input Tidak Lengkap",
+        description: "Harap isi semua kolom yang wajib diisi.",
+      });
+      return;
+    }
+
     setIsAdding(true);
     try {
       const token = localStorage.getItem("token");
       const payload = {
         item_name: newItemData.item_name,
-        category_name: newItemData.category_name,
+        category_id: parseInt(newItemData.category_id),
         unit: newItemData.unit,
         procurement_date: format(newDate, "yyyy-MM-dd"),
         initial_stock: parseInt(newItemData.initial_stock),
-        unit_price: newItemData.unit_price,
+        unit_price: parseFloat(newItemData.unit_price),
+        remarks: newItemData.remarks
       };
 
       await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items`, payload, {
@@ -360,10 +372,11 @@ export default function MasterDataBarangPage() {
       // Reset form
       setNewItemData({
         item_name: "",
-        category_name: "",
+        category_id: "",
         unit: "",
         initial_stock: "",
-        unit_price: ""
+        unit_price: "",
+        remarks: "Saldo awal tahun"
       });
       setNewDate(new Date());
 
@@ -561,20 +574,20 @@ export default function MasterDataBarangPage() {
                   <DialogTrigger asChild><Button><PlusCircle className="mr-2 h-4 w-4" />Tambah Barang</Button></DialogTrigger>
                   <DialogContent className="sm:max-w-lg">
                     <DialogHeader><DialogTitle>Form Data Barang Baru</DialogTitle></DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="item-name" className="text-right">Nama Barang</Label>
                         <Input id="item-name" placeholder="cth: Pulpen Boxy" className="col-span-3" value={newItemData.item_name} onChange={(e) => handleAddItemFormChange('item_name', e.target.value)} />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="category" className="text-right">Kategori</Label>
-                        <Select value={newItemData.category_name} onValueChange={(val) => handleAddItemFormChange('category_name', val)}>
+                        <Select value={newItemData.category_id} onValueChange={(val) => handleAddItemFormChange('category_id', val)}>
                             <SelectTrigger className="col-span-3">
                               <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Pilih Kategori"} />
                             </SelectTrigger>
                             <SelectContent>
                               {categories.map((cat) => (
-                                <SelectItem key={cat.category_id} value={cat.category_name}>{cat.category_name}</SelectItem>
+                                <SelectItem key={cat.category_id} value={String(cat.category_id)}>{cat.category_name}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -618,6 +631,10 @@ export default function MasterDataBarangPage() {
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="unit-price" className="text-right">Harga Satuan</Label>
                         <Input id="unit-price" type="number" className="col-span-3" value={newItemData.unit_price} onChange={(e) => handleAddItemFormChange('unit_price', e.target.value)} />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="remarks" className="text-right">Keterangan</Label>
+                        <Textarea id="remarks" placeholder="cth: Saldo awal tahun" className="col-span-3" value={newItemData.remarks} onChange={(e) => handleAddItemFormChange('remarks', e.target.value)} />
                       </div>
                     </div>
                     <DialogFooter>
@@ -698,7 +715,7 @@ export default function MasterDataBarangPage() {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader><DialogTitle>Edit Data Barang</DialogTitle></DialogHeader>
             {selectedItem && (
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
                 <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Nama Barang</Label><Input value={editedItemData.item_name || ''} onChange={(e) => handleEditFormChange('item_name', e.target.value)} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Kategori</Label>

@@ -148,6 +148,7 @@ export default function MasterDataBarangPage() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -368,6 +369,7 @@ export default function MasterDataBarangPage() {
         description: "Barang baru berhasil ditambahkan.",
       });
 
+      setIsAddDialogOpen(false);
       fetchData(1, searchKeyword);
       // Reset form
       setNewItemData({
@@ -570,14 +572,14 @@ export default function MasterDataBarangPage() {
                   </DialogContent>
                 </Dialog>
 
-                <Dialog>
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild><Button><PlusCircle className="mr-2 h-4 w-4" />Tambah Barang</Button></DialogTrigger>
                   <DialogContent className="sm:max-w-lg">
                     <DialogHeader><DialogTitle>Form Data Barang Baru</DialogTitle></DialogHeader>
                     <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="item-name" className="text-right">Nama Barang</Label>
-                        <Input id="item-name" placeholder="cth: Pulpen Boxy" className="col-span-3" value={newItemData.item_name} onChange={(e) => handleAddItemFormChange('item_name', e.target.value)} />
+                        <Input id="item-name" placeholder="cth: Pipa PVC" className="col-span-3" value={newItemData.item_name} onChange={(e) => handleAddItemFormChange('item_name', e.target.value)} />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="category" className="text-right">Kategori</Label>

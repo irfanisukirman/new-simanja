@@ -120,8 +120,8 @@ const exportColumnsDefault = {
   category_name: { label: "Kategori", selected: true },
   unit: { label: "Satuan", selected: true },
   procurement_date: { label: "Tgl. Pengadaan", selected: true },
-  initial_stock: { label: "Stok Awal", selected: true },
-  current_stock: { label: "Stok Saat Ini", selected: true },
+  initial_stock: { label: "Stok", selected: true },
+  current_stock: { label: "Sisa", selected: true },
   unit_price: { label: "Harga Satuan", selected: true },
   status: { label: "Status", selected: true },
 }
@@ -318,8 +318,7 @@ export default function MasterDataBarangPage() {
             unit: editedItemData.unit,
             procurement_date: date ? format(date, "yyyy-MM-dd") : undefined,
             initial_stock: parseInt(String(editedItemData.initial_stock)),
-            unit_price: parseInt(String(editedItemData.unit_price)),
-            remarks: editedItemData.remarks
+            unit_price: parseInt(String(editedItemData.unit_price))
         };
 
         await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/${selectedItem.item_id}`, payload, {
@@ -613,7 +612,7 @@ export default function MasterDataBarangPage() {
                           </Select>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="procurement-date" className="text-right">Tgl. Pengadaan</Label>
+                        <Label htmlFor="procurement-date" className="text-right">Pengadaan</Label>
                           <div className="grid grid-cols-3 gap-2 col-span-3">
                               <Select onValueChange={(value) => handleDateChange('add', 'day', value)} value={String(newDate.getDate())}>
                                   <SelectTrigger><SelectValue/></SelectTrigger>
@@ -632,16 +631,12 @@ export default function MasterDataBarangPage() {
                           </div>
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="initial-stock" className="text-right">Stok Awal</Label>
+                        <Label htmlFor="initial-stock" className="text-right">Stok</Label>
                         <Input id="initial-stock" type="number" className="col-span-3" value={newItemData.initial_stock} onChange={(e) => handleAddItemFormChange('initial_stock', e.target.value)} />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="unit-price" className="text-right">Harga Satuan</Label>
                         <Input id="unit-price" type="number" className="col-span-3" value={newItemData.unit_price} onChange={(e) => handleAddItemFormChange('unit_price', e.target.value)} />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="remarks" className="text-right">Keterangan</Label>
-                        <Textarea id="remarks" placeholder="cth: Saldo awal tahun" className="col-span-3" value={newItemData.remarks} onChange={(e) => handleAddItemFormChange('remarks', e.target.value)} />
                       </div>
                     </div>
                     <DialogFooter>
@@ -663,9 +658,9 @@ export default function MasterDataBarangPage() {
                 <TableHead className="w-[50px] text-center text-foreground font-semibold">No</TableHead>
                 <TableHead className="text-center text-foreground font-semibold">Nama Barang</TableHead>
                 <TableHead className="text-center text-foreground font-semibold">Kategori</TableHead>
-                <TableHead className="text-center text-foreground font-semibold">Tgl. Pengadaan</TableHead>
-                <TableHead className="text-center text-foreground font-semibold">Stok Awal</TableHead>
-                <TableHead className="text-center text-foreground font-semibold">Stok Saat Ini</TableHead>
+                <TableHead className="text-center text-foreground font-semibold">Pengadaan</TableHead>
+                <TableHead className="text-center text-foreground font-semibold">Stok</TableHead>
+                <TableHead className="text-center text-foreground font-semibold">Sisa</TableHead>
                 <TableHead className="text-center text-foreground font-semibold">Status</TableHead>
                 <TableHead className="w-[150px] text-center text-foreground font-semibold">Aksi</TableHead>
               </TableRow>
@@ -749,7 +744,7 @@ export default function MasterDataBarangPage() {
                   </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label className="text-right">Tgl. Pengadaan</Label>
+                  <Label className="text-right">Pengadaan</Label>
                   <div className="grid grid-cols-3 gap-2 col-span-3">
                       <Select onValueChange={(value) => handleDateChange('edit', 'day', value)} value={String(date?.getDate())}>
                           <SelectTrigger><SelectValue/></SelectTrigger>
@@ -765,9 +760,8 @@ export default function MasterDataBarangPage() {
                       </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Stok Awal</Label><Input type="number" value={editedItemData.initial_stock || 0} onChange={(e) => handleEditFormChange('initial_stock', parseInt(e.target.value, 10))} className="col-span-3" /></div>
+                <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Stok</Label><Input type="number" value={editedItemData.initial_stock || 0} onChange={(e) => handleEditFormChange('initial_stock', parseInt(e.target.value, 10))} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Harga Satuan</Label><Input type="number" value={editedItemData.unit_price || 0} onChange={(e) => handleEditFormChange('unit_price', e.target.value)} className="col-span-3" /></div>
-                <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Keterangan</Label><Textarea value={editedItemData.remarks || ''} onChange={(e) => handleEditFormChange('remarks', e.target.value)} className="col-span-3" /></div>
               </div>
             )}
             <DialogFooter>

@@ -66,8 +66,7 @@ interface Item {
     current_stock: number;
     unit_price: string;
     status: string;
-    remarks?: string;
-}
+  }
 
 interface Category {
     category_id: number;
@@ -260,8 +259,7 @@ export default function MasterDataBarangPage() {
     setEditedItemData({ 
         ...item,
         category_id: item.category_id,
-        unit_price: String(Math.floor(parseFloat(item.unit_price))),
-        remarks: item.remarks || ""
+        unit_price: String(Math.floor(parseFloat(item.unit_price)))
     });
     if (item.procurement_date) {
         setDate(new Date(item.procurement_date));
@@ -319,8 +317,7 @@ export default function MasterDataBarangPage() {
             unit: editedItemData.unit,
             procurement_date: date ? format(date, "yyyy-MM-dd") : undefined,
             initial_stock: parseInt(String(editedItemData.initial_stock)),
-            unit_price: parseInt(String(editedItemData.unit_price)),
-            remarks: editedItemData.remarks
+            unit_price: parseInt(String(editedItemData.unit_price))
         };
 
         await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items/${selectedItem.item_id}`, payload, {
@@ -362,8 +359,7 @@ export default function MasterDataBarangPage() {
         unit: newItemData.unit,
         procurement_date: format(newDate, "yyyy-MM-dd"),
         initial_stock: parseInt(newItemData.initial_stock),
-        unit_price: parseInt(newItemData.unit_price),
-        remarks: newItemData.remarks
+        unit_price: parseInt(newItemData.unit_price)
       };
 
       await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items`, payload, {
@@ -644,10 +640,6 @@ export default function MasterDataBarangPage() {
                         <Label htmlFor="unit-price" className="text-right">Harga Satuan</Label>
                         <Input id="unit-price" type="number" className="col-span-3" value={newItemData.unit_price} onChange={(e) => handleAddItemFormChange('unit_price', e.target.value)} />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="remarks" className="text-right">Keterangan</Label>
-                        <Textarea id="remarks" placeholder="cth: Saldo awal tahun" className="col-span-3" value={newItemData.remarks} onChange={(e) => handleAddItemFormChange('remarks', e.target.value)} />
-                      </div>
                     </div>
                     <DialogFooter>
                       <DialogClose asChild><Button type="button" variant="secondary">Batal</Button></DialogClose>
@@ -781,7 +773,6 @@ export default function MasterDataBarangPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Stok</Label><Input type="number" value={editedItemData.initial_stock || 0} onChange={(e) => handleEditFormChange('initial_stock', parseInt(e.target.value, 10))} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Harga Satuan</Label><Input type="number" value={editedItemData.unit_price || 0} onChange={(e) => handleEditFormChange('unit_price', e.target.value)} className="col-span-3" /></div>
-                <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Keterangan</Label><Textarea value={editedItemData.remarks || ''} onChange={(e) => handleEditFormChange('remarks', e.target.value)} className="col-span-3" /></div>
               </div>
             )}
             <DialogFooter>

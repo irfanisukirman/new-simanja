@@ -257,7 +257,11 @@ export default function MasterDataBarangPage() {
 
   const handleEditClick = (item: Item) => {
     setSelectedItem(item);
-    setEditedItemData({ ...item });
+    setEditedItemData({ 
+        ...item,
+        category_id: item.category_id,
+        unit_price: String(Math.floor(parseFloat(item.unit_price)))
+    });
     if (item.procurement_date) {
         setDate(new Date(item.procurement_date));
     } else {
@@ -424,7 +428,7 @@ export default function MasterDataBarangPage() {
            if (key === 'procurement_date' && item.procurement_date) {
              row[value.label] = format(new Date(item.procurement_date), "dd-MM-yyyy");
            } else if (key === 'unit_price') {
-              row[value.label] = parseFloat(item.unit_price)
+              row[value.label] = parseInt(item.unit_price)
            } else if (key === 'status') {
              row[value.label] = formatStatusForExport(item.status);
            }
@@ -722,7 +726,10 @@ export default function MasterDataBarangPage() {
                 <div className="grid grid-cols-4 items-center gap-4"><Label className="text-right">Nama Barang</Label><Input value={editedItemData.item_name || ''} onChange={(e) => handleEditFormChange('item_name', e.target.value)} className="col-span-3" /></div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Kategori</Label>
-                  <Select value={String(editedItemData.category_id || '')} onValueChange={(value) => handleEditFormChange('category_id', value)}>
+                  <Select 
+                    value={String(editedItemData.category_id || '')} 
+                    onValueChange={(value) => handleEditFormChange('category_id', parseInt(value))}
+                  >
                     <SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Kategori" /></SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (

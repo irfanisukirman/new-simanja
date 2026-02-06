@@ -143,6 +143,7 @@ export default function BarangKeluarPage() {
   const [addSelectedBarangId, setAddSelectedBarangId] = useState("");
   const [addSelectedPegawaiId, setAddSelectedPegawaiId] = useState("");
   const [addQty, setAddQty] = useState<number | string>("");
+  const [addSatuan, setAddSatuan] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [addBarangComboboxOpen, setAddBarangComboboxOpen] = useState(false);
   const [addPegawaiComboboxOpen, setAddPegawaiComboboxOpen] = useState(false);
@@ -337,7 +338,7 @@ export default function BarangKeluarPage() {
   };
 
     const handleAddItem = async () => {
-    if (!addTanggal || !addSelectedBarangId || !addSelectedPegawaiId || !addQty) {
+    if (!addTanggal || !addSelectedBarangId || !addSelectedPegawaiId || !addQty || !addSatuan) {
       toast({
         variant: "destructive",
         title: "Input Tidak Lengkap",
@@ -354,6 +355,7 @@ export default function BarangKeluarPage() {
         item_id: parseInt(addSelectedBarangId),
         pegawai_id: parseInt(addSelectedPegawaiId),
         qty: typeof addQty === 'string' ? parseInt(addQty) : addQty,
+        satuan: addSatuan,
       };
 
       await axios.post(`https://unepigrammatically-noninstinctive-madelaine.ngrok-free.dev/api/items-out`, payload, {
@@ -371,6 +373,7 @@ export default function BarangKeluarPage() {
       setAddSelectedBarangId("");
       setAddSelectedPegawaiId("");
       setAddQty("");
+      setAddSatuan("");
       
       fetchItemsOut(currentPage);
 
@@ -791,6 +794,25 @@ export default function BarangKeluarPage() {
                     <Label htmlFor="qty" className="text-right">Jumlah</Label>
                     <Input id="qty" type="number" placeholder="0" className="col-span-3" value={addQty} onChange={(e) => setAddQty(e.target.value)} />
                   </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="satuan" className="text-right">Satuan</Label>
+                    <Select value={addSatuan} onValueChange={setAddSatuan}>
+                        <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Pilih satuan..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Unit">Unit</SelectItem>
+                            <SelectItem value="Buah">Buah</SelectItem>
+                            <SelectItem value="Set">Set</SelectItem>
+                            <SelectItem value="Paket">Paket</SelectItem>
+                            <SelectItem value="Rim">Rim</SelectItem>
+                            <SelectItem value="Lembar">Lembar</SelectItem>
+                            <SelectItem value="Dus">Dus</SelectItem>
+                            <SelectItem value="Meter">Meter</SelectItem>
+                            <SelectItem value="Roll">Roll</SelectItem>
+                        </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
@@ -919,5 +941,3 @@ export default function BarangKeluarPage() {
     </div>
   );
 }
-
-    

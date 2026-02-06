@@ -603,11 +603,15 @@ export default function MasterDataBarangPage() {
                         <Select value={newItemData.unit} onValueChange={(val) => handleAddItemFormChange('unit', val)}>
                             <SelectTrigger className="col-span-3"><SelectValue placeholder="Pilih Satuan" /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Rim">Rim</SelectItem>
+                              <SelectItem value="Unit">Unit</SelectItem>
                               <SelectItem value="Buah">Buah</SelectItem>
-                              <SelectItem value="Pak">Pak</SelectItem>
-                              <SelectItem value="Botol">Botol</SelectItem>
-                              <SelectItem value="pcs">Pcs</SelectItem>
+                              <SelectItem value="Set">Set</SelectItem>
+                              <SelectItem value="Paket">Paket</SelectItem>
+                              <SelectItem value="Rim">Rim</SelectItem>
+                              <SelectItem value="Lembar">Lembar</SelectItem>
+                              <SelectItem value="Dus">Dus</SelectItem>
+                              <SelectItem value="Meter">Meter</SelectItem>
+                              <SelectItem value="Roll">Roll</SelectItem>
                             </SelectContent>
                           </Select>
                       </div>

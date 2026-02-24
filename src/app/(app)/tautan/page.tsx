@@ -56,6 +56,11 @@ const linkGroups = [
     groupTitle: "Laporan & Tugas Internal",
     links: [
       {
+        title: "Drive SOP Aset",
+        description: "Kumpulan Standar Operasional Prosedur (SOP) pengelolaan aset BPSDM.",
+        url: "https://drive.google.com/drive/folders/1vzNbmuCT-dQVHy-3pmaPFi5MTZ63VFyt",
+      },
+      {
         title: "Laporan Denah BPSDM Provinsi Jawa Barat",
         description: "Dokumen spreadsheet untuk laporan denah dan aset BPSDM.",
         url: "https://docs.google.com/spreadsheets/d/1Gs4zNJih6NW2OqZP8XTVH8nDnCZjxKx3KtfqFP-RS6I/edit?gid=1723776320#gid=1723776320",

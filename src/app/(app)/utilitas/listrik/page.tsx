@@ -16,6 +16,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+  DialogTrigger
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { 
   Zap, 
@@ -23,7 +33,8 @@ import {
   FileText, 
   LineChart as LineChartIcon, 
   PlusCircle, 
-  Upload
+  Upload,
+  Info
 } from "lucide-react"
 import {
   ChartConfig,
@@ -65,9 +76,9 @@ const chartConfig = {
 } satisfies ChartConfig
 
 const bills = [
-  { id: 1, period: "Juni 2026", amount: 5900000, status: "Lunas", due: "20-06-2026" },
-  { id: 2, period: "Mei 2026", amount: 5500000, status: "Lunas", due: "20-05-2026" },
-  { id: 3, period: "April 2026", amount: 6100000, status: "Lunas", due: "20-04-2026" },
+  { id: 1, period: "Juni 2026", amount: 5900000, status: "Lunas", due: "20-06-2026", noPel: "543210987654", usage: 1700 },
+  { id: 2, period: "Mei 2026", amount: 5500000, status: "Lunas", due: "20-05-2026", noPel: "543210987654", usage: 1550 },
+  { id: 3, period: "April 2026", amount: 6100000, status: "Lunas", due: "20-04-2026", noPel: "543210987654", usage: 1600 },
 ]
 
 const history = [
@@ -194,7 +205,7 @@ export default function ListrikPage() {
                       {bills.map((bill) => (
                         <TableRow key={bill.id}>
                           <TableCell className="font-medium">{bill.period}</TableCell>
-                          <TableCell>543210987654</TableCell>
+                          <TableCell>{bill.noPel}</TableCell>
                           <TableCell className="text-right font-semibold">{formatCurrency(bill.amount)}</TableCell>
                           <TableCell className="text-center">{bill.due}</TableCell>
                           <TableCell className="text-center">
@@ -203,7 +214,52 @@ export default function ListrikPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="outline" size="sm">Detail</Button>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Info className="mr-2 h-3 w-3" /> Detail
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-[425px]">
+                                <DialogHeader>
+                                  <DialogTitle>Rincian Tagihan {bill.period}</DialogTitle>
+                                  <DialogDescription>
+                                    Informasi lengkap pemakaian dan rincian biaya listrik.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                  <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">No. Pelanggan</span>
+                                    <span className="font-medium">{bill.noPel}</span>
+                                  </div>
+                                  <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Total Pemakaian</span>
+                                    <span className="font-medium">{bill.usage} kWh</span>
+                                  </div>
+                                  <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Tarif Dasar</span>
+                                    <span className="font-medium">{formatCurrency(bill.amount - 250000)}</span>
+                                  </div>
+                                  <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Pajak (PPJ)</span>
+                                    <span className="font-medium">{formatCurrency(245000)}</span>
+                                  </div>
+                                  <div className="flex justify-between border-b pb-2">
+                                    <span className="text-muted-foreground">Biaya Admin</span>
+                                    <span className="font-medium">{formatCurrency(5000)}</span>
+                                  </div>
+                                  <div className="flex justify-between pt-2">
+                                    <span className="font-bold">Total Bayar</span>
+                                    <span className="font-bold text-primary">{formatCurrency(bill.amount)}</span>
+                                  </div>
+                                </div>
+                                <DialogFooter>
+                                  <DialogClose asChild>
+                                    <Button type="button">Tutup</Button>
+                                  </DialogClose>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
                           </TableCell>
                         </TableRow>
                       ))}

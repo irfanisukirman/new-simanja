@@ -23,8 +23,7 @@ import {
   FileText, 
   LineChart as LineChartIcon, 
   PlusCircle, 
-  Upload,
-  Calendar as CalendarIcon
+  Upload
 } from "lucide-react"
 import {
   ChartConfig,
@@ -82,7 +81,7 @@ export default function ListrikPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <main className="flex-1 space-y-4 p-4 pt-6 md:p-8 pb-24">
+      <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24">
         <div className="flex items-center justify-between space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Manajemen Listrik</h1>
           <div className="flex items-center space-x-2">
@@ -92,31 +91,43 @@ export default function ListrikPage() {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 lg:w-[600px] lg:grid-cols-4">
-            <TabsTrigger value="input" className="flex items-center gap-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0 border-b rounded-none">
+            <TabsTrigger 
+              value="input" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
+            >
               <PlusCircle className="h-4 w-4" /> Input Meter
             </TabsTrigger>
-            <TabsTrigger value="bills" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="bills" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
+            >
               <FileText className="h-4 w-4" /> Tagihan
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="history" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
+            >
               <History className="h-4 w-4" /> Riwayat
             </TabsTrigger>
-            <TabsTrigger value="graph" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="graph" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
+            >
               <LineChartIcon className="h-4 w-4" /> Grafik
             </TabsTrigger>
           </TabsList>
 
           {/* Tab: Input Meter */}
-          <TabsContent value="input">
+          <TabsContent value="input" className="mt-0">
             <Card>
               <CardHeader>
                 <CardTitle>Pencatatan Meter Mandiri</CardTitle>
                 <CardDescription>Input stand meter listrik untuk pemantauan pemakaian bulanan.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="tanggal">Tanggal Pencatatan</Label>
@@ -143,7 +154,7 @@ export default function ListrikPage() {
                   </div>
                   <div className="space-y-4">
                     <Label>Foto Bukti Meteran</Label>
-                    <div className="border-2 border-dashed rounded-lg h-[200px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors">
+                    <div className="border-2 border-dashed rounded-lg h-[210px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors">
                       <Upload className="h-8 w-8 mb-2" />
                       <p className="text-sm">Klik atau seret foto untuk upload</p>
                       <p className="text-xs mt-1">Format: JPG, PNG (Maks 2MB)</p>
@@ -160,83 +171,87 @@ export default function ListrikPage() {
           </TabsContent>
 
           {/* Tab: Tagihan PLN */}
-          <TabsContent value="bills">
+          <TabsContent value="bills" className="mt-0">
             <Card>
               <CardHeader>
                 <CardTitle>Tagihan & Pembayaran PLN</CardTitle>
                 <CardDescription>Daftar tagihan bulanan dari PLN.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Periode</TableHead>
-                      <TableHead>No. Pelanggan</TableHead>
-                      <TableHead className="text-right">Nominal Tagihan</TableHead>
-                      <TableHead className="text-center">Jatuh Tempo</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-right">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bills.map((bill) => (
-                      <TableRow key={bill.id}>
-                        <TableCell className="font-medium">{bill.period}</TableCell>
-                        <TableCell>543210987654</TableCell>
-                        <TableCell className="text-right font-semibold">{formatCurrency(bill.amount)}</TableCell>
-                        <TableCell className="text-center">{bill.due}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
-                            {bill.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="outline" size="sm">Detail</Button>
-                        </TableCell>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Periode</TableHead>
+                        <TableHead>No. Pelanggan</TableHead>
+                        <TableHead className="text-right">Nominal Tagihan</TableHead>
+                        <TableHead className="text-center">Jatuh Tempo</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
+                        <TableHead className="text-right">Aksi</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {bills.map((bill) => (
+                        <TableRow key={bill.id}>
+                          <TableCell className="font-medium">{bill.period}</TableCell>
+                          <TableCell>543210987654</TableCell>
+                          <TableCell className="text-right font-semibold">{formatCurrency(bill.amount)}</TableCell>
+                          <TableCell className="text-center">{bill.due}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
+                              {bill.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="outline" size="sm">Detail</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Tab: Riwayat Pemakaian */}
-          <TabsContent value="history">
+          <TabsContent value="history" className="mt-0">
             <Card>
               <CardHeader>
                 <CardTitle>Riwayat Pemakaian Listrik</CardTitle>
                 <CardDescription>Catatan pemakaian kWh dari waktu ke waktu.</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal Catat</TableHead>
-                      <TableHead>Lokasi</TableHead>
-                      <TableHead className="text-right">Stand Meter</TableHead>
-                      <TableHead className="text-right">Pemakaian (kWh)</TableHead>
-                      <TableHead className="text-center">Petugas</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {history.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.date}</TableCell>
-                        <TableCell>{item.location}</TableCell>
-                        <TableCell className="text-right">{item.meter.toLocaleString()}</TableCell>
-                        <TableCell className="text-right font-bold text-primary">{item.usage.toLocaleString()} kWh</TableCell>
-                        <TableCell className="text-center">Irfan I.</TableCell>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tanggal Catat</TableHead>
+                        <TableHead>Lokasi</TableHead>
+                        <TableHead className="text-right">Stand Meter</TableHead>
+                        <TableHead className="text-right">Pemakaian (kWh)</TableHead>
+                        <TableHead className="text-center">Petugas</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {history.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.date}</TableCell>
+                          <TableCell>{item.location}</TableCell>
+                          <TableCell className="text-right">{item.meter.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-bold text-primary">{item.usage.toLocaleString()} kWh</TableCell>
+                          <TableCell className="text-center">Irfan I.</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Tab: Grafik kWh */}
-          <TabsContent value="graph">
+          <TabsContent value="graph" className="mt-0">
             <Card>
               <CardHeader>
                 <CardTitle>Tren Konsumsi Listrik</CardTitle>

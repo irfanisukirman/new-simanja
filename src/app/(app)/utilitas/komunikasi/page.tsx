@@ -121,13 +121,13 @@ export default function KomunikasiPage() {
               value="internet" 
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
             >
-              <Wifi className="h-4 w-4" /> Internet Kantor
+              <Wifi className="h-4 w-4" /> Internet
             </TabsTrigger>
             <TabsTrigger 
               value="telepon" 
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
             >
-              <Phone className="h-4 w-4" /> Telepon Kantor
+              <Phone className="h-4 w-4" /> Telepon
             </TabsTrigger>
             <TabsTrigger 
               value="vendor" 

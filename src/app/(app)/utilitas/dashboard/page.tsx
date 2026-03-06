@@ -119,7 +119,7 @@ export default function UtilitasDashboardPage() {
           </Card>
           <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Biaya Komunikasi</CardTitle>
+              <CardTitle className="text-sm font-medium">Biaya Komunikasi Bulan Ini</CardTitle>
               <div className="rounded-full bg-purple-100 p-2 text-purple-600">
                 <Phone className="h-4 w-4" />
               </div>

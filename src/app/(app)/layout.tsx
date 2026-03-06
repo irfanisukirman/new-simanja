@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -13,7 +12,13 @@ import {
   Boxes,
   ChevronDown,
   Users,
-  Package
+  Package,
+  Building2,
+  Zap,
+  Droplets,
+  Phone,
+  FileBarChart,
+  Settings
 } from 'lucide-react';
 import {
   Sidebar,
@@ -38,6 +43,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isBmdMenuOpen, setIsBmdMenuOpen] = useState(false);
   const [isSchedulingMenuOpen, setIsSchedulingMenuOpen] = useState(false);
   const [isInventarisMenuOpen, setIsInventarisMenuOpen] = useState(false);
+  const [isUtilitasMenuOpen, setIsUtilitasMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,9 +60,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const isBmdPath = pathname.startsWith('/bmd-management');
     const isSchedulingPath = pathname.startsWith('/scheduling');
     const isInventarisPath = pathname.startsWith('/inventaris');
+    const isUtilitasPath = pathname.startsWith('/utilitas');
+    
     setIsBmdMenuOpen(isBmdPath);
     setIsSchedulingMenuOpen(isSchedulingPath);
     setIsInventarisMenuOpen(isInventarisPath);
+    setIsUtilitasMenuOpen(isUtilitasPath);
   }, [pathname]);
 
   return (
@@ -77,15 +86,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent className='pl-2 pr-2'>
           <SidebarMenu>
-            {/* <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Dashboard" isActive={pathname === '/dashboard'}>
-                <Link href="/dashboard">
-                  <LayoutDashboard />
-                  <span>Dashboard</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem> */}
-
             {userRole !== 'staff_barang' && userRole !== 'staff_gudang' && (
               <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Master Data Pegawai" isActive={pathname === '/master-data-pegawai'}>
@@ -97,118 +97,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </SidebarMenuItem>
             )}
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Master Data Barang" isActive={pathname === '/master-data-barang'}>
-                  <Link href="/master-data-barang">
-                    <Package />
-                    <span>Master Data Barang</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-            {/* <Collapsible open={isBmdMenuOpen} onOpenChange={setIsBmdMenuOpen}>
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton 
-                    className="w-full"
-                  >
-                    <Library />
-                    <span className='flex-1 text-left'>Manajemen BMD</span>
-                    <ChevronDown className={cn("h-4 w-4 transition-transform", isBmdMenuOpen && "rotate-180")} />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-              </SidebarMenuItem>
-              <CollapsibleContent>
-                 <SidebarMenu className="pl-7">
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Dashboard BMD" isActive={pathname === '/bmd-management/dashboard'}>
-                            <Link href="/bmd-management/dashboard">
-                                <span className='pl-2'>Dashboard</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Data Masalah" isActive={pathname === '/bmd-management'}>
-                            <Link href="/bmd-management">
-                                <span className='pl-2'>Data Masalah</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                 </SidebarMenu>
-              </CollapsibleContent>
-            </Collapsible> */}
-
-            {/* <Collapsible open={isSchedulingMenuOpen} onOpenChange={setIsSchedulingMenuOpen}>
-              <SidebarMenuItem>
-                 <CollapsibleTrigger asChild>
-                    <SidebarMenuButton 
-                      className="w-full"
-                    >
-                       <CalendarClock />
-                       <span className='flex-1 text-left'>Jadwal</span>
-                       <ChevronDown className={cn("h-4 w-4 transition-transform", isSchedulingMenuOpen && "rotate-180")} />
-                    </SidebarMenuButton>
-                </CollapsibleTrigger>
-              </SidebarMenuItem>
-              <CollapsibleContent>
-                <SidebarMenu className="pl-7">
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Dashboard Jadwal" isActive={pathname === '/scheduling/dashboard'}>
-                            <Link href="/scheduling/dashboard">
-                                <span className='pl-2'>Dashboard</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Data Jadwal" isActive={pathname === '/scheduling'}>
-                            <Link href="/scheduling">
-                                <span className='pl-2'>Data Jadwal</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                 </SidebarMenu>
-              </CollapsibleContent>
-            </Collapsible> */}
-
-            {/* <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Peralihan Barang" isActive={pathname === '/peralihan-barang'}>
-                <Link href="/peralihan-barang">
-                  <ArrowRightLeft />
-                  <span>Peralihan Barang</span>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild tooltip="Master Data Barang" isActive={pathname === '/master-data-barang'}>
+                <Link href="/master-data-barang">
+                  <Package />
+                  <span>Master Data Barang</span>
                 </Link>
               </SidebarMenuButton>
-            </SidebarMenuItem> */}
-             {/* <Collapsible open={isInventarisMenuOpen} onOpenChange={setIsInventarisMenuOpen}>
-              <SidebarMenuItem>
-                 <CollapsibleTrigger asChild>
-                    <SidebarMenuButton 
-                      className="w-full"
-                    >
-                       <Boxes />
-                       <span className='flex-1 text-left'>Inventaris</span>
-                       <ChevronDown className={cn("h-4 w-4 transition-transform", isInventarisMenuOpen && "rotate-180")} />
-                    </SidebarMenuButton>
-                </CollapsibleTrigger>
-              </SidebarMenuItem>
-              <CollapsibleContent>
-                <SidebarMenu className="pl-7">
-                    <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Mutasi Persediaan" isActive={pathname === '/inventaris/mutasi-persediaan'}>
-                            <Link href="/inventaris/mutasi-persediaan">
-                                <span className='pl-2'>Mutasi Persediaan</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                     <SidebarMenuItem>
-                        <SidebarMenuButton asChild tooltip="Barang Keluar" isActive={pathname === '/inventaris/barang-keluar'}>
-                            <Link href="/inventaris/barang-keluar">
-                                <span className='pl-2'>Barang Keluar</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                 </SidebarMenu>
-              </CollapsibleContent>
-            </Collapsible> */}
+            </SidebarMenuItem>
+
             {userRole !== 'staff_barang' && userRole !== 'staff_gudang' && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Data Jadwal" isActive={pathname === '/scheduling'}>
@@ -228,6 +125,74 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+
+            {/* Menu Utilitas Gedung & Wisma */}
+            <Collapsible open={isUtilitasMenuOpen} onOpenChange={setIsUtilitasMenuOpen}>
+              <SidebarMenuItem>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton 
+                    className="w-full"
+                    tooltip="Utilitas Gedung & Wisma"
+                  >
+                    <Building2 />
+                    <span className='flex-1 text-left'>Utilitas Gedung & Wisma</span>
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", isUtilitasMenuOpen && "rotate-180")} />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+              </SidebarMenuItem>
+              <CollapsibleContent>
+                <SidebarMenu className="pl-7">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Dashboard Utilitas" isActive={pathname === '/utilitas/dashboard'}>
+                      <Link href="/utilitas/dashboard">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span className='pl-2'>Dashboard</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Listrik" isActive={pathname === '/utilitas/listrik'}>
+                      <Link href="/utilitas/listrik">
+                        <Zap className="h-4 w-4" />
+                        <span className='pl-2'>Listrik</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Air" isActive={pathname === '/utilitas/air'}>
+                      <Link href="/utilitas/air">
+                        <Droplets className="h-4 w-4" />
+                        <span className='pl-2'>Air</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Komunikasi" isActive={pathname === '/utilitas/komunikasi'}>
+                      <Link href="/utilitas/komunikasi">
+                        <Phone className="h-4 w-4" />
+                        <span className='pl-2'>Komunikasi</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Laporan" isActive={pathname === '/utilitas/laporan'}>
+                      <Link href="/utilitas/laporan">
+                        <FileBarChart className="h-4 w-4" />
+                        <span className='pl-2'>Laporan</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Pengaturan" isActive={pathname === '/utilitas/pengaturan'}>
+                      <Link href="/utilitas/pengaturan">
+                        <Settings className="h-4 w-4" />
+                        <span className='pl-2'>Pengaturan</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </CollapsibleContent>
+            </Collapsible>
             
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Tautan" isActive={pathname === '/tautan'}>

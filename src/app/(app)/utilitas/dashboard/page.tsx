@@ -26,7 +26,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis, ResponsiveContainer, Legend } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, Legend } from "recharts"
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -43,6 +43,12 @@ const usageData = [
   { month: "Apr", listrik: 6100000, air: 1300000, komunikasi: 900000 },
   { month: "Mei", listrik: 5500000, air: 1400000, komunikasi: 850000 },
   { month: "Jun", listrik: 5900000, air: 1250000, komunikasi: 800000 },
+  { month: "Jul", listrik: 0, air: 0, komunikasi: 0 },
+  { month: "Agu", listrik: 0, air: 0, komunikasi: 0 },
+  { month: "Sep", listrik: 0, air: 0, komunikasi: 0 },
+  { month: "Okt", listrik: 0, air: 0, komunikasi: 0 },
+  { month: "Nov", listrik: 0, air: 0, komunikasi: 0 },
+  { month: "Des", listrik: 0, air: 0, komunikasi: 0 },
 ]
 
 const chartConfig = {
@@ -136,12 +142,12 @@ export default function UtilitasDashboardPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Grafik Pemakaian Utilitas (6 Bulan Terakhir)
+                Grafik Pemakaian Utilitas (12 Bulan)
               </CardTitle>
-              <CardDescription>Visualisasi pengeluaran bulanan untuk listrik, air, dan komunikasi.</CardDescription>
+              <CardDescription>Visualisasi pengeluaran bulanan untuk listrik, air, dan komunikasi sepanjang tahun.</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <ChartContainer config={chartConfig} className="h-[350px] w-full">
                 <BarChart data={usageData}>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" />
                   <XAxis
@@ -203,7 +209,7 @@ export default function UtilitasDashboardPage() {
                       <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
                       <TableCell className="text-center">
                         <Badge 
-                          variant={item.status === "Lunas" ? "success" : "secondary"}
+                          variant={item.status === "Lunas" ? "default" : "secondary"}
                           className={item.status === "Lunas" ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"}
                         >
                           {item.status}

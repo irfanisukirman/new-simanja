@@ -33,8 +33,16 @@ import {
   CheckCircle2, 
   AlertCircle,
   Info,
-  ExternalLink
+  ExternalLink,
+  LineChart as LineChartIcon
 } from "lucide-react"
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -69,6 +77,28 @@ const bills = [
   { id: 2, period: "Juni 2026", service: "Indibiz + Telepon", amount: 1250000, status: "Proses", due: "20-06-2026" },
   { id: 3, period: "Mei 2026", service: "Internet Astinet", amount: 8500000, status: "Lunas", due: "20-05-2026" },
 ]
+
+const communicationData = [
+  { month: "Jan", cost: 9500000 },
+  { month: "Feb", cost: 9700000 },
+  { month: "Mar", cost: 9300000 },
+  { month: "Apr", cost: 9800000 },
+  { month: "Mei", cost: 9600000 },
+  { month: "Jun", cost: 9750000 },
+  { month: "Jul", cost: 9400000 },
+  { month: "Agu", cost: 9900000 },
+  { month: "Sep", cost: 9550000 },
+  { month: "Okt", cost: 10200000 },
+  { month: "Nov", cost: 9800000 },
+  { month: "Des", cost: 10500000 },
+]
+
+const chartConfig = {
+  cost: {
+    label: "Biaya Komunikasi",
+    color: "hsl(var(--chart-3))",
+  },
+} satisfies ChartConfig
 
 export default function KomunikasiPage() {
   const [activeTab, setActiveTab] = useState("internet")
@@ -110,6 +140,12 @@ export default function KomunikasiPage() {
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
             >
               <FileText className="h-4 w-4" /> Tagihan Bulanan
+            </TabsTrigger>
+            <TabsTrigger 
+              value="graph" 
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
+            >
+              <LineChartIcon className="h-4 w-4" /> Grafik
             </TabsTrigger>
           </TabsList>
 
@@ -303,6 +339,45 @@ export default function KomunikasiPage() {
                     </TableBody>
                   </Table>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Grafik Komunikasi */}
+          <TabsContent value="graph" className="mt-0">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tren Biaya Komunikasi</CardTitle>
+                <CardDescription>Grafik pengeluaran biaya internet dan telepon selama 12 bulan terakhir.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={communicationData}>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="month" 
+                        tickLine={false} 
+                        axisLine={false} 
+                        tickMargin={10}
+                      />
+                      <YAxis 
+                        tickLine={false} 
+                        axisLine={false} 
+                        tickFormatter={(value) => `Rp ${value/1000000}jt`}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line 
+                        type="monotone" 
+                        dataKey="cost" 
+                        stroke="var(--color-cost)" 
+                        strokeWidth={3} 
+                        dot={{ r: 6, fill: "var(--color-cost)" }}
+                        activeDot={{ r: 8 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
           </TabsContent>

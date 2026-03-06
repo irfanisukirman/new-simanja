@@ -139,7 +139,7 @@ export default function KomunikasiPage() {
               value="bills" 
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
             >
-              <FileText className="h-4 w-4" /> Tagihan Bulanan
+              <FileText className="h-4 w-4" /> Tagihan
             </TabsTrigger>
             <TabsTrigger 
               value="graph" 

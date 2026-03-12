@@ -36,7 +36,8 @@ import {
   Trash2,
   UserCheck,
   PackageOpen,
-  User
+  User,
+  PhoneCall
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -74,6 +75,12 @@ interface MaintenanceLog {
   user: string;
 }
 
+interface UnitPIC {
+  name: string;
+  contact: string;
+  role: string;
+}
+
 interface RoomStatus {
   id: string;
   name: string;
@@ -82,6 +89,7 @@ interface RoomStatus {
   status: "Baik" | "Rusak Ringan" | "Rusak Berat" | "Dalam Perbaikan" | "Selesai (Verifikasi)";
   description: string;
   lastChecked: string;
+  pic: UnitPIC;
   logs: MaintenanceLog[];
 }
 
@@ -92,19 +100,6 @@ interface NeededMaterial {
   unit: string;
 }
 
-interface BuildingPIC {
-  name: string;
-  role: string;
-  contact: string;
-}
-
-const buildingPICs: Record<string, BuildingPIC> = {
-  "all": { name: "Irfan Irawan", role: "Koordinator Fasilitas", contact: "Internal 101" },
-  "Wisma": { name: "Budi Raharjo", role: "Teknisi Area Wisma", contact: "0812-XXXX-XXXX" },
-  "Tower A": { name: "Siti Aminah", role: "Supervisor Tower A", contact: "0856-XXXX-XXXX" },
-  "Tower B": { name: "Ahmad Fauzi", role: "Supervisor Tower B", contact: "0878-XXXX-XXXX" },
-};
-
 const dummyData: RoomStatus[] = [
   { 
     id: "W-A01", 
@@ -114,18 +109,20 @@ const dummyData: RoomStatus[] = [
     status: "Rusak Ringan", 
     description: "Atap bocor halus di area teras", 
     lastChecked: "05-06-2026",
+    pic: { name: "Udin Syarifuddin", contact: "0812-1111-2222", role: "PJ Wisma Blok A" },
     logs: [
       { date: "05-06-2026 09:00", action: "Kerusakan dilaporkan oleh Irfan", user: "Irfan I." }
     ]
   },
   { 
-    id: "W-A02", 
-    name: "Blok A-2", 
+    id: "W-B02", 
+    name: "Blok B-2", 
     building: "Wisma", 
     category: "Wisma", 
     status: "Baik", 
     description: "Kondisi sangat baik", 
     lastChecked: "05-06-2026",
+    pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: []
   },
   { 
@@ -136,6 +133,7 @@ const dummyData: RoomStatus[] = [
     status: "Dalam Perbaikan", 
     description: "Plafon kamar mandi jebol", 
     lastChecked: "04-06-2026",
+    pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: [
       { date: "04-06-2026 10:00", action: "Kerusakan dilaporkan", user: "Admin" },
       { date: "05-06-2026 08:30", action: "Penugasan teknisi (Bpk. Maman)", user: "Admin" },
@@ -150,18 +148,20 @@ const dummyData: RoomStatus[] = [
     status: "Rusak Berat", 
     description: "AC tidak dingin & dinding rembes air", 
     lastChecked: "02-06-2026",
+    pic: { name: "Siti Aminah", contact: "0878-5555-6666", role: "PJ Tower A" },
     logs: [
        { date: "02-06-2026 11:00", action: "Laporan tamu: AC Mati", user: "Resepsionis" }
     ]
   },
   { 
-    id: "TA-322", 
-    name: "Kamar A-322", 
-    building: "Tower A", 
-    category: "Tower A", 
+    id: "TB-102", 
+    name: "Kamar B-102", 
+    building: "Tower B", 
+    category: "Tower B", 
     status: "Selesai (Verifikasi)", 
-    description: "Kondisi normal", 
+    description: "Kran air patah", 
     lastChecked: "06-06-2026",
+    pic: { name: "Ahmad Fauzi", contact: "0813-7777-8888", role: "PJ Tower B" },
     logs: [
       { date: "02-06-2026 10:00", action: "Kerusakan Kran Air", user: "Admin" },
       { date: "06-06-2026 11:00", action: "Penggantian Kran Selesai", user: "Teknisi" }
@@ -202,7 +202,6 @@ export default function StatusKondisiPage() {
   const [selectedUnit, setSelectedUnit] = useState<RoomStatus | null>(null);
   const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
 
-  // Material Management State
   const [materials, setMaterials] = useState<NeededMaterial[]>([
     { id: Math.random().toString(), itemName: "", qty: "", unit: "" }
   ]);
@@ -211,7 +210,8 @@ export default function StatusKondisiPage() {
   const filteredAndSortedData = useMemo(() => {
     let result = dummyData.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           item.description.toLowerCase().includes(searchTerm.toLowerCase());
+                           item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.pic.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = activeCategory === "all" || item.category === activeCategory;
       return matchesSearch && matchesCategory;
     });
@@ -230,6 +230,7 @@ export default function StatusKondisiPage() {
       "ID Unit": item.id,
       "Nama Unit": item.name,
       "Bangunan": item.building,
+      "PIC Unit": item.pic.name,
       "Kondisi": item.status,
       "Deskripsi Kerusakan": item.description,
       "Terakhir Dicek": item.lastChecked
@@ -238,12 +239,12 @@ export default function StatusKondisiPage() {
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Status Kondisi");
-    XLSX.writeFile(workbook, `Status_Kondisi_Bangunan_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    XLSX.writeFile(workbook, `Status_Kondisi_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
     
     toast({
       variant: "success",
       title: "Ekspor Berhasil",
-      description: "Data status kondisi telah diunduh ke Excel.",
+      description: "Data status kondisi telah diunduh.",
     });
   };
 
@@ -270,12 +271,11 @@ export default function StatusKondisiPage() {
 
   const handleSaveProgress = () => {
     const hasMaterials = materials.some(m => m.itemName && m.qty);
-    
     if (hasMaterials && !requestingPIC) {
       toast({
         variant: "destructive",
         title: "PIC Belum Dipilih",
-        description: "Harap pilih PIC yang meminta material terlebih dahulu."
+        description: "Harap pilih PIC yang meminta material."
       });
       return;
     }
@@ -283,15 +283,10 @@ export default function StatusKondisiPage() {
     toast({
       variant: "success",
       title: "Progres Disimpan",
-      description: hasMaterials 
-        ? `Tindak lanjut disimpan. ${materials.filter(m => m.itemName).length} item material akan diteruskan ke gudang.`
-        : "Tindak lanjut telah berhasil diperbarui."
+      description: "Tindak lanjut telah berhasil diperbarui."
     });
-    
     setIsMaintenanceOpen(false);
   };
-
-  const currentPIC = buildingPICs[activeCategory] || buildingPICs["all"];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -299,7 +294,7 @@ export default function StatusKondisiPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">Status Kondisi Bangunan</h1>
-            <p className="text-muted-foreground text-sm">Monitoring fisik Wisma dan Gedung Tower (A & B) untuk peserta diklat.</p>
+            <p className="text-muted-foreground text-sm">Monitoring fisik per unit dengan penanggung jawab spesifik.</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => window.print()} className="hidden sm:flex">
@@ -311,7 +306,6 @@ export default function StatusKondisiPage() {
           </div>
         </div>
 
-        {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="bg-green-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
@@ -333,7 +327,7 @@ export default function StatusKondisiPage() {
           </Card>
           <Card className="bg-blue-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Progres Perbaikan</CardTitle>
+              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Dalam Perbaikan</CardTitle>
               <Wrench className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent className="p-4 pt-0">
@@ -356,13 +350,13 @@ export default function StatusKondisiPage() {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <CardTitle>Daftar Kondisi Unit</CardTitle>
-                <CardDescription>Cari unit berdasarkan nama atau rincian kerusakan.</CardDescription>
+                <CardDescription>Pemantauan unit kerja beserta penanggung jawab (PIC) terkait.</CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                 <div className="relative w-full sm:w-80">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Cari kamar atau wisma..." 
+                    placeholder="Cari unit atau nama PIC..." 
                     className="pl-9"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -379,15 +373,9 @@ export default function StatusKondisiPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Opsi Pengurutan</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setSortOrder("none")}>
-                      Default (Bawaan)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortOrder("priority")}>
-                      <SortDesc className="mr-2 h-4 w-4" /> Rusak Berat Teratas
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortOrder("priority-desc")}>
-                      <SortAsc className="mr-2 h-4 w-4" /> Kondisi Baik Teratas
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("none")}>Default</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("priority")}>Rusak Berat Teratas</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("priority-desc")}>Kondisi Baik Teratas</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -396,52 +384,21 @@ export default function StatusKondisiPage() {
           <CardContent>
             <Tabs value={activeCategory} onValueChange={setActiveCategory} className="space-y-4">
               <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0 border-b rounded-none">
-                <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
-                  Semua
-                </TabsTrigger>
-                <TabsTrigger value="Wisma" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-2">
-                  <Home className="h-4 w-4" /> Wisma
-                </TabsTrigger>
-                <TabsTrigger value="Tower A" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-2">
-                  <Building className="h-4 w-4" /> Tower A
-                </TabsTrigger>
-                <TabsTrigger value="Tower B" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-2">
-                  <Building className="h-4 w-4" /> Tower B
-                </TabsTrigger>
+                <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">Semua</TabsTrigger>
+                <TabsTrigger value="Wisma" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-2"><Home className="h-4 w-4" /> Wisma</TabsTrigger>
+                <TabsTrigger value="Tower A" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-2"><Building className="h-4 w-4" /> Tower A</TabsTrigger>
+                <TabsTrigger value="Tower B" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3 flex items-center gap-2"><Building className="h-4 w-4" /> Tower B</TabsTrigger>
               </TabsList>
-
-              {/* Dynamic PIC Info Section */}
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 border p-3 mt-2 animate-in fade-in slide-in-from-top-1">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-full border shadow-sm">
-                    <User className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">PIC {activeCategory === 'all' ? 'Seluruh Area' : activeCategory}</p>
-                    <p className="text-sm font-semibold">{currentPIC.name}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                   <div className="text-right hidden md:block">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Jabatan</p>
-                    <p className="text-xs">{currentPIC.role}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Kontak</p>
-                    <p className="text-xs font-mono">{currentPIC.contact}</p>
-                  </div>
-                </div>
-              </div>
 
               <TabsContent value={activeCategory} className="mt-0">
                 <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
-                        <TableHead className="w-[120px]">ID Unit</TableHead>
+                        <TableHead className="w-[100px]">ID Unit</TableHead>
                         <TableHead>Nama Unit</TableHead>
+                        <TableHead>PIC Penanggung Jawab</TableHead>
                         <TableHead>Kondisi</TableHead>
-                        <TableHead className="max-w-[250px]">Rincian Masalah</TableHead>
                         <TableHead className="text-center">Tgl Cek</TableHead>
                         <TableHead className="text-right">Aksi</TableHead>
                       </TableRow>
@@ -449,13 +406,24 @@ export default function StatusKondisiPage() {
                     <TableBody>
                       {filteredAndSortedData.length > 0 ? (
                         filteredAndSortedData.map((item) => (
-                          <TableRow key={item.id} className="hover:bg-accent/50 transition-colors">
+                          <TableRow key={item.id} className="hover:bg-accent/50">
                             <TableCell className="font-mono text-xs font-bold">{item.id}</TableCell>
-                            <TableCell className="font-medium">{item.name}</TableCell>
-                            <TableCell>{getStatusBadge(item.status)}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground italic truncate max-w-[200px]">
-                              {item.description}
+                            <TableCell className="font-medium">
+                                <div>{item.name}</div>
+                                <div className="text-[10px] text-muted-foreground italic">{item.description.substring(0, 30)}...</div>
                             </TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center border">
+                                        <User className="h-3.5 w-3.5 text-slate-600" />
+                                    </div>
+                                    <div className="text-xs">
+                                        <div className="font-semibold">{item.pic.name}</div>
+                                        <div className="text-muted-foreground">{item.pic.role}</div>
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(item.status)}</TableCell>
                             <TableCell className="text-center text-xs">{item.lastChecked}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
@@ -478,9 +446,7 @@ export default function StatusKondisiPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                            Data unit tidak ditemukan.
-                          </TableCell>
+                          <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Data tidak ditemukan.</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -497,85 +463,109 @@ export default function StatusKondisiPage() {
             <SheetHeader>
               <SheetTitle className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-blue-600" />
-                Tindak Lanjut Perbaikan
+                Manajemen Perbaikan Unit
               </SheetTitle>
-              <SheetDescription>
-                Kelola alur perbaikan dan kebutuhan material untuk unit {selectedUnit?.name}.
-              </SheetDescription>
+              <SheetDescription>Update progres dan kebutuhan material untuk perbaikan unit.</SheetDescription>
             </SheetHeader>
 
             {selectedUnit && (
               <div className="space-y-6 py-6">
-                {/* Info Section */}
+                {/* Info PIC Spesifik Unit */}
+                <div className="bg-slate-900 text-white rounded-lg p-4 shadow-md">
+                    <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
+                                <User className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] uppercase font-bold text-blue-300 leading-none mb-1">PIC Penanggung Jawab</p>
+                                <p className="text-sm font-bold">{selectedUnit.pic.name}</p>
+                            </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20">
+                            <PhoneCall className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <Separator className="bg-white/10 mb-3" />
+                    <div className="grid grid-cols-2 gap-4 text-[11px]">
+                        <div>
+                            <p className="text-blue-300 font-bold uppercase mb-0.5">Role/Jabatan</p>
+                            <p>{selectedUnit.pic.role}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-blue-300 font-bold uppercase mb-0.5">Kontak</p>
+                            <p className="font-mono">{selectedUnit.pic.contact}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 rounded-lg bg-accent/30 p-4 border border-blue-100">
                   <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Kondisi Saat Ini</Label>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Kondisi Unit</Label>
                     <div>{getStatusBadge(selectedUnit.status)}</div>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Lokasi</Label>
-                    <div className="text-sm font-medium">{selectedUnit.building}</div>
+                  <div className="space-y-1 text-right">
+                    <Label className="text-[10px] uppercase text-muted-foreground">ID Unit</Label>
+                    <div className="text-sm font-bold">{selectedUnit.id}</div>
                   </div>
                   <div className="col-span-2 space-y-1">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Deskripsi Masalah</Label>
-                    <div className="text-sm italic">"{selectedUnit.description}"</div>
+                    <Label className="text-[10px] uppercase text-muted-foreground">Masalah Dilaporkan</Label>
+                    <div className="text-sm italic border-l-2 border-blue-500 pl-3 py-1">"{selectedUnit.description}"</div>
                   </div>
                 </div>
 
                 {/* Form Progres */}
                 <div className="space-y-4">
-                  <div className="text-sm font-semibold flex items-center gap-2">
-                    <Clock className="h-4 w-4" /> Progres Pekerjaan
+                  <div className="text-sm font-semibold flex items-center gap-2 border-b pb-2">
+                    <Clock className="h-4 w-4 text-blue-600" /> Progres Pekerjaan
                   </div>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="next-status">Update Status Progres</Label>
+                      <Label htmlFor="next-status">Update Status Baru</Label>
                       <Select defaultValue={selectedUnit.status}>
                         <SelectTrigger id="next-status">
-                          <SelectValue placeholder="Pilih Status Baru" />
+                          <SelectValue placeholder="Pilih Status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Rusak Ringan">Tetap Rusak Ringan</SelectItem>
-                          <SelectItem value="Rusak Berat">Ubah ke Rusak Berat</SelectItem>
-                          <SelectItem value="Dalam Perbaikan">Sedang Dikerjakan (Dalam Perbaikan)</SelectItem>
-                          <SelectItem value="Selesai (Verifikasi)">Selesai & Butuh Verifikasi</SelectItem>
-                          <SelectItem value="Baik">Sudah Oke (Kembali ke Baik)</SelectItem>
+                          <SelectItem value="Rusak Ringan">Rusak Ringan</SelectItem>
+                          <SelectItem value="Rusak Berat">Rusak Berat</SelectItem>
+                          <SelectItem value="Dalam Perbaikan">Sedang Dikerjakan</SelectItem>
+                          <SelectItem value="Selesai (Verifikasi)">Selesai & Cek Ulang</SelectItem>
+                          <SelectItem value="Baik">Selesai & Kembali Baik</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="action-note">Catatan Pekerjaan / Tindak Lanjut</Label>
-                      <Textarea id="action-note" placeholder="Tuliskan detail perbaikan yang dilakukan..." className="min-h-[80px]" />
+                      <Label htmlFor="action-note">Catatan Pekerjaan</Label>
+                      <Textarea id="action-note" placeholder="Tuliskan progres perbaikan..." className="min-h-[80px]" />
                     </div>
                   </div>
                 </div>
 
-                <Separator />
-
                 {/* Material Section */}
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between border-b pb-2">
                     <div className="text-sm font-semibold flex items-center gap-2">
-                      <PackageOpen className="h-4 w-4 text-orange-600" /> Kebutuhan Material (Opsional)
+                      <PackageOpen className="h-4 w-4 text-orange-600" /> Kebutuhan Barang Gudang
                     </div>
                     <Button variant="outline" size="sm" onClick={addMaterialRow} className="h-7 text-xs">
-                      <Plus className="mr-1 h-3 w-3" /> Tambah Baris
+                      <Plus className="mr-1 h-3 w-3" /> Tambah Item
                     </Button>
                   </div>
 
                   <div className="space-y-3">
                     <div className="space-y-2">
-                        <Label htmlFor="pic-request" className="text-xs">PIC Penerima Material</Label>
+                        <Label htmlFor="pic-request" className="text-xs">PIC Yang Meminta/Mengambil</Label>
                         <Select value={requestingPIC} onValueChange={setRequestingPIC}>
                           <SelectTrigger id="pic-request">
                              <UserCheck className="mr-2 h-3 w-3 text-muted-foreground" />
-                             <SelectValue placeholder="Pilih PIC yang meminta barang" />
+                             <SelectValue placeholder="Pilih Staff/Teknisi" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="1">Irfan Irawan Sukirman (Staff)</SelectItem>
+                            <SelectItem value="1">Irfan Irawan Sukirman</SelectItem>
                             <SelectItem value="2">Maman (Teknisi Listrik)</SelectItem>
                             <SelectItem value="3">Asep (Teknisi Air)</SelectItem>
-                            <SelectItem value="4">Fitri (Admin Gudang)</SelectItem>
+                            <SelectItem value="4">Fitri (Admin)</SelectItem>
                           </SelectContent>
                         </Select>
                     </div>
@@ -585,22 +575,11 @@ export default function StatusKondisiPage() {
                         <div key={material.id} className="grid grid-cols-12 gap-2 items-end mb-2 last:mb-0">
                           <div className="col-span-6 space-y-1">
                             {index === 0 && <Label className="text-[10px]">Nama Barang</Label>}
-                            <Input 
-                                placeholder="cth: Kran Air" 
-                                value={material.itemName} 
-                                onChange={(e) => updateMaterial(material.id, 'itemName', e.target.value)}
-                                className="h-8 text-xs"
-                            />
+                            <Input placeholder="cth: Lampu LED" value={material.itemName} onChange={(e) => updateMaterial(material.id, 'itemName', e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="col-span-2 space-y-1">
-                            {index === 0 && <Label className="text-[10px]">Jumlah</Label>}
-                            <Input 
-                                type="number" 
-                                placeholder="0" 
-                                value={material.qty} 
-                                onChange={(e) => updateMaterial(material.id, 'qty', e.target.value)}
-                                className="h-8 text-xs"
-                            />
+                            {index === 0 && <Label className="text-[10px]">Qty</Label>}
+                            <Input type="number" placeholder="0" value={material.qty} onChange={(e) => updateMaterial(material.id, 'qty', e.target.value)} className="h-8 text-xs" />
                           </div>
                           <div className="col-span-3 space-y-1">
                             {index === 0 && <Label className="text-[10px]">Satuan</Label>}
@@ -610,20 +589,13 @@ export default function StatusKondisiPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Pcs">Pcs</SelectItem>
+                                    <SelectItem value="Unit">Unit</SelectItem>
                                     <SelectItem value="Buah">Buah</SelectItem>
-                                    <SelectItem value="Meter">Meter</SelectItem>
-                                    <SelectItem value="Pak">Pak</SelectItem>
                                 </SelectContent>
                             </Select>
                           </div>
-                          <div className="col-span-1 pb-1">
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => removeMaterialRow(material.id)}
-                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                disabled={materials.length === 1}
-                            >
+                          <div className="col-span-1 pb-1 text-right">
+                            <Button variant="ghost" size="icon" onClick={() => removeMaterialRow(material.id)} className="h-8 w-8 text-destructive" disabled={materials.length === 1}>
                                 <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
@@ -635,8 +607,8 @@ export default function StatusKondisiPage() {
 
                 {/* Maintenance Log */}
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <History className="h-4 w-4" /> Riwayat Aktivitas
+                  <div className="flex items-center gap-2 text-sm font-semibold border-b pb-2">
+                    <History className="h-4 w-4 text-slate-500" /> Riwayat Progres
                   </div>
                   <ScrollArea className="h-32 rounded-md border p-4 bg-slate-50/50">
                     <div className="space-y-4">
@@ -650,7 +622,7 @@ export default function StatusKondisiPage() {
                           </div>
                         ))
                       ) : (
-                        <p className="text-center text-xs text-muted-foreground py-6">Belum ada riwayat perbaikan.</p>
+                        <p className="text-center text-xs text-muted-foreground py-6">Belum ada riwayat pengerjaan.</p>
                       )}
                     </div>
                   </ScrollArea>
@@ -662,11 +634,8 @@ export default function StatusKondisiPage() {
               <SheetClose asChild>
                 <Button variant="outline" className="flex-1 sm:flex-none">Batal</Button>
               </SheetClose>
-              <Button 
-                className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700"
-                onClick={handleSaveProgress}
-              >
-                Simpan & Proses ke Gudang
+              <Button className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 font-bold" onClick={handleSaveProgress}>
+                Simpan & Update Status
               </Button>
             </SheetFooter>
           </SheetContent>

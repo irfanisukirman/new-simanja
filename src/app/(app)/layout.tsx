@@ -18,7 +18,8 @@ import {
   Droplets,
   Phone,
   FileBarChart,
-  Settings
+  Settings,
+  ClipboardList
 } from 'lucide-react';
 import {
   Sidebar,
@@ -147,6 +148,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <Link href="/utilitas/dashboard">
                         <LayoutDashboard className="h-4 w-4" />
                         <span className='pl-2'>Dashboard</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="Status Kondisi" isActive={pathname === '/utilitas/status'}>
+                      <Link href="/utilitas/status">
+                        <ClipboardList className="h-4 w-4" />
+                        <span className='pl-2'>Status</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

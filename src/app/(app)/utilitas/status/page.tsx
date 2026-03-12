@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -23,8 +23,19 @@ import {
   CheckCircle2, 
   Info,
   Building,
-  Home
+  Home,
+  ArrowUpDown,
+  SortAsc,
+  SortDesc
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import * as XLSX from "xlsx"
 import { useToast } from "@/hooks/use-toast"
 
@@ -67,20 +78,41 @@ const getStatusBadge = (status: RoomStatus["status"]) => {
   }
 };
 
+const statusPriority = {
+  "Rusak Berat": 0,
+  "Rusak Ringan": 1,
+  "Baik": 2
+};
+
 export default function StatusKondisiPage() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"none" | "priority" | "priority-desc">("none");
 
-  const filteredData = dummyData.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredAndSortedData = useMemo(() => {
+    // 1. Filter
+    let result = dummyData.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           item.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = activeCategory === "all" || item.category === activeCategory;
+      return matchesSearch && matchesCategory;
+    });
+
+    // 2. Sort
+    if (sortOrder === "priority") {
+      // Rusak Berat First
+      result.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
+    } else if (sortOrder === "priority-desc") {
+      // Kondisi Baik First
+      result.sort((a, b) => statusPriority[b.status] - statusPriority[a.status]);
+    }
+
+    return result;
+  }, [searchTerm, activeCategory, sortOrder]);
 
   const handleExportExcel = () => {
-    const dataToExport = filteredData.map(item => ({
+    const dataToExport = filteredAndSortedData.map(item => ({
       "ID Unit": item.id,
       "Nama Unit": item.name,
       "Bangunan": item.building,
@@ -106,7 +138,7 @@ export default function StatusKondisiPage() {
       <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight">Status Kondisi Bangunan</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Status Kondisi Bangunan</h1>
             <p className="text-muted-foreground text-sm">Monitoring fisik Wisma dan Gedung Tower (A & B) untuk peserta diklat.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -152,24 +184,48 @@ export default function StatusKondisiPage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <CardTitle>Daftar Kondisi Unit</CardTitle>
                 <CardDescription>Cari unit berdasarkan nama atau rincian kerusakan.</CardDescription>
               </div>
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Cari kamar atau wisma..." 
-                  className="pl-9"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Cari kamar atau wisma..." 
+                    className="pl-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="w-full sm:w-auto">
+                      <ArrowUpDown className="mr-2 h-4 w-4" />
+                      Urutkan: {sortOrder === 'none' ? 'Default' : sortOrder === 'priority' ? 'Tingkat Kerusakan' : 'Kondisi Baik'}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Opsi Pengurutan</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setSortOrder("none")}>
+                      Default (Bawaan)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("priority")}>
+                      <SortDesc className="mr-2 h-4 w-4" /> Rusak Berat Teratas
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("priority-desc")}>
+                      <SortAsc className="mr-2 h-4 w-4" /> Kondisi Baik Teratas
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="all" onValueChange={setActiveCategory} className="space-y-4">
+            <Tabs value={activeCategory} onValueChange={setActiveCategory} className="space-y-4">
               <TabsList className="flex h-auto w-full flex-wrap justify-start gap-2 bg-transparent p-0 border-b rounded-none">
                 <TabsTrigger value="all" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
                   Semua
@@ -199,8 +255,8 @@ export default function StatusKondisiPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredData.length > 0 ? (
-                        filteredData.map((item) => (
+                      {filteredAndSortedData.length > 0 ? (
+                        filteredAndSortedData.map((item) => (
                           <TableRow key={item.id} className="hover:bg-accent/50 transition-colors">
                             <TableCell className="font-mono text-xs font-bold">{item.id}</TableCell>
                             <TableCell className="font-medium">{item.name}</TableCell>

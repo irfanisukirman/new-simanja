@@ -17,7 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { 
-  ClipboardList, 
   Search, 
   FileDown, 
   Printer, 
@@ -33,7 +32,10 @@ import {
   History,
   Clock,
   CheckCircle,
-  ExternalLink
+  Plus,
+  Trash2,
+  UserCheck,
+  PackageOpen
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -60,6 +62,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
 import * as XLSX from "xlsx"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
@@ -79,6 +82,13 @@ interface RoomStatus {
   description: string;
   lastChecked: string;
   logs: MaintenanceLog[];
+}
+
+interface NeededMaterial {
+  id: string;
+  itemName: string;
+  qty: string;
+  unit: string;
 }
 
 const dummyData: RoomStatus[] = [
@@ -143,9 +153,6 @@ const dummyData: RoomStatus[] = [
       { date: "06-06-2026 11:00", action: "Penggantian Kran Selesai", user: "Teknisi" }
     ]
   },
-  { id: "TA-405", name: "Kamar A-405", building: "Tower A", category: "Tower A", status: "Rusak Ringan", description: "Gagang pintu kamar mandi longgar", lastChecked: "03-06-2026", logs: [] },
-  { id: "TB-102", name: "Kamar B-102", building: "Tower B", category: "Tower B", status: "Baik", description: "Siap huni", lastChecked: "01-06-2026", logs: [] },
-  { id: "TB-210", name: "Kamar B-210", building: "Tower B", category: "Tower B", status: "Rusak Ringan", description: "Lampu utama redup/kedip", lastChecked: "04-06-2026", logs: [] },
 ];
 
 const getStatusBadge = (status: RoomStatus["status"]) => {
@@ -180,6 +187,12 @@ export default function StatusKondisiPage() {
   const [sortOrder, setSortOrder] = useState<"none" | "priority" | "priority-desc">("none");
   const [selectedUnit, setSelectedUnit] = useState<RoomStatus | null>(null);
   const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
+
+  // Material Management State
+  const [materials, setMaterials] = useState<NeededMaterial[]>([
+    { id: Math.random().toString(), itemName: "", qty: "", unit: "" }
+  ]);
+  const [requestingPIC, setRequestingPIC] = useState("");
 
   const filteredAndSortedData = useMemo(() => {
     let result = dummyData.filter(item => {
@@ -222,7 +235,47 @@ export default function StatusKondisiPage() {
 
   const handleOpenMaintenance = (unit: RoomStatus) => {
     setSelectedUnit(unit);
+    setMaterials([{ id: Math.random().toString(), itemName: "", qty: "", unit: "" }]);
+    setRequestingPIC("");
     setIsMaintenanceOpen(true);
+  };
+
+  const addMaterialRow = () => {
+    setMaterials([...materials, { id: Math.random().toString(), itemName: "", qty: "", unit: "" }]);
+  };
+
+  const removeMaterialRow = (id: string) => {
+    if (materials.length > 1) {
+      setMaterials(materials.filter(m => m.id !== id));
+    }
+  };
+
+  const updateMaterial = (id: string, field: keyof NeededMaterial, value: string) => {
+    setMaterials(materials.map(m => m.id === id ? { ...m, [field]: value } : m));
+  };
+
+  const handleSaveProgress = () => {
+    // Simulasi integrasi barang keluar
+    const hasMaterials = materials.some(m => m.itemName && m.qty);
+    
+    if (hasMaterials && !requestingPIC) {
+      toast({
+        variant: "destructive",
+        title: "PIC Belum Dipilih",
+        description: "Harap pilih PIC yang meminta material terlebih dahulu."
+      });
+      return;
+    }
+
+    toast({
+      variant: "success",
+      title: "Progres Disimpan",
+      description: hasMaterials 
+        ? `Tindak lanjut disimpan. ${materials.filter(m => m.itemName).length} item material akan diteruskan ke gudang.`
+        : "Tindak lanjut telah berhasil diperbarui."
+    });
+    
+    setIsMaintenanceOpen(false);
   };
 
   return (
@@ -305,7 +358,7 @@ export default function StatusKondisiPage() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="w-full sm:w-auto">
                       <ArrowUpDown className="mr-2 h-4 w-4" />
-                      Urutkan: {sortOrder === 'none' ? 'Default' : sortOrder === 'priority' ? 'Tingkat Kerusakan' : 'Kondisi Baik'}
+                      Urutkan
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -402,21 +455,21 @@ export default function StatusKondisiPage() {
 
         {/* Maintenance Flow Sheet */}
         <Sheet open={isMaintenanceOpen} onOpenChange={setIsMaintenanceOpen}>
-          <SheetContent className="sm:max-w-md md:max-w-lg overflow-y-auto">
+          <SheetContent className="sm:max-w-md md:max-w-xl overflow-y-auto">
             <SheetHeader>
               <SheetTitle className="flex items-center gap-2">
                 <Wrench className="h-5 w-5 text-blue-600" />
                 Tindak Lanjut Perbaikan
               </SheetTitle>
               <SheetDescription>
-                Kelola alur perbaikan untuk unit {selectedUnit?.name} ({selectedUnit?.id}).
+                Kelola alur perbaikan dan kebutuhan material untuk unit {selectedUnit?.name}.
               </SheetDescription>
             </SheetHeader>
 
             {selectedUnit && (
               <div className="space-y-6 py-6">
                 {/* Info Section */}
-                <div className="grid grid-cols-2 gap-4 rounded-lg bg-accent/30 p-4">
+                <div className="grid grid-cols-2 gap-4 rounded-lg bg-accent/30 p-4 border border-blue-100">
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase text-muted-foreground">Kondisi Saat Ini</Label>
                     <div>{getStatusBadge(selectedUnit.status)}</div>
@@ -431,34 +484,12 @@ export default function StatusKondisiPage() {
                   </div>
                 </div>
 
-                {/* Maintenance Log */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <History className="h-4 w-4" />
-                    Riwayat Aktivitas Perbaikan
+                {/* Form Progres */}
+                <div className="space-y-4">
+                  <div className="text-sm font-semibold flex items-center gap-2">
+                    <Clock className="h-4 w-4" /> Progres Pekerjaan
                   </div>
-                  <ScrollArea className="h-48 rounded-md border p-4 bg-slate-50/50">
-                    <div className="space-y-4">
-                      {selectedUnit.logs.length > 0 ? (
-                        selectedUnit.logs.map((log, idx) => (
-                          <div key={idx} className="relative pl-6 pb-4 border-l last:pb-0">
-                            <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-blue-500" />
-                            <div className="text-[10px] text-muted-foreground">{log.date}</div>
-                            <div className="text-sm font-medium">{log.action}</div>
-                            <div className="text-[11px] text-muted-foreground">Oleh: {log.user}</div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-center text-xs text-muted-foreground py-10">Belum ada riwayat perbaikan.</p>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                {/* Follow Up Form */}
-                <div className="space-y-4 border-t pt-4">
-                  <div className="text-sm font-semibold">Input Tindak Lanjut Baru</div>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="next-status">Update Status Progres</Label>
                       <Select defaultValue={selectedUnit.status}>
@@ -476,36 +507,128 @@ export default function StatusKondisiPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="action-note">Catatan Pekerjaan / Tindak Lanjut</Label>
-                      <Textarea id="action-note" placeholder="Tuliskan detail perbaikan yang dilakukan atau instruksi untuk teknisi..." className="min-h-[100px]" />
-                    </div>
-                    
-                    <div className="bg-yellow-50 p-3 rounded border border-yellow-200 text-[11px] flex gap-2">
-                       <Info className="h-4 w-4 shrink-0 text-yellow-600" />
-                       <div>
-                         <b>Tip:</b> Jika perbaikan membutuhkan material gudang, pastikan Anda juga mencatatnya di menu <span className="underline cursor-pointer text-blue-600 font-bold">Barang Keluar</span> untuk sinkronisasi stok.
-                       </div>
+                      <Textarea id="action-note" placeholder="Tuliskan detail perbaikan yang dilakukan..." className="min-h-[80px]" />
                     </div>
                   </div>
+                </div>
+
+                <Separator />
+
+                {/* Material Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold flex items-center gap-2">
+                      <PackageOpen className="h-4 w-4 text-orange-600" /> Kebutuhan Material (Opsional)
+                    </div>
+                    <Button variant="outline" size="sm" onClick={addMaterialRow} className="h-7 text-xs">
+                      <Plus className="mr-1 h-3 w-3" /> Tambah Baris
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                        <Label htmlFor="pic-request" className="text-xs">PIC Penerima Material</Label>
+                        <Select value={requestingPIC} onValueChange={setRequestingPIC}>
+                          <SelectTrigger id="pic-request">
+                             <UserCheck className="mr-2 h-3 w-3 text-muted-foreground" />
+                             <SelectValue placeholder="Pilih PIC yang meminta barang" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">Irfan Irawan Sukirman (Staff)</SelectItem>
+                            <SelectItem value="2">Maman (Teknisi Listrik)</SelectItem>
+                            <SelectItem value="3">Asep (Teknisi Air)</SelectItem>
+                            <SelectItem value="4">Fitri (Admin Gudang)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="space-y-2 border rounded-md p-3 bg-muted/20">
+                      {materials.map((material, index) => (
+                        <div key={material.id} className="grid grid-cols-12 gap-2 items-end mb-2 last:mb-0">
+                          <div className="col-span-6 space-y-1">
+                            {index === 0 && <Label className="text-[10px]">Nama Barang</Label>}
+                            <Input 
+                                placeholder="cth: Kran Air" 
+                                value={material.itemName} 
+                                onChange={(e) => updateMaterial(material.id, 'itemName', e.target.value)}
+                                className="h-8 text-xs"
+                            />
+                          </div>
+                          <div className="col-span-2 space-y-1">
+                            {index === 0 && <Label className="text-[10px]">Jumlah</Label>}
+                            <Input 
+                                type="number" 
+                                placeholder="0" 
+                                value={material.qty} 
+                                onChange={(e) => updateMaterial(material.id, 'qty', e.target.value)}
+                                className="h-8 text-xs"
+                            />
+                          </div>
+                          <div className="col-span-3 space-y-1">
+                            {index === 0 && <Label className="text-[10px]">Satuan</Label>}
+                            <Select value={material.unit} onValueChange={(val) => updateMaterial(material.id, 'unit', val)}>
+                                <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue placeholder="Unit" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Pcs">Pcs</SelectItem>
+                                    <SelectItem value="Buah">Buah</SelectItem>
+                                    <SelectItem value="Meter">Meter</SelectItem>
+                                    <SelectItem value="Pak">Pak</SelectItem>
+                                </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="col-span-1 pb-1">
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => removeMaterialRow(material.id)}
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                disabled={materials.length === 1}
+                            >
+                                <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Maintenance Log */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <History className="h-4 w-4" /> Riwayat Aktivitas
+                  </div>
+                  <ScrollArea className="h-32 rounded-md border p-4 bg-slate-50/50">
+                    <div className="space-y-4">
+                      {selectedUnit.logs.length > 0 ? (
+                        selectedUnit.logs.map((log, idx) => (
+                          <div key={idx} className="relative pl-6 pb-4 border-l last:pb-0">
+                            <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-blue-500" />
+                            <div className="text-[10px] text-muted-foreground">{log.date}</div>
+                            <div className="text-sm font-medium">{log.action}</div>
+                            <div className="text-[11px] text-muted-foreground">Oleh: {log.user}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-center text-xs text-muted-foreground py-6">Belum ada riwayat perbaikan.</p>
+                      )}
+                    </div>
+                  </ScrollArea>
                 </div>
               </div>
             )}
 
-            <SheetFooter className="mt-6 flex gap-2 sm:gap-0">
+            <SheetFooter className="mt-6 flex gap-2">
               <SheetClose asChild>
-                <Button variant="outline" className="w-full sm:w-auto">Batal</Button>
+                <Button variant="outline" className="flex-1 sm:flex-none">Batal</Button>
               </SheetClose>
               <Button 
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
-                onClick={() => {
-                  toast({
-                    variant: "success",
-                    title: "Status Diperbarui",
-                    description: `Tindak lanjut untuk ${selectedUnit?.id} telah disimpan.`
-                  });
-                  setIsMaintenanceOpen(false);
-                }}
+                className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700"
+                onClick={handleSaveProgress}
               >
-                Simpan Progres
+                Simpan & Proses ke Gudang
               </Button>
             </SheetFooter>
           </SheetContent>

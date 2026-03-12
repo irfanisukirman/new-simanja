@@ -35,7 +35,8 @@ import {
   Plus,
   Trash2,
   UserCheck,
-  PackageOpen
+  PackageOpen,
+  User
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -53,7 +54,7 @@ import {
   SheetTitle,
   SheetFooter,
   SheetClose,
-} from "@/components/ui/sheet"
+} from "@/sheet"
 import {
   Select,
   SelectContent,
@@ -90,6 +91,19 @@ interface NeededMaterial {
   qty: string;
   unit: string;
 }
+
+interface BuildingPIC {
+  name: string;
+  role: string;
+  contact: string;
+}
+
+const buildingPICs: Record<string, BuildingPIC> = {
+  "all": { name: "Irfan Irawan", role: "Koordinator Fasilitas", contact: "Internal 101" },
+  "Wisma": { name: "Budi Raharjo", role: "Teknisi Area Wisma", contact: "0812-XXXX-XXXX" },
+  "Tower A": { name: "Siti Aminah", role: "Supervisor Tower A", contact: "0856-XXXX-XXXX" },
+  "Tower B": { name: "Ahmad Fauzi", role: "Supervisor Tower B", contact: "0878-XXXX-XXXX" },
+};
 
 const dummyData: RoomStatus[] = [
   { 
@@ -255,7 +269,6 @@ export default function StatusKondisiPage() {
   };
 
   const handleSaveProgress = () => {
-    // Simulasi integrasi barang keluar
     const hasMaterials = materials.some(m => m.itemName && m.qty);
     
     if (hasMaterials && !requestingPIC) {
@@ -277,6 +290,8 @@ export default function StatusKondisiPage() {
     
     setIsMaintenanceOpen(false);
   };
+
+  const currentPIC = buildingPICs[activeCategory] || buildingPICs["all"];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -394,6 +409,29 @@ export default function StatusKondisiPage() {
                   <Building className="h-4 w-4" /> Tower B
                 </TabsTrigger>
               </TabsList>
+
+              {/* Dynamic PIC Info Section */}
+              <div className="flex items-center justify-between rounded-lg bg-slate-50 border p-3 mt-2 animate-in fade-in slide-in-from-top-1">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white rounded-full border shadow-sm">
+                    <User className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">PIC {activeCategory === 'all' ? 'Seluruh Area' : activeCategory}</p>
+                    <p className="text-sm font-semibold">{currentPIC.name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                   <div className="text-right hidden md:block">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Jabatan</p>
+                    <p className="text-xs">{currentPIC.role}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Kontak</p>
+                    <p className="text-xs font-mono">{currentPIC.contact}</p>
+                  </div>
+                </div>
+              </div>
 
               <TabsContent value={activeCategory} className="mt-0">
                 <div className="rounded-md border">

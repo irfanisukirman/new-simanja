@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react"
@@ -501,7 +500,18 @@ export default function StatusKondisiPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="new-pic">Nama PIC Penanggung Jawab</Label>
-                        <Input id="new-pic" placeholder="Nama Lengkap" />
+                        <Select>
+                          <SelectTrigger id="new-pic">
+                            <SelectValue placeholder="Pilih PIC" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Udin Syarifuddin">Udin Syarifuddin</SelectItem>
+                            <SelectItem value="Pedro Gonzales">Pedro Gonzales</SelectItem>
+                            <SelectItem value="Siti Aminah">Siti Aminah</SelectItem>
+                            <SelectItem value="Ahmad Fauzi">Ahmad Fauzi</SelectItem>
+                            <SelectItem value="Irfan Irawan Sukirman">Irfan Irawan Sukirman</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="new-desc">Deskripsi / Catatan Awal</Label>

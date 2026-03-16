@@ -202,7 +202,7 @@ const DescriptionCell = ({ text }: { text: string }) => {
       {text.substring(0, 47)}...
       <Dialog>
         <DialogTrigger asChild>
-          <button className="ml-1 text-primary hover:underline font-bold">Lihat Selengkapnya</button>
+          <button className="ml-1 text-primary hover:underline font-bold print:hidden">Lihat Selengkapnya</button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -249,7 +249,7 @@ export default function StatusKondisiPage() {
   }, [searchTerm, activeCategory, sortOrder]);
 
   const handleExportExcel = () => {
-    const dataToExport = filteredAndSortedData.map(item => ({
+    const dataToExport = dummyData.map(item => ({
       "ID Unit": item.id,
       "Nama Unit": item.name,
       "Bangunan": item.building,
@@ -261,13 +261,13 @@ export default function StatusKondisiPage() {
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Status Kondisi");
-    XLSX.writeFile(workbook, `Status_Kondisi_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Status Kondisi Lengkap");
+    XLSX.writeFile(workbook, `Status_Kondisi_Lengkap_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
     
     toast({
       variant: "success",
       title: "Ekspor Berhasil",
-      description: "Data status kondisi telah diunduh.",
+      description: "Seluruh data status kondisi telah diunduh.",
     });
   };
 
@@ -313,7 +313,7 @@ export default function StatusKondisiPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24 text-foreground">
+      <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24 text-foreground print:hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">Status Kondisi Bangunan</h1>
@@ -654,6 +654,63 @@ export default function StatusKondisiPage() {
         </Sheet>
       </main>
 
+      {/* PRINT-ONLY SECTION: Full Data Report */}
+      <div className="hidden print:block p-8 bg-white text-black min-h-screen">
+        <header className="text-center mb-8 border-b-2 border-black pb-4">
+          <h1 className="text-2xl font-bold uppercase">Laporan Status Kondisi Bangunan</h1>
+          <h2 className="text-lg font-semibold uppercase">Wisma & Tower A/B BPSDM Provinsi Jawa Barat</h2>
+          <p className="text-sm mt-2">Tanggal Laporan: {format(new Date(), 'dd MMMM yyyy')}</p>
+        </header>
+
+        <table className="w-full border-collapse border border-black text-xs">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-black p-2 text-center w-[80px]">ID Unit</th>
+              <th className="border border-black p-2 text-left">Nama Unit / Bangunan</th>
+              <th className="border border-black p-2 text-left">PIC Penanggung Jawab</th>
+              <th className="border border-black p-2 text-center">Status Kondisi</th>
+              <th className="border border-black p-2 text-left w-[30%]">Deskripsi Kerusakan</th>
+              <th className="border border-black p-2 text-center">Tgl Cek</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dummyData.map((item) => (
+              <tr key={item.id}>
+                <td className="border border-black p-2 text-center font-mono font-bold">{item.id}</td>
+                <td className="border border-black p-2">
+                  <div className="font-bold">{item.name}</div>
+                  <div className="text-[10px] text-gray-600">{item.building}</div>
+                </td>
+                <td className="border border-black p-2 text-left">
+                  <div className="font-bold">{item.pic.name}</div>
+                  <div className="text-[10px]">{item.pic.role}</div>
+                </td>
+                <td className="border border-black p-2 text-center font-bold">
+                  {item.status.toUpperCase()}
+                </td>
+                <td className="border border-black p-2 text-[10px] italic">
+                  {item.status === "Baik" ? "-" : item.description}
+                </td>
+                <td className="border border-black p-2 text-center">{item.lastChecked}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <footer className="mt-12 grid grid-cols-2 gap-8 text-xs">
+          <div className="text-center">
+            <p>Mengetahui,</p>
+            <p className="mt-16 font-bold underline">(_________________________)</p>
+            <p>Kepala Bagian Umum</p>
+          </div>
+          <div className="text-center">
+            <p>Dibuat Oleh,</p>
+            <p className="mt-16 font-bold underline">(_________________________)</p>
+            <p>Admin Utilitas</p>
+          </div>
+        </footer>
+      </div>
+
       <footer className="sticky bottom-0 z-10 w-full bg-background/95 backdrop-blur-sm print:hidden">
         <Card className="rounded-none border-0 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
           <div className="p-4 text-center text-sm text-muted-foreground">
@@ -664,16 +721,31 @@ export default function StatusKondisiPage() {
       
       <style jsx global>{`
         @media print {
-          .sidebar-trigger, footer, .print:hidden, .sidebar {
+          /* Sembunyikan SEMUA elemen UI aplikasi */
+          body * {
+            visibility: hidden;
+          }
+          /* Tampilkan hanya section print */
+          .print\:block, .print\:block * {
+            visibility: visible;
+          }
+          .print\:block {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            display: block !important;
+          }
+          /* Perbaikan layout cetak */
+          @page {
+            size: A4 portrait;
+            margin: 1.5cm;
+          }
+          footer, .sidebar, header, nav, button, .tabs-list {
             display: none !important;
           }
           main {
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-          .card {
-            border: none !important;
-            box-shadow: none !important;
+            display: none !important;
           }
         }
       `}</style>

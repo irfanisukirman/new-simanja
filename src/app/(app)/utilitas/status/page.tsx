@@ -37,7 +37,7 @@ import {
   User,
   PhoneCall,
   Users,
-  UserCircle
+  PlusCircle
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -69,6 +69,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -349,6 +351,14 @@ export default function StatusKondisiPage() {
     setIsMaintenanceOpen(false);
   };
 
+  const handleSaveNewUnit = () => {
+    toast({
+      variant: "success",
+      title: "Unit Berhasil Ditambahkan",
+      description: "Data unit baru telah masuk ke dalam sistem monitoring."
+    });
+  };
+
   return (
     <div className="flex min-h-screen flex-col relative">
       {/* Main UI - Hidden when printing */}
@@ -362,7 +372,7 @@ export default function StatusKondisiPage() {
             <Button variant="outline" size="sm" onClick={() => window.print()} className="hidden sm:flex">
               <Printer className="mr-2 h-4 w-4" /> Cetak PDF
             </Button>
-            <Button size="sm" onClick={handleExportExcel} className="bg-success hover:bg-success/90">
+            <Button size="sm" onClick={handleExportExcel} className="bg-success hover:bg-success/90 text-white">
               <FileDown className="mr-2 h-4 w-4" /> Excel
             </Button>
           </div>
@@ -431,6 +441,78 @@ export default function StatusKondisiPage() {
                     <DropdownMenuItem onClick={() => setSortOrder("priority-desc")}>Kondisi Baik Teratas</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="w-full sm:w-auto bg-primary">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Tambah Unit
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle>Tambah Unit Gedung/Wisma Baru</DialogTitle>
+                      <DialogDescription>
+                        Input data unit baru untuk monitoring kondisi fisik dan hunian.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="new-id">ID Unit</Label>
+                          <Input id="new-id" placeholder="cth: W-A01 atau TA-101" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="new-name">Nama Unit</Label>
+                          <Input id="new-name" placeholder="cth: Blok A-1" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="new-category">Kategori</Label>
+                          <Select>
+                            <SelectTrigger id="new-category">
+                              <SelectValue placeholder="Pilih Kategori" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Wisma">Wisma</SelectItem>
+                              <SelectItem value="Tower A">Tower A</SelectItem>
+                              <SelectItem value="Tower B">Tower B</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="new-capacity">Kapasitas (Orang)</Label>
+                          <Input id="new-capacity" type="number" placeholder="6" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-status">Status Awal</Label>
+                        <Select defaultValue="Baik">
+                          <SelectTrigger id="new-status">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Baik">Baik</SelectItem>
+                            <SelectItem value="Dalam Perbaikan">Dalam Perbaikan</SelectItem>
+                            <SelectItem value="Rusak">Rusak</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-pic">Nama PIC Penanggung Jawab</Label>
+                        <Input id="new-pic" placeholder="Nama Lengkap" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="new-desc">Deskripsi / Catatan Awal</Label>
+                        <Textarea id="new-desc" placeholder="Keterangan tambahan unit..." />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="button" onClick={handleSaveNewUnit}>Simpan Unit</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </CardHeader>

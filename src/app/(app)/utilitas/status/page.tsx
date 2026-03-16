@@ -727,14 +727,28 @@ export default function StatusKondisiPage() {
             margin: 1cm;
           }
           
-          /* Reset Sidebar and UI positioning */
+          /* Reset Sidebar and UI positioning specifically for the Sidebar wrapper and inset */
+          [data-sidebar="sidebar"], 
+          aside, 
+          nav, 
+          header, 
+          footer, 
+          button, 
+          [role="tablist"], 
+          .print\:hidden {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            overflow: hidden !important;
+          }
+
+          /* Force Main container to fill the whole width by removing the left margin */
+          main.ml-72, 
           .ml-72 {
             margin-left: 0 !important;
-          }
-          
-          /* Force hide elements that shouldn't be in PDF */
-          aside, nav, header, footer, button, [role="tablist"], .print\:hidden {
-            display: none !important;
+            padding: 0 !important;
+            width: 100% !important;
           }
           
           /* Reset root background for clear PDF */
@@ -755,6 +769,7 @@ export default function StatusKondisiPage() {
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
+            z-index: 9999 !important;
           }
         }
       `}</style>

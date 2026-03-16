@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from "react"
@@ -26,12 +27,9 @@ import {
   Building,
   Home,
   ArrowUpDown,
-  SortAsc,
-  SortDesc,
   Wrench,
   History,
   Clock,
-  CheckCircle,
   Plus,
   Trash2,
   UserCheck,
@@ -63,6 +61,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import * as XLSX from "xlsx"
@@ -86,7 +91,7 @@ interface RoomStatus {
   name: string;
   building: string;
   category: "Wisma" | "Tower A" | "Tower B";
-  status: "Baik" | "Rusak Ringan" | "Rusak Berat" | "Dalam Perbaikan" | "Selesai (Verifikasi)";
+  status: "Baik" | "Dalam Perbaikan" | "Rusak";
   description: string;
   lastChecked: string;
   pic: UnitPIC;
@@ -106,8 +111,8 @@ const dummyData: RoomStatus[] = [
     name: "Blok A-1", 
     building: "Wisma", 
     category: "Wisma", 
-    status: "Rusak Ringan", 
-    description: "Atap bocor halus di area teras", 
+    status: "Rusak", 
+    description: "Atap bocor halus di area teras depan wisma yang mengakibatkan air merembes ke plafon saat hujan deras.", 
     lastChecked: "05-06-2026",
     pic: { name: "Udin Syarifuddin", contact: "0812-1111-2222", role: "PJ Wisma Blok A" },
     logs: [
@@ -120,7 +125,7 @@ const dummyData: RoomStatus[] = [
     building: "Wisma", 
     category: "Wisma", 
     status: "Baik", 
-    description: "Kondisi sangat baik", 
+    description: "Kondisi sangat baik.", 
     lastChecked: "05-06-2026",
     pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: []
@@ -131,7 +136,7 @@ const dummyData: RoomStatus[] = [
     building: "Wisma", 
     category: "Wisma", 
     status: "Dalam Perbaikan", 
-    description: "Plafon kamar mandi jebol", 
+    description: "Plafon kamar mandi jebol akibat kebocoran pipa saluran air dari lantai atas.", 
     lastChecked: "04-06-2026",
     pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: [
@@ -145,8 +150,8 @@ const dummyData: RoomStatus[] = [
     name: "Kamar A-321", 
     building: "Tower A", 
     category: "Tower A", 
-    status: "Rusak Berat", 
-    description: "AC tidak dingin & dinding rembes air", 
+    status: "Rusak", 
+    description: "AC tidak dingin & dinding rembes air dari sisi luar gedung saat hujan disertai angin kencang.", 
     lastChecked: "02-06-2026",
     pic: { name: "Siti Aminah", contact: "0878-5555-6666", role: "PJ Tower A" },
     logs: [
@@ -158,13 +163,13 @@ const dummyData: RoomStatus[] = [
     name: "Kamar B-102", 
     building: "Tower B", 
     category: "Tower B", 
-    status: "Selesai (Verifikasi)", 
-    description: "Kran air patah", 
+    status: "Dalam Perbaikan", 
+    description: "Kran air patah di wastafel kamar mandi utama.", 
     lastChecked: "06-06-2026",
     pic: { name: "Ahmad Fauzi", contact: "0813-7777-8888", role: "PJ Tower B" },
     logs: [
       { date: "02-06-2026 10:00", action: "Kerusakan Kran Air", user: "Admin" },
-      { date: "06-06-2026 11:00", action: "Penggantian Kran Selesai", user: "Teknisi" }
+      { date: "06-06-2026 11:00", action: "Pengerjaan penggantian unit kran baru", user: "Teknisi" }
     ]
   },
 ];
@@ -173,25 +178,43 @@ const getStatusBadge = (status: RoomStatus["status"]) => {
   switch (status) {
     case "Baik":
       return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200"><CheckCircle2 className="mr-1 h-3 w-3" /> Baik</Badge>;
-    case "Rusak Ringan":
-      return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak Ringan</Badge>;
-    case "Rusak Berat":
-      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak Berat</Badge>;
+    case "Rusak":
+      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak</Badge>;
     case "Dalam Perbaikan":
       return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"><Clock className="mr-1 h-3 w-3" /> Dalam Perbaikan</Badge>;
-    case "Selesai (Verifikasi)":
-      return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200"><CheckCircle className="mr-1 h-3 w-3" /> Selesai (Verifikasi)</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
 };
 
 const statusPriority = {
-  "Rusak Berat": 0,
+  "Rusak": 0,
   "Dalam Perbaikan": 1,
-  "Selesai (Verifikasi)": 2,
-  "Rusak Ringan": 3,
-  "Baik": 4
+  "Baik": 2
+};
+
+const DescriptionCell = ({ text }: { text: string }) => {
+  const isLong = text.length > 50;
+  if (!isLong) return <div className="text-[10px] text-muted-foreground italic">{text}</div>;
+
+  return (
+    <div className="text-[10px] text-muted-foreground italic">
+      {text.substring(0, 47)}...
+      <Dialog>
+        <DialogTrigger asChild>
+          <button className="ml-1 text-primary hover:underline font-bold">Lihat Selengkapnya</button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Deskripsi Kerusakan Lengkap</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-sm leading-relaxed">
+            {text}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default function StatusKondisiPage() {
@@ -306,7 +329,7 @@ export default function StatusKondisiPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card className="bg-green-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
               <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Kondisi Baik</CardTitle>
@@ -316,13 +339,13 @@ export default function StatusKondisiPage() {
               <div className="text-2xl font-bold text-green-700">{dummyData.filter(d => d.status === "Baik").length}</div>
             </CardContent>
           </Card>
-          <Card className="bg-yellow-50/50">
+          <Card className="bg-red-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Perlu Atensi</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Kondisi Rusak</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="text-2xl font-bold text-yellow-700">{dummyData.filter(d => d.status === "Rusak Ringan" || d.status === "Rusak Berat").length}</div>
+              <div className="text-2xl font-bold text-red-700">{dummyData.filter(d => d.status === "Rusak").length}</div>
             </CardContent>
           </Card>
           <Card className="bg-blue-50/50">
@@ -332,15 +355,6 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0">
               <div className="text-2xl font-bold text-blue-700">{dummyData.filter(d => d.status === "Dalam Perbaikan").length}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-purple-50/50">
-            <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Menunggu Verifikasi</CardTitle>
-              <CheckCircle className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="text-2xl font-bold text-purple-700">{dummyData.filter(d => d.status === "Selesai (Verifikasi)").length}</div>
             </CardContent>
           </Card>
         </div>
@@ -374,7 +388,7 @@ export default function StatusKondisiPage() {
                     <DropdownMenuLabel>Opsi Pengurutan</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setSortOrder("none")}>Default</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortOrder("priority")}>Rusak Berat Teratas</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("priority")}>Rusak Teratas</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setSortOrder("priority-desc")}>Kondisi Baik Teratas</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -410,7 +424,7 @@ export default function StatusKondisiPage() {
                             <TableCell className="font-mono text-xs font-bold">{item.id}</TableCell>
                             <TableCell className="font-medium">
                                 <div>{item.name}</div>
-                                <div className="text-[10px] text-muted-foreground italic">{item.description.substring(0, 30)}...</div>
+                                <DescriptionCell text={item.description} />
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
@@ -527,10 +541,8 @@ export default function StatusKondisiPage() {
                           <SelectValue placeholder="Pilih Status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Rusak Ringan">Rusak Ringan</SelectItem>
-                          <SelectItem value="Rusak Berat">Rusak Berat</SelectItem>
+                          <SelectItem value="Rusak">Rusak</SelectItem>
                           <SelectItem value="Dalam Perbaikan">Sedang Dikerjakan</SelectItem>
-                          <SelectItem value="Selesai (Verifikasi)">Selesai & Cek Ulang</SelectItem>
                           <SelectItem value="Baik">Selesai & Kembali Baik</SelectItem>
                         </SelectContent>
                       </Select>

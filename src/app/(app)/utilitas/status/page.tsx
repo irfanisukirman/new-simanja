@@ -322,7 +322,7 @@ export default function StatusKondisiPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => window.print()} className="hidden sm:flex">
-              <Printer className="mr-2 h-4 w-4" /> PDF
+              <Printer className="mr-2 h-4 w-4" /> Cetak PDF
             </Button>
             <Button size="sm" onClick={handleExportExcel} className="bg-success hover:bg-success/90">
               <FileDown className="mr-2 h-4 w-4" /> Excel
@@ -723,7 +723,7 @@ export default function StatusKondisiPage() {
       <style jsx global>{`
         @media print {
           @page {
-            size: A4 portrait;
+            size: A4 landscape;
             margin: 1cm;
           }
           

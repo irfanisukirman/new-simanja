@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from "react"
@@ -26,12 +27,9 @@ import {
   Building,
   Home,
   ArrowUpDown,
-  SortAsc,
-  SortDesc,
   Wrench,
   History,
   Clock,
-  CheckCircle,
   Plus,
   Trash2,
   UserCheck,
@@ -63,6 +61,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import * as XLSX from "xlsx"
@@ -86,7 +91,7 @@ interface RoomStatus {
   name: string;
   building: string;
   category: "Wisma" | "Tower A" | "Tower B";
-  status: "Baik" | "Rusak Ringan" | "Rusak Berat" | "Dalam Perbaikan" | "Selesai (Verifikasi)";
+  status: "Baik" | "Dalam Perbaikan" | "Rusak";
   description: string;
   lastChecked: string;
   pic: UnitPIC;
@@ -106,8 +111,8 @@ const dummyData: RoomStatus[] = [
     name: "Blok A-1", 
     building: "Wisma", 
     category: "Wisma", 
-    status: "Rusak Ringan", 
-    description: "Atap bocor halus di area teras", 
+    status: "Rusak", 
+    description: "Atap bocor halus di area teras depan wisma yang mengakibatkan air merembes ke plafon saat hujan deras.", 
     lastChecked: "05-06-2026",
     pic: { name: "Udin Syarifuddin", contact: "0812-1111-2222", role: "PJ Wisma Blok A" },
     logs: [
@@ -120,7 +125,7 @@ const dummyData: RoomStatus[] = [
     building: "Wisma", 
     category: "Wisma", 
     status: "Baik", 
-    description: "Kondisi sangat baik", 
+    description: "Kondisi sangat baik.", 
     lastChecked: "05-06-2026",
     pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: []
@@ -131,7 +136,7 @@ const dummyData: RoomStatus[] = [
     building: "Wisma", 
     category: "Wisma", 
     status: "Dalam Perbaikan", 
-    description: "Plafon kamar mandi jebol", 
+    description: "Plafon kamar mandi jebol akibat kebocoran pipa saluran air dari lantai atas.", 
     lastChecked: "04-06-2026",
     pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: [
@@ -145,8 +150,8 @@ const dummyData: RoomStatus[] = [
     name: "Kamar A-321", 
     building: "Tower A", 
     category: "Tower A", 
-    status: "Rusak Berat", 
-    description: "AC tidak dingin & dinding rembes air", 
+    status: "Rusak", 
+    description: "AC tidak dingin & dinding rembes air dari sisi luar gedung saat hujan disertai angin kencang.", 
     lastChecked: "02-06-2026",
     pic: { name: "Siti Aminah", contact: "0878-5555-6666", role: "PJ Tower A" },
     logs: [
@@ -158,13 +163,13 @@ const dummyData: RoomStatus[] = [
     name: "Kamar B-102", 
     building: "Tower B", 
     category: "Tower B", 
-    status: "Selesai (Verifikasi)", 
-    description: "Kran air patah", 
+    status: "Dalam Perbaikan", 
+    description: "Kran air patah di wastafel kamar mandi utama.", 
     lastChecked: "06-06-2026",
     pic: { name: "Ahmad Fauzi", contact: "0813-7777-8888", role: "PJ Tower B" },
     logs: [
       { date: "02-06-2026 10:00", action: "Kerusakan Kran Air", user: "Admin" },
-      { date: "06-06-2026 11:00", action: "Penggantian Kran Selesai", user: "Teknisi" }
+      { date: "06-06-2026 11:00", action: "Pengerjaan penggantian unit kran baru", user: "Teknisi" }
     ]
   },
 ];
@@ -173,25 +178,43 @@ const getStatusBadge = (status: RoomStatus["status"]) => {
   switch (status) {
     case "Baik":
       return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200"><CheckCircle2 className="mr-1 h-3 w-3" /> Baik</Badge>;
-    case "Rusak Ringan":
-      return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak Ringan</Badge>;
-    case "Rusak Berat":
-      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak Berat</Badge>;
+    case "Rusak":
+      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak</Badge>;
     case "Dalam Perbaikan":
       return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"><Clock className="mr-1 h-3 w-3" /> Dalam Perbaikan</Badge>;
-    case "Selesai (Verifikasi)":
-      return <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 border-purple-200"><CheckCircle className="mr-1 h-3 w-3" /> Selesai (Verifikasi)</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
 };
 
 const statusPriority = {
-  "Rusak Berat": 0,
+  "Rusak": 0,
   "Dalam Perbaikan": 1,
-  "Selesai (Verifikasi)": 2,
-  "Rusak Ringan": 3,
-  "Baik": 4
+  "Baik": 2
+};
+
+const DescriptionCell = ({ text }: { text: string }) => {
+  const isLong = text.length > 50;
+  if (!isLong) return <div className="text-[10px] text-muted-foreground italic">{text}</div>;
+
+  return (
+    <div className="text-[10px] text-muted-foreground italic">
+      {text.substring(0, 47)}...
+      <Dialog>
+        <DialogTrigger asChild>
+          <button className="ml-1 text-primary hover:underline font-bold print:hidden">Lihat Selengkapnya</button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Deskripsi Kerusakan Lengkap</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-sm leading-relaxed">
+            {text}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 };
 
 export default function StatusKondisiPage() {
@@ -226,7 +249,7 @@ export default function StatusKondisiPage() {
   }, [searchTerm, activeCategory, sortOrder]);
 
   const handleExportExcel = () => {
-    const dataToExport = filteredAndSortedData.map(item => ({
+    const dataToExport = dummyData.map(item => ({
       "ID Unit": item.id,
       "Nama Unit": item.name,
       "Bangunan": item.building,
@@ -238,13 +261,13 @@ export default function StatusKondisiPage() {
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Status Kondisi");
-    XLSX.writeFile(workbook, `Status_Kondisi_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Status Kondisi Lengkap");
+    XLSX.writeFile(workbook, `Status_Kondisi_Lengkap_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
     
     toast({
       variant: "success",
       title: "Ekspor Berhasil",
-      description: "Data status kondisi telah diunduh.",
+      description: "Seluruh data status kondisi telah diunduh.",
     });
   };
 
@@ -289,8 +312,9 @@ export default function StatusKondisiPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24 text-foreground">
+    <div className="flex min-h-screen flex-col relative">
+      {/* Main UI - Hidden when printing */}
+      <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24 text-foreground print:hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight">Status Kondisi Bangunan</h1>
@@ -298,7 +322,7 @@ export default function StatusKondisiPage() {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => window.print()} className="hidden sm:flex">
-              <Printer className="mr-2 h-4 w-4" /> PDF
+              <Printer className="mr-2 h-4 w-4" /> Cetak PDF
             </Button>
             <Button size="sm" onClick={handleExportExcel} className="bg-success hover:bg-success/90">
               <FileDown className="mr-2 h-4 w-4" /> Excel
@@ -306,7 +330,7 @@ export default function StatusKondisiPage() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <Card className="bg-green-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
               <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Kondisi Baik</CardTitle>
@@ -316,13 +340,13 @@ export default function StatusKondisiPage() {
               <div className="text-2xl font-bold text-green-700">{dummyData.filter(d => d.status === "Baik").length}</div>
             </CardContent>
           </Card>
-          <Card className="bg-yellow-50/50">
+          <Card className="bg-red-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Perlu Atensi</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Kondisi Rusak</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="text-2xl font-bold text-yellow-700">{dummyData.filter(d => d.status === "Rusak Ringan" || d.status === "Rusak Berat").length}</div>
+              <div className="text-2xl font-bold text-red-700">{dummyData.filter(d => d.status === "Rusak").length}</div>
             </CardContent>
           </Card>
           <Card className="bg-blue-50/50">
@@ -332,15 +356,6 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0">
               <div className="text-2xl font-bold text-blue-700">{dummyData.filter(d => d.status === "Dalam Perbaikan").length}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-purple-50/50">
-            <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
-              <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Menunggu Verifikasi</CardTitle>
-              <CheckCircle className="h-4 w-4 text-purple-600" />
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <div className="text-2xl font-bold text-purple-700">{dummyData.filter(d => d.status === "Selesai (Verifikasi)").length}</div>
             </CardContent>
           </Card>
         </div>
@@ -374,7 +389,7 @@ export default function StatusKondisiPage() {
                     <DropdownMenuLabel>Opsi Pengurutan</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setSortOrder("none")}>Default</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortOrder("priority")}>Rusak Berat Teratas</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("priority")}>Rusak Teratas</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setSortOrder("priority-desc")}>Kondisi Baik Teratas</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -410,7 +425,7 @@ export default function StatusKondisiPage() {
                             <TableCell className="font-mono text-xs font-bold">{item.id}</TableCell>
                             <TableCell className="font-medium">
                                 <div>{item.name}</div>
-                                <div className="text-[10px] text-muted-foreground italic">{item.description.substring(0, 30)}...</div>
+                                <DescriptionCell text={item.description} />
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
@@ -527,10 +542,8 @@ export default function StatusKondisiPage() {
                           <SelectValue placeholder="Pilih Status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Rusak Ringan">Rusak Ringan</SelectItem>
-                          <SelectItem value="Rusak Berat">Rusak Berat</SelectItem>
+                          <SelectItem value="Rusak">Rusak</SelectItem>
                           <SelectItem value="Dalam Perbaikan">Sedang Dikerjakan</SelectItem>
-                          <SelectItem value="Selesai (Verifikasi)">Selesai & Cek Ulang</SelectItem>
                           <SelectItem value="Baik">Selesai & Kembali Baik</SelectItem>
                         </SelectContent>
                       </Select>
@@ -649,19 +662,114 @@ export default function StatusKondisiPage() {
           </div>
         </Card>
       </footer>
+
+      {/* PRINT-ONLY SECTION: Optimized for browser print engine */}
+      <div id="print-area" className="hidden print:block p-8 bg-white text-black w-full min-h-screen">
+        <header className="text-center mb-8 border-b-2 border-black pb-4">
+          <h1 className="text-2xl font-bold uppercase">Laporan Status Kondisi Bangunan</h1>
+          <h2 className="text-lg font-semibold uppercase text-slate-700">Wisma & Tower A/B BPSDM Provinsi Jawa Barat</h2>
+          <p className="text-sm mt-2 text-slate-500">Tanggal Laporan: {format(new Date(), 'dd MMMM yyyy')}</p>
+        </header>
+
+        <table className="w-full border-collapse border border-black text-xs">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-black p-2 text-center w-[80px]">ID Unit</th>
+              <th className="border border-black p-2 text-left">Nama Unit / Bangunan</th>
+              <th className="border border-black p-2 text-left">PIC Penanggung Jawab</th>
+              <th className="border border-black p-2 text-center">Status Kondisi</th>
+              <th className="border border-black p-2 text-left w-[30%]">Deskripsi Kerusakan</th>
+              <th className="border border-black p-2 text-center">Tgl Cek</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dummyData.map((item) => (
+              <tr key={item.id}>
+                <td className="border border-black p-2 text-center font-mono font-bold">{item.id}</td>
+                <td className="border border-black p-2">
+                  <div className="font-bold">{item.name}</div>
+                  <div className="text-[10px] text-gray-600">{item.building}</div>
+                </td>
+                <td className="border border-black p-2 text-left">
+                  <div className="font-bold">{item.pic.name}</div>
+                  <div className="text-[10px]">{item.pic.role}</div>
+                </td>
+                <td className="border border-black p-2 text-center font-bold">
+                  {item.status.toUpperCase()}
+                </td>
+                <td className="border border-black p-2 text-[10px] italic leading-relaxed">
+                  {item.status === "Baik" ? "-" : item.description}
+                </td>
+                <td className="border border-black p-2 text-center">{item.lastChecked}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <footer className="mt-12 grid grid-cols-2 gap-8 text-xs">
+          <div className="text-center">
+            <p className="mb-16">Mengetahui,</p>
+            <p className="font-bold underline uppercase">(_________________________)</p>
+            <p className="mt-1">Kepala Bagian Umum</p>
+          </div>
+          <div className="text-center">
+            <p className="mb-16">Dibuat Oleh,</p>
+            <p className="font-bold underline uppercase">(_________________________)</p>
+            <p className="mt-1">Admin Utilitas</p>
+          </div>
+        </footer>
+      </div>
       
       <style jsx global>{`
         @media print {
-          .sidebar-trigger, footer, .print:hidden, .sidebar {
+          @page {
+            size: A4 landscape;
+            margin: 1cm;
+          }
+          
+          /* Reset Sidebar and UI positioning specifically for the Sidebar wrapper and inset */
+          [data-sidebar="sidebar"], 
+          aside, 
+          nav, 
+          header, 
+          footer, 
+          button, 
+          [role="tablist"], 
+          .print\:hidden {
             display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            overflow: hidden !important;
           }
-          main {
+
+          /* Force Main container to fill the whole width by removing the left margin */
+          main.ml-72, 
+          .ml-72 {
+            margin-left: 0 !important;
             padding: 0 !important;
-            margin: 0 !important;
+            width: 100% !important;
           }
-          .card {
-            border: none !important;
-            box-shadow: none !important;
+          
+          /* Reset root background for clear PDF */
+          body, html {
+            background-color: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            width: 100% !important;
+          }
+
+          /* Show only the print area */
+          #print-area {
+            display: block !important;
+            visibility: visible !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            z-index: 9999 !important;
           }
         }
       `}</style>

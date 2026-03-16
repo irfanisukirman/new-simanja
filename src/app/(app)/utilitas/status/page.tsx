@@ -312,7 +312,8 @@ export default function StatusKondisiPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col relative">
+      {/* Main UI - Hidden when printing */}
       <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24 text-foreground print:hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -654,12 +655,20 @@ export default function StatusKondisiPage() {
         </Sheet>
       </main>
 
-      {/* PRINT-ONLY SECTION: Full Data Report */}
-      <div className="hidden print:block p-8 bg-white text-black min-h-screen">
+      <footer className="sticky bottom-0 z-10 w-full bg-background/95 backdrop-blur-sm print:hidden">
+        <Card className="rounded-none border-0 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            <p>© 2026 BPSDM Provinsi Jawa Barat. Developed by Irfan Irawan Sukirman. SIMANJA. All rights reserved.</p>
+          </div>
+        </Card>
+      </footer>
+
+      {/* PRINT-ONLY SECTION: Optimized for browser print engine */}
+      <div id="print-area" className="hidden print:block p-8 bg-white text-black w-full min-h-screen">
         <header className="text-center mb-8 border-b-2 border-black pb-4">
           <h1 className="text-2xl font-bold uppercase">Laporan Status Kondisi Bangunan</h1>
-          <h2 className="text-lg font-semibold uppercase">Wisma & Tower A/B BPSDM Provinsi Jawa Barat</h2>
-          <p className="text-sm mt-2">Tanggal Laporan: {format(new Date(), 'dd MMMM yyyy')}</p>
+          <h2 className="text-lg font-semibold uppercase text-slate-700">Wisma & Tower A/B BPSDM Provinsi Jawa Barat</h2>
+          <p className="text-sm mt-2 text-slate-500">Tanggal Laporan: {format(new Date(), 'dd MMMM yyyy')}</p>
         </header>
 
         <table className="w-full border-collapse border border-black text-xs">
@@ -688,7 +697,7 @@ export default function StatusKondisiPage() {
                 <td className="border border-black p-2 text-center font-bold">
                   {item.status.toUpperCase()}
                 </td>
-                <td className="border border-black p-2 text-[10px] italic">
+                <td className="border border-black p-2 text-[10px] italic leading-relaxed">
                   {item.status === "Baik" ? "-" : item.description}
                 </td>
                 <td className="border border-black p-2 text-center">{item.lastChecked}</td>
@@ -699,53 +708,53 @@ export default function StatusKondisiPage() {
 
         <footer className="mt-12 grid grid-cols-2 gap-8 text-xs">
           <div className="text-center">
-            <p>Mengetahui,</p>
-            <p className="mt-16 font-bold underline">(_________________________)</p>
-            <p>Kepala Bagian Umum</p>
+            <p className="mb-16">Mengetahui,</p>
+            <p className="font-bold underline uppercase">(_________________________)</p>
+            <p className="mt-1">Kepala Bagian Umum</p>
           </div>
           <div className="text-center">
-            <p>Dibuat Oleh,</p>
-            <p className="mt-16 font-bold underline">(_________________________)</p>
-            <p>Admin Utilitas</p>
+            <p className="mb-16">Dibuat Oleh,</p>
+            <p className="font-bold underline uppercase">(_________________________)</p>
+            <p className="mt-1">Admin Utilitas</p>
           </div>
         </footer>
       </div>
-
-      <footer className="sticky bottom-0 z-10 w-full bg-background/95 backdrop-blur-sm print:hidden">
-        <Card className="rounded-none border-0 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            <p>© 2026 BPSDM Provinsi Jawa Barat. Developed by Irfan Irawan Sukirman. SIMANJA. All rights reserved.</p>
-          </div>
-        </Card>
-      </footer>
       
       <style jsx global>{`
         @media print {
-          /* Sembunyikan SEMUA elemen UI aplikasi */
-          body * {
-            visibility: hidden;
-          }
-          /* Tampilkan hanya section print */
-          .print\:block, .print\:block * {
-            visibility: visible;
-          }
-          .print\:block {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            display: block !important;
-          }
-          /* Perbaikan layout cetak */
           @page {
             size: A4 portrait;
-            margin: 1.5cm;
+            margin: 1cm;
           }
-          footer, .sidebar, header, nav, button, .tabs-list {
+          
+          /* Reset Sidebar and UI positioning */
+          .ml-72 {
+            margin-left: 0 !important;
+          }
+          
+          /* Force hide elements that shouldn't be in PDF */
+          aside, nav, header, footer, button, [role="tablist"], .print\:hidden {
             display: none !important;
           }
-          main {
-            display: none !important;
+          
+          /* Reset root background for clear PDF */
+          body, html {
+            background-color: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            width: 100% !important;
+          }
+
+          /* Show only the print area */
+          #print-area {
+            display: block !important;
+            visibility: visible !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
           }
         }
       `}</style>

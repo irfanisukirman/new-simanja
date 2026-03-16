@@ -76,6 +76,7 @@ import { Separator } from "@/components/ui/separator"
 import * as XLSX from "xlsx"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface MaintenanceLog {
   date: string;

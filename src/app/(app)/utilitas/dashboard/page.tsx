@@ -10,7 +10,12 @@ import {
   TrendingUp, 
   CreditCard,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Home,
+  Building,
+  Users,
+  AlertTriangle,
+  CheckCircle2
 } from "lucide-react"
 import {
   Table,
@@ -43,12 +48,6 @@ const usageData = [
   { month: "Apr", listrik: 6100000, air: 1300000, komunikasi: 900000 },
   { month: "Mei", listrik: 5500000, air: 1400000, komunikasi: 850000 },
   { month: "Jun", listrik: 5900000, air: 1250000, komunikasi: 800000 },
-  { month: "Jul", listrik: 0, air: 0, komunikasi: 0 },
-  { month: "Agu", listrik: 0, air: 0, komunikasi: 0 },
-  { month: "Sep", listrik: 0, air: 0, komunikasi: 0 },
-  { month: "Okt", listrik: 0, air: 0, komunikasi: 0 },
-  { month: "Nov", listrik: 0, air: 0, komunikasi: 0 },
-  { month: "Des", listrik: 0, air: 0, komunikasi: 0 },
 ]
 
 const chartConfig = {
@@ -70,22 +69,83 @@ const paymentStatus = [
   { id: 1, utility: "Listrik", period: "Juni 2026", amount: 5900000, status: "Lunas", date: "05-06-2026" },
   { id: 2, utility: "Air", period: "Juni 2026", amount: 1250000, status: "Lunas", date: "07-06-2026" },
   { id: 3, utility: "Komunikasi", period: "Juni 2026", amount: 800000, status: "Proses", date: "-" },
-  { id: 4, utility: "Listrik", period: "Mei 2026", amount: 5500000, status: "Lunas", date: "04-05-2026" },
 ]
 
 export default function UtilitasDashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <main className="flex-1 space-y-4 p-4 pt-6 md:p-8 pb-24">
+      <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24">
         <div className="flex items-center justify-between space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard Utilitas</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard Utilitas & Fasilitas</h1>
         </div>
 
-        {/* Stat Cards */}
+        {/* Statistik Hunian & Fasilitas */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Statistik Wisma</CardTitle>
+              <Home className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">12 / 15</div>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-50 text-[10px]">12 Terisi</Badge>
+                <Badge variant="secondary" className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[10px]">3 Kosong</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-indigo-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Kamar Tower (A & B)</CardTitle>
+              <Building className="h-4 w-4 text-indigo-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">156 / 200</div>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-50 text-[10px]">156 Terisi</Badge>
+                <Badge variant="secondary" className="bg-slate-100 text-slate-600 hover:bg-slate-100 text-[10px]">44 Kosong</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Penghuni</CardTitle>
+              <Users className="h-4 w-4 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">428</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Orang saat ini menetap
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Kondisi Fisik</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">8</div>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] flex items-center text-red-600 font-medium">
+                   5 Rusak
+                </span>
+                <span className="text-[10px] flex items-center text-blue-600 font-medium">
+                   3 Perbaikan
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Biaya Utilitas Cards */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Biaya Listrik Bulan Ini</CardTitle>
+              <CardTitle className="text-sm font-medium">Biaya Listrik (Juni)</CardTitle>
               <div className="rounded-full bg-yellow-100 p-2 text-yellow-600">
                 <Zap className="h-4 w-4" />
               </div>
@@ -102,7 +162,7 @@ export default function UtilitasDashboardPage() {
           </Card>
           <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Biaya Air Bulan Ini</CardTitle>
+              <CardTitle className="text-sm font-medium">Biaya Air (Juni)</CardTitle>
               <div className="rounded-full bg-blue-100 p-2 text-blue-600">
                 <Droplets className="h-4 w-4" />
               </div>
@@ -119,7 +179,7 @@ export default function UtilitasDashboardPage() {
           </Card>
           <Card className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Biaya Komunikasi Bulan Ini</CardTitle>
+              <CardTitle className="text-sm font-medium">Komunikasi (Juni)</CardTitle>
               <div className="rounded-full bg-purple-100 p-2 text-purple-600">
                 <Phone className="h-4 w-4" />
               </div>
@@ -142,9 +202,9 @@ export default function UtilitasDashboardPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Grafik Pemakaian Utilitas (12 Bulan)
+                Tren Pengeluaran Utilitas Bulanan
               </CardTitle>
-              <CardDescription>Visualisasi pengeluaran bulanan untuk listrik, air, dan komunikasi sepanjang tahun.</CardDescription>
+              <CardDescription>Visualisasi perbandingan pengeluaran operasional.</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
               <ChartContainer config={chartConfig} className="h-[350px] w-full">
@@ -188,7 +248,7 @@ export default function UtilitasDashboardPage() {
                 <CreditCard className="h-4 w-4" />
                 Status Pembayaran Terakhir
               </CardTitle>
-              <CardDescription>Ringkasan transaksi pembayaran utilitas terbaru.</CardDescription>
+              <CardDescription>Ringkasan transaksi pembayaran terbaru.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -203,14 +263,14 @@ export default function UtilitasDashboardPage() {
                   {paymentStatus.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <div className="font-medium">{item.utility}</div>
-                        <div className="text-xs text-muted-foreground">{item.period}</div>
+                        <div className="font-medium text-xs">{item.utility}</div>
+                        <div className="text-[10px] text-muted-foreground">{item.period}</div>
                       </TableCell>
-                      <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
+                      <TableCell className="text-right text-xs font-semibold">{formatCurrency(item.amount)}</TableCell>
                       <TableCell className="text-center">
                         <Badge 
                           variant={item.status === "Lunas" ? "default" : "secondary"}
-                          className={item.status === "Lunas" ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"}
+                          className={item.status === "Lunas" ? "bg-green-100 text-green-700 hover:bg-green-100 text-[10px]" : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-[10px]"}
                         >
                           {item.status}
                         </Badge>

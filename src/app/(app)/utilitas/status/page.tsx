@@ -35,7 +35,9 @@ import {
   UserCheck,
   PackageOpen,
   User,
-  PhoneCall
+  PhoneCall,
+  Users,
+  UserCircle
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -68,11 +70,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import * as XLSX from "xlsx"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface MaintenanceLog {
   date: string;
@@ -86,6 +90,11 @@ interface UnitPIC {
   role: string;
 }
 
+interface Inhabitant {
+  name: string;
+  nip: string;
+}
+
 interface RoomStatus {
   id: string;
   name: string;
@@ -95,6 +104,8 @@ interface RoomStatus {
   description: string;
   lastChecked: string;
   pic: UnitPIC;
+  capacity: number;
+  inhabitants: Inhabitant[];
   logs: MaintenanceLog[];
 }
 
@@ -114,6 +125,12 @@ const dummyData: RoomStatus[] = [
     status: "Rusak", 
     description: "Atap bocor halus di area teras depan wisma yang mengakibatkan air merembes ke plafon saat hujan deras.", 
     lastChecked: "05-06-2026",
+    capacity: 6,
+    inhabitants: [
+      { name: "Budi Santoso", nip: "198801012015011001" },
+      { name: "Agus Setiawan", nip: "198902022016021002" },
+      { name: "Dedi Kurniawan", nip: "199003032017031003" }
+    ],
     pic: { name: "Udin Syarifuddin", contact: "0812-1111-2222", role: "PJ Wisma Blok A" },
     logs: [
       { date: "05-06-2026 09:00", action: "Kerusakan dilaporkan oleh Irfan", user: "Irfan I." }
@@ -127,6 +144,11 @@ const dummyData: RoomStatus[] = [
     status: "Baik", 
     description: "Kondisi sangat baik.", 
     lastChecked: "05-06-2026",
+    capacity: 8,
+    inhabitants: [
+      { name: "Siti Aminah", nip: "199204042018042004" },
+      { name: "Ratna Sari", nip: "199305052019052005" }
+    ],
     pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: []
   },
@@ -138,6 +160,13 @@ const dummyData: RoomStatus[] = [
     status: "Dalam Perbaikan", 
     description: "Plafon kamar mandi jebol akibat kebocoran pipa saluran air dari lantai atas.", 
     lastChecked: "04-06-2026",
+    capacity: 8,
+    inhabitants: [
+      { name: "Iwan Fals", nip: "198506062010061006" },
+      { name: "Ebiet G. Ade", nip: "198607072011071007" },
+      { name: "Chrisye", nip: "198708082012081008" },
+      { name: "Nike Ardilla", nip: "198809092013092009" }
+    ],
     pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
     logs: [
       { date: "04-06-2026 10:00", action: "Kerusakan dilaporkan", user: "Admin" },
@@ -153,6 +182,10 @@ const dummyData: RoomStatus[] = [
     status: "Rusak", 
     description: "AC tidak dingin & dinding rembes air dari sisi luar gedung saat hujan disertai angin kencang.", 
     lastChecked: "02-06-2026",
+    capacity: 2,
+    inhabitants: [
+      { name: "Ahmad Dhani", nip: "199010102020101010" }
+    ],
     pic: { name: "Siti Aminah", contact: "0878-5555-6666", role: "PJ Tower A" },
     logs: [
        { date: "02-06-2026 11:00", action: "Laporan tamu: AC Mati", user: "Resepsionis" }
@@ -166,6 +199,10 @@ const dummyData: RoomStatus[] = [
     status: "Dalam Perbaikan", 
     description: "Kran air patah di wastafel kamar mandi utama.", 
     lastChecked: "06-06-2026",
+    capacity: 1,
+    inhabitants: [
+      { name: "Once Mekel", nip: "199111112021111011" }
+    ],
     pic: { name: "Ahmad Fauzi", contact: "0813-7777-8888", role: "PJ Tower B" },
     logs: [
       { date: "02-06-2026 10:00", action: "Kerusakan Kran Air", user: "Admin" },
@@ -254,6 +291,7 @@ export default function StatusKondisiPage() {
       "Nama Unit": item.name,
       "Bangunan": item.building,
       "PIC Unit": item.pic.name,
+      "Keterisian": `${item.inhabitants.length}/${item.capacity}`,
       "Kondisi": item.status,
       "Deskripsi Kerusakan": item.description,
       "Terakhir Dicek": item.lastChecked
@@ -412,6 +450,7 @@ export default function StatusKondisiPage() {
                       <TableRow className="bg-muted/50">
                         <TableHead className="w-[100px]">ID Unit</TableHead>
                         <TableHead>Nama Unit</TableHead>
+                        <TableHead>Keterisian</TableHead>
                         <TableHead>PIC Penanggung Jawab</TableHead>
                         <TableHead>Kondisi</TableHead>
                         <TableHead className="text-center">Tgl Cek</TableHead>
@@ -426,6 +465,43 @@ export default function StatusKondisiPage() {
                             <TableCell className="font-medium">
                                 <div>{item.name}</div>
                                 <DescriptionCell text={item.description} />
+                            </TableCell>
+                            <TableCell>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Badge 
+                                            variant="secondary" 
+                                            className={cn(
+                                                "cursor-pointer hover:bg-primary hover:text-white transition-colors",
+                                                item.inhabitants.length >= item.capacity ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
+                                            )}
+                                        >
+                                            <Users className="mr-1 h-3 w-3" />
+                                            {item.inhabitants.length}/{item.capacity}
+                                        </Badge>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-0" align="start">
+                                        <div className="bg-muted/50 p-3 border-b">
+                                            <h4 className="font-semibold text-xs uppercase flex items-center gap-2">
+                                                <Users className="h-3 w-3" /> Daftar Penghuni
+                                            </h4>
+                                        </div>
+                                        <div className="p-2">
+                                            {item.inhabitants.length > 0 ? (
+                                                <div className="space-y-1">
+                                                    {item.inhabitants.map((p, i) => (
+                                                        <div key={i} className="flex flex-col p-2 rounded hover:bg-accent text-xs">
+                                                            <span className="font-bold">{p.name}</span>
+                                                            <span className="text-muted-foreground font-mono">NIP. {p.nip}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="p-4 text-center text-xs text-muted-foreground">Kamar Kosong</div>
+                                            )}
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-2">
@@ -461,7 +537,7 @@ export default function StatusKondisiPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">Data tidak ditemukan.</TableCell>
+                          <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">Data tidak ditemukan.</TableCell>
                         </TableRow>
                       )}
                     </TableBody>
@@ -512,6 +588,32 @@ export default function StatusKondisiPage() {
                             <p className="font-mono">{selectedUnit.pic.contact}</p>
                         </div>
                     </div>
+                </div>
+
+                {/* Info Penghuni di Sheet */}
+                <div className="border rounded-lg p-4 bg-muted/30">
+                    <div className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2 mb-3">
+                        <Users className="h-3.5 w-3.5" /> Informasi Penghuni Kamar
+                    </div>
+                    {selectedUnit.inhabitants.length > 0 ? (
+                        <div className="grid gap-2">
+                            {selectedUnit.inhabitants.map((p, i) => (
+                                <div key={i} className="flex items-center gap-3 bg-white p-2 rounded border shadow-sm">
+                                    <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs border">
+                                        {i + 1}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-xs font-bold">{p.name}</span>
+                                        <span className="text-[10px] text-muted-foreground font-mono">NIP. {p.nip}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-4 text-xs text-muted-foreground italic border border-dashed rounded bg-white">
+                            Tidak ada penghuni saat ini.
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 rounded-lg bg-accent/30 p-4 border border-blue-100">
@@ -663,7 +765,7 @@ export default function StatusKondisiPage() {
         </Card>
       </footer>
 
-      {/* PRINT-ONLY SECTION: Optimized for browser print engine */}
+      {/* PRINT-ONLY SECTION */}
       <div id="print-area" className="hidden print:block p-8 bg-white text-black w-full min-h-screen">
         <header className="text-center mb-8 border-b-2 border-black pb-4">
           <h1 className="text-2xl font-bold uppercase">Laporan Status Kondisi Bangunan</h1>
@@ -676,9 +778,10 @@ export default function StatusKondisiPage() {
             <tr className="bg-gray-100">
               <th className="border border-black p-2 text-center w-[80px]">ID Unit</th>
               <th className="border border-black p-2 text-left">Nama Unit / Bangunan</th>
+              <th className="border border-black p-2 text-center">Keterisian</th>
               <th className="border border-black p-2 text-left">PIC Penanggung Jawab</th>
               <th className="border border-black p-2 text-center">Status Kondisi</th>
-              <th className="border border-black p-2 text-left w-[30%]">Deskripsi Kerusakan</th>
+              <th className="border border-black p-2 text-left w-[25%]">Deskripsi Kerusakan</th>
               <th className="border border-black p-2 text-center">Tgl Cek</th>
             </tr>
           </thead>
@@ -689,6 +792,9 @@ export default function StatusKondisiPage() {
                 <td className="border border-black p-2">
                   <div className="font-bold">{item.name}</div>
                   <div className="text-[10px] text-gray-600">{item.building}</div>
+                </td>
+                <td className="border border-black p-2 text-center">
+                    {item.inhabitants.length}/{item.capacity}
                 </td>
                 <td className="border border-black p-2 text-left">
                   <div className="font-bold">{item.pic.name}</div>
@@ -727,7 +833,6 @@ export default function StatusKondisiPage() {
             margin: 1cm;
           }
           
-          /* Reset Sidebar and UI positioning specifically for the Sidebar wrapper and inset */
           [data-sidebar="sidebar"], 
           aside, 
           nav, 
@@ -743,7 +848,6 @@ export default function StatusKondisiPage() {
             overflow: hidden !important;
           }
 
-          /* Force Main container to fill the whole width by removing the left margin */
           main.ml-72, 
           .ml-72 {
             margin-left: 0 !important;
@@ -751,7 +855,6 @@ export default function StatusKondisiPage() {
             width: 100% !important;
           }
           
-          /* Reset root background for clear PDF */
           body, html {
             background-color: white !important;
             color: black !important;
@@ -761,7 +864,6 @@ export default function StatusKondisiPage() {
             width: 100% !important;
           }
 
-          /* Show only the print area */
           #print-area {
             display: block !important;
             visibility: visible !important;

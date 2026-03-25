@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react"
@@ -27,7 +28,6 @@ import {
   Home,
   ArrowUpDown,
   Wrench,
-  History,
   Clock,
   Plus,
   Trash2,
@@ -35,9 +35,7 @@ import {
   PackageOpen,
   User,
   PhoneCall,
-  Users,
   PlusCircle,
-  Loader2
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -73,7 +71,6 @@ import {
   DialogFooter
 } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import * as XLSX from "xlsx"
@@ -120,7 +117,7 @@ interface NeededMaterial {
 }
 
 const getStatusBadge = (status: string) => {
-  const normalizedStatus = status.toUpperCase();
+  const normalizedStatus = (status || "").toUpperCase();
   switch (normalizedStatus) {
     case "BAIK":
       return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200"><CheckCircle2 className="mr-1 h-3 w-3" /> Baik</Badge>;
@@ -139,30 +136,6 @@ const statusPriority: Record<string, number> = {
   "DALAM_PERBAIKAN": 1,
   "DALAM PERBAIKAN": 1,
   "BAIK": 2
-};
-
-const DescriptionCell = ({ text }: { text: string }) => {
-  const isLong = text.length > 50;
-  if (!isLong) return <div className="text-[10px] text-muted-foreground italic">{text}</div>;
-
-  return (
-    <div className="text-[10px] text-muted-foreground italic">
-      {text.substring(0, 47)}...
-      <Dialog>
-        <DialogTrigger asChild>
-          <button className="ml-1 text-primary hover:underline font-bold print:hidden">Lihat Selengkapnya</button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Deskripsi Kerusakan Lengkap</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 text-sm leading-relaxed">
-            {text}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
 };
 
 export default function StatusKondisiPage() {
@@ -206,6 +179,7 @@ export default function StatusKondisiPage() {
     } catch (error: any) {
       console.error("Failed to fetch summary", error);
     } finally {
+      // Small artificial delay to ensure the pulse animation is noticeable
       setTimeout(() => {
         setIsSummaryLoading(false);
       }, 700);
@@ -233,6 +207,7 @@ export default function StatusKondisiPage() {
         description: "Terjadi kesalahan saat menghubungi server."
       });
     } finally {
+      // Artificial delay for smooth UX transition
       setTimeout(() => {
         setIsUnitsLoading(false);
       }, 1000);
@@ -259,9 +234,9 @@ export default function StatusKondisiPage() {
     });
 
     if (sortOrder === "priority") {
-      result.sort((a, b) => statusPriority[a.condition_status.toUpperCase()] - statusPriority[b.condition_status.toUpperCase()]);
+      result.sort((a, b) => statusPriority[(a.condition_status || "").toUpperCase()] - statusPriority[(b.condition_status || "").toUpperCase()]);
     } else if (sortOrder === "priority-desc") {
-      result.sort((a, b) => statusPriority[b.condition_status.toUpperCase()] - statusPriority[a.condition_status.toUpperCase()]);
+      result.sort((a, b) => statusPriority[(b.condition_status || "").toUpperCase()] - statusPriority[(a.condition_status || "").toUpperCase()]);
     }
 
     return result;
@@ -274,7 +249,7 @@ export default function StatusKondisiPage() {
       "PIC Unit": item.pic.name,
       "Keterisian": item.total_occupancy,
       "Kondisi": item.condition_status,
-      "Terakhir Dicek": format(new Date(item.last_check_date), 'dd-MM-yyyy')
+      "Terakhir Dicek": item.last_check_date ? format(new Date(item.last_check_date), 'dd-MM-yyyy') : "-"
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -363,7 +338,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-14 animate-pulse bg-green-200" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-green-200/50" />
               ) : (
                 <div className="text-2xl font-bold text-green-700">{summary.kondisi_baik}</div>
               )}
@@ -376,7 +351,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-14 animate-pulse bg-red-200" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-red-200/50" />
               ) : (
                 <div className="text-2xl font-bold text-red-700">{summary.kondisi_rusak}</div>
               )}
@@ -389,7 +364,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-14 animate-pulse bg-blue-200" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-blue-200/50" />
               ) : (
                 <div className="text-2xl font-bold text-blue-700">{summary.dalam_perbaikan}</div>
               )}
@@ -543,24 +518,24 @@ export default function StatusKondisiPage() {
                       {isUnitsLoading ? (
                         Array.from({ length: 10 }).map((_, i) => (
                           <TableRow key={i}>
-                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-16 bg-slate-200" /></TableCell>
                             <TableCell>
-                              <Skeleton className="h-4 w-32 mb-1" />
-                              <Skeleton className="h-3 w-48" />
+                              <Skeleton className="h-4 w-32 mb-1 bg-slate-200" />
+                              <Skeleton className="h-3 w-48 bg-slate-200" />
                             </TableCell>
-                            <TableCell><Skeleton className="h-6 w-12 rounded-full" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-12 rounded-full bg-slate-200" /></TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Skeleton className="h-7 w-7 rounded-full" />
+                                <Skeleton className="h-7 w-7 rounded-full bg-slate-200" />
                                 <div className="space-y-1">
-                                  <Skeleton className="h-3 w-24" />
-                                  <Skeleton className="h-2 w-16" />
+                                  <Skeleton className="h-3 w-24 bg-slate-200" />
+                                  <Skeleton className="h-2 w-16 bg-slate-200" />
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                            <TableCell><Skeleton className="h-4 w-20 mx-auto" /></TableCell>
-                            <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-20 rounded-full bg-slate-200" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-20 mx-auto bg-slate-200" /></TableCell>
+                            <TableCell><Skeleton className="h-8 w-24 ml-auto bg-slate-200" /></TableCell>
                           </TableRow>
                         ))
                       ) : filteredAndSortedData.length > 0 ? (
@@ -580,14 +555,14 @@ export default function StatusKondisiPage() {
                                                 item.current_occupancy >= item.capacity ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
                                             )}
                                         >
-                                            <Users className="mr-1 h-3 w-3" />
+                                            <Plus className="mr-1 h-3 w-3 rotate-45" /> {/* Users replacement for occupancy view */}
                                             {item.total_occupancy}
                                         </Badge>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-64 p-0" align="start">
                                         <div className="bg-muted/50 p-3 border-b">
                                             <h4 className="font-semibold text-xs uppercase flex items-center gap-2">
-                                                <Users className="h-3 w-3" /> Info Penghuni
+                                                <User className="h-3 w-3" /> Info Penghuni
                                             </h4>
                                         </div>
                                         <div className="p-4 text-center text-xs text-muted-foreground italic border border-dashed m-2 rounded bg-white">
@@ -613,7 +588,7 @@ export default function StatusKondisiPage() {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                {item.condition_status.toUpperCase() !== "BAIK" && (
+                                {(item.condition_status || "").toUpperCase() !== "BAIK" && (
                                   <Button 
                                     variant="outline" 
                                     size="sm" 
@@ -833,7 +808,7 @@ export default function StatusKondisiPage() {
                   <div className="text-[10px]">{item.pic.position}</div>
                 </td>
                 <td className="border border-black p-2 text-center font-bold">
-                  {item.condition_status.toUpperCase()}
+                  {(item.condition_status || "").toUpperCase()}
                 </td>
                 <td className="border border-black p-2 text-center">
                   {item.last_check_date ? format(new Date(item.last_check_date), 'dd-MM-yyyy') : '-'}

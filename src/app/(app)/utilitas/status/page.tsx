@@ -36,6 +36,8 @@ import {
   User,
   PhoneCall,
   PlusCircle,
+  MessageCircle,
+  ExternalLink
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -148,8 +150,6 @@ const getStatusBadge = (status: string) => {
 
 const statusPriority: Record<string, number> = {
   "RUSAK": 0,
-  "DALAM_PERBAIKAN": 1,
-  "DALAM PERBAIKAN": 1,
   "PERBAIKAN": 1,
   "BAIK": 2
 };
@@ -161,6 +161,7 @@ export default function StatusKondisiPage() {
   const [sortOrder, setSortOrder] = useState<"none" | "priority" | "priority-desc">("none");
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   // Stats State
   const [summary, setSummary] = useState<SummaryData>({
@@ -235,13 +236,13 @@ export default function StatusKondisiPage() {
 
   const filteredAndSortedData = useMemo(() => {
     let result = units.filter(item => {
-      const matchesSearch = item.unit_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           item.unit_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.pic.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = (item.unit_name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           (item.unit_code || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (item.pic.name || "").toLowerCase().includes(searchTerm.toLowerCase());
       
-      const categoryFromCode = item.unit_code.startsWith('W-') ? 'Wisma' : 
-                               item.unit_code.startsWith('TA-') ? 'Tower A' : 
-                               item.unit_code.startsWith('TB-') ? 'Tower B' : 'Lainnya';
+      const categoryFromCode = (item.unit_code || "").startsWith('W-') ? 'Wisma' : 
+                               (item.unit_code || "").startsWith('TA-') ? 'Tower A' : 
+                               (item.unit_code || "").startsWith('TB-') ? 'Tower B' : 'Lainnya';
                                
       const matchesCategory = activeCategory === "all" || categoryFromCode === activeCategory;
       return matchesSearch && matchesCategory;
@@ -293,6 +294,11 @@ export default function StatusKondisiPage() {
     setIsMaintenanceOpen(true);
   };
 
+  const handleOpenDetail = (unit: Unit) => {
+    setSelectedUnit(unit);
+    setIsDetailOpen(true);
+  };
+
   const addMaterialRow = () => {
     setMaterials([...materials, { id: Math.random().toString(), itemName: "", qty: "", unit: "" }]);
   };
@@ -332,6 +338,12 @@ export default function StatusKondisiPage() {
       title: "Unit Berhasil Ditambahkan",
       description: "Data unit baru telah masuk ke dalam sistem monitoring."
     });
+  };
+
+  const openWhatsApp = (contact: string) => {
+    const formatted = contact.replace(/\D/g, '');
+    const cleanNumber = formatted.startsWith('0') ? '62' + formatted.slice(1) : formatted;
+    window.open(`https://wa.me/${cleanNumber}`, '_blank');
   };
 
   return (
@@ -623,8 +635,13 @@ export default function StatusKondisiPage() {
                                     <Wrench className="mr-1 h-3 w-3" /> Tindak Lanjut
                                   </Button>
                                 )}
-                                <Button variant="ghost" size="sm" className="h-8">
-                                  <Info className="h-4 w-4" />
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="h-8 hover:bg-primary/10 hover:text-primary"
+                                  onClick={() => handleOpenDetail(item)}
+                                >
+                                  <UserCheck className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
@@ -667,8 +684,13 @@ export default function StatusKondisiPage() {
                                 <p className="text-sm font-bold">{selectedUnit.pic.name}</p>
                             </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20">
-                            <PhoneCall className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-white hover:bg-white/20"
+                          onClick={() => openWhatsApp(selectedUnit.pic.contact)}
+                        >
+                            <MessageCircle className="h-4 w-4" />
                         </Button>
                     </div>
                     <Separator className="bg-white/10 mb-3" />
@@ -791,6 +813,105 @@ export default function StatusKondisiPage() {
               <Button className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 font-bold" onClick={handleSaveProgress}>
                 Simpan & Update Status
               </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        {/* Unit & PIC Detail Sheet */}
+        <Sheet open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+          <SheetContent side="right" className="sm:max-w-md">
+            <SheetHeader>
+              <SheetTitle>Detail Unit & PIC</SheetTitle>
+              <SheetDescription>Informasi lengkap unit bangunan dan penanggung jawab.</SheetDescription>
+            </SheetHeader>
+            
+            {selectedUnit && (
+              <div className="space-y-8 py-8">
+                {/* Unit Section */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Building className="h-4 w-4" /> Informasi Unit
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">ID Unit</p>
+                      <p className="font-mono font-bold text-primary">{selectedUnit.unit_code}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Status Kondisi</p>
+                      <div>{getStatusBadge(selectedUnit.condition_status)}</div>
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <p className="text-xs text-muted-foreground">Nama Unit</p>
+                      <p className="font-medium">{selectedUnit.unit_name}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Kapasitas</p>
+                      <p className="font-medium">{selectedUnit.capacity} Orang</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Hunian Saat Ini</p>
+                      <p className={cn("font-bold", selectedUnit.current_occupancy >= selectedUnit.capacity ? "text-red-600" : "text-green-600")}>
+                        {selectedUnit.total_occupancy}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* PIC Card Section */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <UserCheck className="h-4 w-4" /> Penanggung Jawab (PIC)
+                  </h4>
+                  <Card className="border-none shadow-lg bg-slate-900 text-white overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="h-14 w-14 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
+                          <User className="h-7 w-7 text-blue-300" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold leading-tight">{selectedUnit.pic.name}</p>
+                          <p className="text-xs text-blue-300 font-medium">{selectedUnit.pic.position}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center text-sm p-3 rounded-lg bg-white/5 border border-white/10">
+                          <span className="text-white/60">No. Telepon</span>
+                          <span className="font-mono font-bold">{selectedUnit.pic.contact}</span>
+                        </div>
+                        
+                        <Button 
+                          className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-6 gap-2"
+                          onClick={() => openWhatsApp(selectedUnit.pic.contact)}
+                        >
+                          <MessageCircle className="h-5 w-5" />
+                          Hubungi via WhatsApp
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Last Check Info */}
+                <div className="rounded-lg bg-accent/50 p-4 flex items-center gap-3">
+                   <Clock className="h-5 w-5 text-muted-foreground" />
+                   <div>
+                     <p className="text-[10px] uppercase font-bold text-muted-foreground">Pemeriksaan Terakhir</p>
+                     <p className="text-sm font-medium">
+                       {selectedUnit.last_check_date ? format(new Date(selectedUnit.last_check_date), 'dd MMMM yyyy, HH:mm') : 'Belum pernah dicek'}
+                     </p>
+                   </div>
+                </div>
+              </div>
+            )}
+            
+            <SheetFooter>
+              <SheetClose asChild>
+                <Button variant="outline" className="w-full">Tutup</Button>
+              </SheetClose>
             </SheetFooter>
           </SheetContent>
         </Sheet>

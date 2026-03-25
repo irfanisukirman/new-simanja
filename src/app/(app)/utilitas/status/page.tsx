@@ -135,7 +135,6 @@ const getStatusBadge = (status: string) => {
     );
   }
   
-  // Menangani variasi status "PERBAIKAN"
   if (normalizedStatus.includes("PERBAIKAN")) {
     return (
       <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
@@ -196,7 +195,6 @@ export default function StatusKondisiPage() {
     } catch (error: any) {
       console.error("Failed to fetch summary", error);
     } finally {
-      // Delay kecil agar animasi pulse terlihat elegan
       setTimeout(() => {
         setIsSummaryLoading(false);
       }, 700);
@@ -354,7 +352,7 @@ export default function StatusKondisiPage() {
           </div>
         </div>
 
-        {/* Statistik Cards dengan Shimmer Slate-200 */}
+        {/* Statistik Cards */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="bg-green-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">

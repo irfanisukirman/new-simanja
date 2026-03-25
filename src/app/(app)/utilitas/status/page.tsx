@@ -301,10 +301,10 @@ export default function StatusKondisiPage() {
     } catch (error: any) {
       console.error("Failed to fetch summary", error);
     } finally {
-      // Menambahkan sedikit delay buatan agar animasi skeleton terlihat jika koneksi terlalu cepat
+      // Menambahkan delay buatan agar animasi shimmer/pulse Skeleton terlihat oleh mata
       setTimeout(() => {
         setIsSummaryLoading(false);
-      }, 500);
+      }, 700);
     }
   }, []);
 
@@ -429,7 +429,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-7 w-12 animate-pulse bg-green-200/50" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-green-200" />
               ) : (
                 <div className="text-2xl font-bold text-green-700">{summary.kondisi_baik}</div>
               )}
@@ -442,7 +442,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-7 w-12 animate-pulse bg-red-200/50" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-red-200" />
               ) : (
                 <div className="text-2xl font-bold text-red-700">{summary.kondisi_rusak}</div>
               )}
@@ -455,7 +455,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-7 w-12 animate-pulse bg-blue-200/50" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-blue-200" />
               ) : (
                 <div className="text-2xl font-bold text-blue-700">{summary.dalam_perbaikan}</div>
               )}

@@ -540,27 +540,27 @@ export default function StatusKondisiPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
-                        <TableHead className="w-[100px]">ID Unit</TableHead>
-                        <TableHead>Nama Unit</TableHead>
-                        <TableHead>Keterisian</TableHead>
-                        <TableHead>PIC Penanggung Jawab</TableHead>
-                        <TableHead>Kondisi</TableHead>
+                        <TableHead className="w-[100px] text-center">ID Unit</TableHead>
+                        <TableHead className="text-center">Nama Unit</TableHead>
+                        <TableHead className="text-center">Keterisian</TableHead>
+                        <TableHead className="text-center">PIC Penanggung Jawab</TableHead>
+                        <TableHead className="text-center">Kondisi</TableHead>
                         <TableHead className="text-center">Tgl Cek</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
+                        <TableHead className="text-center">Aksi</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {isUnitsLoading ? (
                         Array.from({ length: 10 }).map((_, i) => (
                           <TableRow key={i}>
-                            <TableCell><Skeleton className="h-4 w-16 bg-slate-200" /></TableCell>
-                            <TableCell>
-                              <Skeleton className="h-4 w-32 mb-1 bg-slate-200" />
-                              <Skeleton className="h-3 w-48 bg-slate-200" />
+                            <TableCell className="text-center"><Skeleton className="h-4 w-16 bg-slate-200 mx-auto" /></TableCell>
+                            <TableCell className="text-center">
+                              <Skeleton className="h-4 w-32 mb-1 bg-slate-200 mx-auto" />
+                              <Skeleton className="h-3 w-48 bg-slate-200 mx-auto" />
                             </TableCell>
-                            <TableCell><Skeleton className="h-6 w-12 rounded-full bg-slate-200" /></TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
+                            <TableCell className="text-center"><Skeleton className="h-6 w-12 rounded-full bg-slate-200 mx-auto" /></TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center justify-center gap-2">
                                 <Skeleton className="h-7 w-7 rounded-full bg-slate-200" />
                                 <div className="space-y-1">
                                   <Skeleton className="h-3 w-24 bg-slate-200" />
@@ -568,25 +568,25 @@ export default function StatusKondisiPage() {
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell><Skeleton className="h-6 w-20 rounded-full bg-slate-200" /></TableCell>
-                            <TableCell><Skeleton className="h-4 w-20 mx-auto bg-slate-200" /></TableCell>
-                            <TableCell><Skeleton className="h-8 w-24 ml-auto bg-slate-200" /></TableCell>
+                            <TableCell className="text-center"><Skeleton className="h-6 w-20 rounded-full bg-slate-200 mx-auto" /></TableCell>
+                            <TableCell className="text-center"><Skeleton className="h-4 w-20 mx-auto bg-slate-200" /></TableCell>
+                            <TableCell className="text-center"><Skeleton className="h-8 w-24 mx-auto bg-slate-200" /></TableCell>
                           </TableRow>
                         ))
                       ) : filteredAndSortedData.length > 0 ? (
                         filteredAndSortedData.map((item) => (
                           <TableRow key={item.id} className="hover:bg-accent/50">
-                            <TableCell className="font-mono text-xs font-bold">{item.unit_code}</TableCell>
-                            <TableCell className="font-medium">
+                            <TableCell className="font-mono text-xs font-bold text-center">{item.unit_code}</TableCell>
+                            <TableCell className="font-medium text-center">
                                 <div>{item.unit_name}</div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="text-center">
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <Badge 
                                             variant="secondary" 
                                             className={cn(
-                                                "cursor-pointer transition-colors",
+                                                "cursor-pointer transition-colors mx-auto",
                                                 item.current_occupancy >= item.capacity 
                                                   ? "bg-red-100 text-red-700 hover:bg-red-200" 
                                                   : "bg-green-100 text-green-700 hover:bg-green-200"
@@ -596,9 +596,9 @@ export default function StatusKondisiPage() {
                                             {item.total_occupancy}
                                         </Badge>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-0" align="start">
+                                    <PopoverContent className="w-64 p-0" align="center">
                                         <div className="bg-muted/50 p-3 border-b">
-                                            <h4 className="font-semibold text-xs uppercase flex items-center gap-2">
+                                            <h4 className="font-semibold text-xs uppercase flex items-center justify-center gap-2">
                                                 <User className="h-3 w-3" /> Info Penghuni
                                             </h4>
                                         </div>
@@ -608,23 +608,23 @@ export default function StatusKondisiPage() {
                                     </PopoverContent>
                                 </Popover>
                             </TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-2">
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-2">
                                     <div className="h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center border">
                                         <User className="h-3.5 w-3.5 text-slate-600" />
                                     </div>
-                                    <div className="text-xs">
+                                    <div className="text-xs text-left">
                                         <div className="font-semibold">{item.pic.name}</div>
                                         <div className="text-muted-foreground">{item.pic.position}</div>
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell>{getStatusBadge(item.condition_status)}</TableCell>
+                            <TableCell className="text-center">{getStatusBadge(item.condition_status)}</TableCell>
                             <TableCell className="text-center text-xs">
                               {item.last_check_date ? format(new Date(item.last_check_date), 'dd-MM-yyyy') : '-'}
                             </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
+                            <TableCell className="text-center">
+                              <div className="flex justify-center gap-2">
                                 {(item.condition_status || "").toUpperCase() !== "BAIK" && (
                                   <Button 
                                     variant="outline" 

@@ -300,9 +300,11 @@ export default function StatusKondisiPage() {
       }
     } catch (error: any) {
       console.error("Failed to fetch summary", error);
-      // Optional: don't show toast for stats error if it's not critical
     } finally {
-      setIsSummaryLoading(false);
+      // Menambahkan sedikit delay buatan agar animasi skeleton terlihat jika koneksi terlalu cepat
+      setTimeout(() => {
+        setIsSummaryLoading(false);
+      }, 500);
     }
   }, []);
 
@@ -425,9 +427,9 @@ export default function StatusKondisiPage() {
               <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Kondisi Baik</CardTitle>
               <CheckCircle2 className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-7 w-12 animate-pulse bg-green-200/50" />
               ) : (
                 <div className="text-2xl font-bold text-green-700">{summary.kondisi_baik}</div>
               )}
@@ -438,9 +440,9 @@ export default function StatusKondisiPage() {
               <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Kondisi Rusak</CardTitle>
               <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-7 w-12 animate-pulse bg-red-200/50" />
               ) : (
                 <div className="text-2xl font-bold text-red-700">{summary.kondisi_rusak}</div>
               )}
@@ -451,9 +453,9 @@ export default function StatusKondisiPage() {
               <CardTitle className="text-xs font-medium uppercase text-muted-foreground">Dalam Perbaikan</CardTitle>
               <Wrench className="h-4 w-4 text-blue-600" />
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-12" />
+                <Skeleton className="h-7 w-12 animate-pulse bg-blue-200/50" />
               ) : (
                 <div className="text-2xl font-bold text-blue-700">{summary.dalam_perbaikan}</div>
               )}

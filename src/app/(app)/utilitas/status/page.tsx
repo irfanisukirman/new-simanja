@@ -118,23 +118,40 @@ interface NeededMaterial {
 
 const getStatusBadge = (status: string) => {
   const normalizedStatus = (status || "").toUpperCase();
-  switch (normalizedStatus) {
-    case "BAIK":
-      return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200"><CheckCircle2 className="mr-1 h-3 w-3" /> Baik</Badge>;
-    case "RUSAK":
-      return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak</Badge>;
-    case "DALAM_PERBAIKAN":
-    case "DALAM PERBAIKAN":
-      return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200"><Wrench className="mr-1 h-3 w-3" /> Dalam Perbaikan</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
+  
+  if (normalizedStatus === "BAIK") {
+    return (
+      <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+        <CheckCircle2 className="mr-1 h-3 w-3" /> Baik
+      </Badge>
+    );
   }
+  
+  if (normalizedStatus === "RUSAK") {
+    return (
+      <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200">
+        <AlertTriangle className="mr-1 h-3 w-3" /> Rusak
+      </Badge>
+    );
+  }
+  
+  // Menangani variasi status "PERBAIKAN"
+  if (normalizedStatus.includes("PERBAIKAN")) {
+    return (
+      <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200">
+        <Wrench className="mr-1 h-3 w-3" /> Dalam Perbaikan
+      </Badge>
+    );
+  }
+  
+  return <Badge variant="outline">{status}</Badge>;
 };
 
 const statusPriority: Record<string, number> = {
   "RUSAK": 0,
   "DALAM_PERBAIKAN": 1,
   "DALAM PERBAIKAN": 1,
+  "PERBAIKAN": 1,
   "BAIK": 2
 };
 
@@ -179,6 +196,7 @@ export default function StatusKondisiPage() {
     } catch (error: any) {
       console.error("Failed to fetch summary", error);
     } finally {
+      // Delay kecil agar animasi pulse terlihat elegan
       setTimeout(() => {
         setIsSummaryLoading(false);
       }, 700);
@@ -232,9 +250,17 @@ export default function StatusKondisiPage() {
     });
 
     if (sortOrder === "priority") {
-      result.sort((a, b) => statusPriority[(a.condition_status || "").toUpperCase()] - statusPriority[(b.condition_status || "").toUpperCase()]);
+      result.sort((a, b) => {
+        const priorityA = statusPriority[(a.condition_status || "").toUpperCase()] ?? 99;
+        const priorityB = statusPriority[(b.condition_status || "").toUpperCase()] ?? 99;
+        return priorityA - priorityB;
+      });
     } else if (sortOrder === "priority-desc") {
-      result.sort((a, b) => statusPriority[(b.condition_status || "").toUpperCase()] - statusPriority[(a.condition_status || "").toUpperCase()]);
+      result.sort((a, b) => {
+        const priorityA = statusPriority[(a.condition_status || "").toUpperCase()] ?? 99;
+        const priorityB = statusPriority[(b.condition_status || "").toUpperCase()] ?? 99;
+        return priorityB - priorityA;
+      });
     }
 
     return result;
@@ -328,6 +354,7 @@ export default function StatusKondisiPage() {
           </div>
         </div>
 
+        {/* Statistik Cards dengan Shimmer Slate-200 */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card className="bg-green-50/50">
             <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0 pb-1">
@@ -779,6 +806,7 @@ export default function StatusKondisiPage() {
         </Card>
       </footer>
 
+      {/* Area Print khusus PDF */}
       <div id="print-area" className="hidden print:block p-8 bg-white text-black w-full min-h-screen">
         <header className="text-center mb-8 border-b-2 border-black pb-4">
           <h1 className="text-2xl font-bold uppercase">Laporan Status Kondisi Bangunan</h1>

@@ -34,10 +34,8 @@ import {
   UserCheck,
   PackageOpen,
   User,
-  PhoneCall,
   PlusCircle,
   MessageCircle,
-  ExternalLink
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -97,6 +95,7 @@ interface Unit {
   id: number;
   unit_code: string;
   unit_name: string;
+  description?: string;
   capacity: number;
   condition_status: string;
   last_check_date: string;
@@ -238,7 +237,8 @@ export default function StatusKondisiPage() {
     let result = units.filter(item => {
       const matchesSearch = (item.unit_name || "").toLowerCase().includes(searchTerm.toLowerCase()) || 
                            (item.unit_code || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (item.pic.name || "").toLowerCase().includes(searchTerm.toLowerCase());
+                           (item.pic.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (item.description || "").toLowerCase().includes(searchTerm.toLowerCase());
       
       const categoryFromCode = (item.unit_code || "").startsWith('W-') ? 'Wisma' : 
                                (item.unit_code || "").startsWith('TA-') ? 'Tower A' : 
@@ -269,6 +269,7 @@ export default function StatusKondisiPage() {
     const dataToExport = units.map(item => ({
       "ID Unit": item.unit_code,
       "Nama Unit": item.unit_name,
+      "Deskripsi": item.description || "-",
       "PIC Unit": item.pic.name,
       "Keterisian": item.total_occupancy,
       "Kondisi": item.condition_status,
@@ -574,8 +575,32 @@ export default function StatusKondisiPage() {
                         filteredAndSortedData.map((item) => (
                           <TableRow key={item.id} className="hover:bg-accent/50">
                             <TableCell className="font-mono text-xs font-bold text-center">{item.unit_code}</TableCell>
-                            <TableCell className="font-medium text-left">
-                                <div>{item.unit_name}</div>
+                            <TableCell className="text-left">
+                                <div className="flex flex-col">
+                                    <span className="font-medium">{item.unit_name}</span>
+                                    {item.description && (
+                                        <div className="flex items-center gap-1 group">
+                                            <span className="text-[11px] text-muted-foreground italic truncate max-w-[200px]">
+                                                {item.description}
+                                            </span>
+                                            {item.description.length > 30 && (
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-4 w-4 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Info className="h-3 w-3 text-muted-foreground" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-72" align="start">
+                                                        <div className="space-y-2">
+                                                            <h4 className="font-semibold text-xs uppercase text-muted-foreground">Detail Keterangan</h4>
+                                                            <p className="text-xs leading-relaxed">{item.description}</p>
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </TableCell>
                             <TableCell className="text-center">
                                 <Popover>
@@ -842,6 +867,10 @@ export default function StatusKondisiPage() {
                       <p className="text-xs text-muted-foreground">Nama Unit</p>
                       <p className="font-medium">{selectedUnit.unit_name}</p>
                     </div>
+                    <div className="col-span-2 space-y-1">
+                      <p className="text-xs text-muted-foreground">Deskripsi</p>
+                      <p className="text-sm italic">{selectedUnit.description || "-"}</p>
+                    </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground">Kapasitas</p>
                       <p className="font-medium">{selectedUnit.capacity} Orang</p>
@@ -945,7 +974,10 @@ export default function StatusKondisiPage() {
             {units.map((item) => (
               <tr key={item.id}>
                 <td className="border border-black p-2 text-center font-mono font-bold">{item.unit_code}</td>
-                <td className="border border-black p-2">{item.unit_name}</td>
+                <td className="border border-black p-2">
+                    <div>{item.unit_name}</div>
+                    <div className="text-[9px] italic text-slate-600">{item.description}</div>
+                </td>
                 <td className="border border-black p-2 text-center">{item.total_occupancy}</td>
                 <td className="border border-black p-2 text-left">
                   <div className="font-bold">{item.pic.name}</div>

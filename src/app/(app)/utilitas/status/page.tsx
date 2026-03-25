@@ -179,6 +179,27 @@ export default function StatusKondisiPage() {
   ]);
   const [requestingPIC, setRequestingPIC] = useState("");
 
+  const handleApiError = useCallback((error: any, context: string = "general") => {
+    if (error.response?.status === 401) {
+      toast({
+        variant: "destructive",
+        title: "Sesi Habis",
+        description: "Sesi Anda telah berakhir. Silakan login kembali.",
+      });
+      localStorage.clear();
+      window.location.href = "/login";
+      return true;
+    }
+    
+    toast({
+      variant: "destructive",
+      title: `Terjadi Kesalahan - ${context}`,
+      description: error.response?.data?.message || "Tidak dapat terhubung ke server.",
+    });
+
+    return false;
+  }, [toast]);
+
   const fetchSummary = useCallback(async () => {
     setIsSummaryLoading(true);
     try {
@@ -193,13 +214,13 @@ export default function StatusKondisiPage() {
         setSummary(response.data.data);
       }
     } catch (error: any) {
-      console.error("Failed to fetch summary", error);
+      handleApiError(error, "Fetch Summary");
     } finally {
       setTimeout(() => {
         setIsSummaryLoading(false);
       }, 700);
     }
-  }, []);
+  }, [handleApiError]);
 
   const fetchUnits = useCallback(async () => {
     setIsUnitsLoading(true);
@@ -215,18 +236,13 @@ export default function StatusKondisiPage() {
         setUnits(response.data.data);
       }
     } catch (error: any) {
-      console.error("Failed to fetch units", error);
-      toast({
-        variant: "destructive",
-        title: "Gagal Mengambil Data",
-        description: "Terjadi kesalahan saat menghubungi server."
-      });
+      handleApiError(error, "Fetch Units");
     } finally {
       setTimeout(() => {
         setIsUnitsLoading(false);
       }, 1000);
     }
-  }, [toast]);
+  }, [handleApiError]);
 
   useEffect(() => {
     fetchSummary();

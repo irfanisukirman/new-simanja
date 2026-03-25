@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,8 @@ import {
   User,
   PhoneCall,
   Users,
-  PlusCircle
+  PlusCircle,
+  Loader2
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -74,10 +75,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import * as XLSX from "xlsx"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import axios from "axios"
 
 interface MaintenanceLog {
   date: string;
@@ -115,6 +118,12 @@ interface NeededMaterial {
   itemName: string;
   qty: string;
   unit: string;
+}
+
+interface SummaryData {
+  kondisi_baik: number;
+  kondisi_rusak: number;
+  dalam_perbaikan: number;
 }
 
 const dummyData: RoomStatus[] = [
@@ -263,10 +272,43 @@ export default function StatusKondisiPage() {
   const [selectedUnit, setSelectedUnit] = useState<RoomStatus | null>(null);
   const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
 
+  // Stats State
+  const [summary, setSummary] = useState<SummaryData>({
+    kondisi_baik: 0,
+    kondisi_rusak: 0,
+    dalam_perbaikan: 0
+  });
+  const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+
   const [materials, setMaterials] = useState<NeededMaterial[]>([
     { id: Math.random().toString(), itemName: "", qty: "", unit: "" }
   ]);
   const [requestingPIC, setRequestingPIC] = useState("");
+
+  const fetchSummary = useCallback(async () => {
+    setIsSummaryLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/summary`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      if (response.data?.code === 200) {
+        setSummary(response.data.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch summary", error);
+      // Optional: don't show toast for stats error if it's not critical
+    } finally {
+      setIsSummaryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const filteredAndSortedData = useMemo(() => {
     let result = dummyData.filter(item => {
@@ -384,7 +426,11 @@ export default function StatusKondisiPage() {
               <CheckCircle2 className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="text-2xl font-bold text-green-700">{dummyData.filter(d => d.status === "Baik").length}</div>
+              {isSummaryLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <div className="text-2xl font-bold text-green-700">{summary.kondisi_baik}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-red-50/50">
@@ -393,7 +439,11 @@ export default function StatusKondisiPage() {
               <AlertTriangle className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="text-2xl font-bold text-red-700">{dummyData.filter(d => d.status === "Rusak").length}</div>
+              {isSummaryLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <div className="text-2xl font-bold text-red-700">{summary.kondisi_rusak}</div>
+              )}
             </CardContent>
           </Card>
           <Card className="bg-blue-50/50">
@@ -402,7 +452,11 @@ export default function StatusKondisiPage() {
               <Wrench className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent className="p-4 pt-0">
-              <div className="text-2xl font-bold text-blue-700">{dummyData.filter(d => d.status === "Dalam Perbaikan").length}</div>
+              {isSummaryLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <div className="text-2xl font-bold text-blue-700">{summary.dalam_perbaikan}</div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -91,26 +91,25 @@ interface MaintenanceLog {
 interface UnitPIC {
   name: string;
   contact: string;
-  role: string;
+  position: string;
 }
 
-interface Inhabitant {
-  name: string;
-  nip: string;
-}
-
-interface RoomStatus {
-  id: string;
-  name: string;
-  building: string;
-  category: "Wisma" | "Tower A" | "Tower B";
-  status: "Baik" | "Dalam Perbaikan" | "Rusak";
-  description: string;
-  lastChecked: string;
-  pic: UnitPIC;
+interface Unit {
+  id: number;
+  unit_code: string;
+  unit_name: string;
   capacity: number;
-  inhabitants: Inhabitant[];
-  logs: MaintenanceLog[];
+  condition_status: string;
+  last_check_date: string;
+  pic: UnitPIC;
+  current_occupancy: number;
+  total_occupancy: string;
+}
+
+interface SummaryData {
+  kondisi_baik: number;
+  kondisi_rusak: number;
+  dalam_perbaikan: number;
 }
 
 interface NeededMaterial {
@@ -120,124 +119,26 @@ interface NeededMaterial {
   unit: string;
 }
 
-interface SummaryData {
-  kondisi_baik: number;
-  kondisi_rusak: number;
-  dalam_perbaikan: number;
-}
-
-const dummyData: RoomStatus[] = [
-  { 
-    id: "W-A01", 
-    name: "Blok A-1", 
-    building: "Wisma", 
-    category: "Wisma", 
-    status: "Rusak", 
-    description: "Atap bocor halus di area teras depan wisma yang mengakibatkan air merembes ke plafon saat hujan deras.", 
-    lastChecked: "05-06-2026",
-    capacity: 6,
-    inhabitants: [
-      { name: "Budi Santoso", nip: "198801012015011001" },
-      { name: "Agus Setiawan", nip: "198902022016021002" },
-      { name: "Dedi Kurniawan", nip: "199003032017031003" }
-    ],
-    pic: { name: "Udin Syarifuddin", contact: "0812-1111-2222", role: "PJ Wisma Blok A" },
-    logs: [
-      { date: "05-06-2026 09:00", action: "Kerusakan dilaporkan oleh Irfan", user: "Irfan I." }
-    ]
-  },
-  { 
-    id: "W-B02", 
-    name: "Blok B-2", 
-    building: "Wisma", 
-    category: "Wisma", 
-    status: "Baik", 
-    description: "Kondisi sangat baik.", 
-    lastChecked: "05-06-2026",
-    capacity: 8,
-    inhabitants: [
-      { name: "Siti Aminah", nip: "199204042018042004" },
-      { name: "Ratna Sari", nip: "199305052019052005" }
-    ],
-    pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
-    logs: []
-  },
-  { 
-    id: "W-B05", 
-    name: "Blok B-5", 
-    building: "Wisma", 
-    category: "Wisma", 
-    status: "Dalam Perbaikan", 
-    description: "Plafon kamar mandi jebol akibat kebocoran pipa saluran air dari lantai atas.", 
-    lastChecked: "04-06-2026",
-    capacity: 8,
-    inhabitants: [
-      { name: "Iwan Fals", nip: "198506062010061006" },
-      { name: "Ebiet G. Ade", nip: "198607072011071007" },
-      { name: "Chrisye", nip: "198708082012081008" },
-      { name: "Nike Ardilla", nip: "198809092013092009" }
-    ],
-    pic: { name: "Pedro Gonzales", contact: "0856-3333-4444", role: "PJ Wisma Blok B" },
-    logs: [
-      { date: "04-06-2026 10:00", action: "Kerusakan dilaporkan", user: "Admin" },
-      { date: "05-06-2026 08:30", action: "Penugasan teknisi (Bpk. Maman)", user: "Admin" },
-      { date: "05-06-2026 14:00", action: "Pembongkaran plafon lama", user: "Teknisi" }
-    ]
-  },
-  { 
-    id: "TA-321", 
-    name: "Kamar A-321", 
-    building: "Tower A", 
-    category: "Tower A", 
-    status: "Rusak", 
-    description: "AC tidak dingin & dinding rembes air dari sisi luar gedung saat hujan disertai angin kencang.", 
-    lastChecked: "02-06-2026",
-    capacity: 2,
-    inhabitants: [
-      { name: "Ahmad Dhani", nip: "199010102020101010" }
-    ],
-    pic: { name: "Siti Aminah", contact: "0878-5555-6666", role: "PJ Tower A" },
-    logs: [
-       { date: "02-06-2026 11:00", action: "Laporan tamu: AC Mati", user: "Resepsionis" }
-    ]
-  },
-  { 
-    id: "TB-102", 
-    name: "Kamar B-102", 
-    building: "Tower B", 
-    category: "Tower B", 
-    status: "Dalam Perbaikan", 
-    description: "Kran air patah di wastafel kamar mandi utama.", 
-    lastChecked: "06-06-2026",
-    capacity: 1,
-    inhabitants: [
-      { name: "Once Mekel", nip: "199111112021111011" }
-    ],
-    pic: { name: "Ahmad Fauzi", contact: "0813-7777-8888", role: "PJ Tower B" },
-    logs: [
-      { date: "02-06-2026 10:00", action: "Kerusakan Kran Air", user: "Admin" },
-      { date: "06-06-2026 11:00", action: "Pengerjaan penggantian unit kran baru", user: "Teknisi" }
-    ]
-  },
-];
-
-const getStatusBadge = (status: RoomStatus["status"]) => {
-  switch (status) {
-    case "Baik":
+const getStatusBadge = (status: string) => {
+  const normalizedStatus = status.toUpperCase();
+  switch (normalizedStatus) {
+    case "BAIK":
       return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200"><CheckCircle2 className="mr-1 h-3 w-3" /> Baik</Badge>;
-    case "Rusak":
+    case "RUSAK":
       return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak</Badge>;
-    case "Dalam Perbaikan":
+    case "DALAM_PERBAIKAN":
+    case "DALAM PERBAIKAN":
       return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"><Clock className="mr-1 h-3 w-3" /> Dalam Perbaikan</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
 };
 
-const statusPriority = {
-  "Rusak": 0,
-  "Dalam Perbaikan": 1,
-  "Baik": 2
+const statusPriority: Record<string, number> = {
+  "RUSAK": 0,
+  "DALAM_PERBAIKAN": 1,
+  "DALAM PERBAIKAN": 1,
+  "BAIK": 2
 };
 
 const DescriptionCell = ({ text }: { text: string }) => {
@@ -269,7 +170,7 @@ export default function StatusKondisiPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [sortOrder, setSortOrder] = useState<"none" | "priority" | "priority-desc">("none");
-  const [selectedUnit, setSelectedUnit] = useState<RoomStatus | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null);
   const [isMaintenanceOpen, setIsMaintenanceOpen] = useState(false);
 
   // Stats State
@@ -279,6 +180,10 @@ export default function StatusKondisiPage() {
     dalam_perbaikan: 0
   });
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+
+  // Units State
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [isUnitsLoading, setIsUnitsLoading] = useState(true);
 
   const [materials, setMaterials] = useState<NeededMaterial[]>([
     { id: Math.random().toString(), itemName: "", qty: "", unit: "" }
@@ -301,45 +206,75 @@ export default function StatusKondisiPage() {
     } catch (error: any) {
       console.error("Failed to fetch summary", error);
     } finally {
-      // Menambahkan delay buatan agar animasi shimmer/pulse Skeleton terlihat oleh mata
       setTimeout(() => {
         setIsSummaryLoading(false);
       }, 700);
     }
   }, []);
 
+  const fetchUnits = useCallback(async () => {
+    setIsUnitsLoading(true);
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      if (response.data?.code === 200) {
+        setUnits(response.data.data);
+      }
+    } catch (error: any) {
+      console.error("Failed to fetch units", error);
+      toast({
+        variant: "destructive",
+        title: "Gagal Mengambil Data",
+        description: "Terjadi kesalahan saat menghubungi server."
+      });
+    } finally {
+      setTimeout(() => {
+        setIsUnitsLoading(false);
+      }, 1000);
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchSummary();
-  }, [fetchSummary]);
+    fetchUnits();
+  }, [fetchSummary, fetchUnits]);
 
   const filteredAndSortedData = useMemo(() => {
-    let result = dummyData.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                           item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    let result = units.filter(item => {
+      const matchesSearch = item.unit_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           item.unit_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.pic.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = activeCategory === "all" || item.category === activeCategory;
+      
+      const categoryFromCode = item.unit_code.startsWith('W-') ? 'Wisma' : 
+                               item.unit_code.startsWith('TA-') ? 'Tower A' : 
+                               item.unit_code.startsWith('TB-') ? 'Tower B' : 'Lainnya';
+                               
+      const matchesCategory = activeCategory === "all" || categoryFromCode === activeCategory;
       return matchesSearch && matchesCategory;
     });
 
     if (sortOrder === "priority") {
-      result.sort((a, b) => statusPriority[a.status] - statusPriority[b.status]);
+      result.sort((a, b) => statusPriority[a.condition_status.toUpperCase()] - statusPriority[b.condition_status.toUpperCase()]);
     } else if (sortOrder === "priority-desc") {
-      result.sort((a, b) => statusPriority[b.status] - statusPriority[a.status]);
+      result.sort((a, b) => statusPriority[b.condition_status.toUpperCase()] - statusPriority[a.condition_status.toUpperCase()]);
     }
 
     return result;
-  }, [searchTerm, activeCategory, sortOrder]);
+  }, [units, searchTerm, activeCategory, sortOrder]);
 
   const handleExportExcel = () => {
-    const dataToExport = dummyData.map(item => ({
-      "ID Unit": item.id,
-      "Nama Unit": item.name,
-      "Bangunan": item.building,
+    const dataToExport = units.map(item => ({
+      "ID Unit": item.unit_code,
+      "Nama Unit": item.unit_name,
       "PIC Unit": item.pic.name,
-      "Keterisian": `${item.inhabitants.length}/${item.capacity}`,
-      "Kondisi": item.status,
-      "Deskripsi Kerusakan": item.description,
-      "Terakhir Dicek": item.lastChecked
+      "Keterisian": item.total_occupancy,
+      "Kondisi": item.condition_status,
+      "Terakhir Dicek": format(new Date(item.last_check_date), 'dd-MM-yyyy')
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -354,7 +289,7 @@ export default function StatusKondisiPage() {
     });
   };
 
-  const handleOpenMaintenance = (unit: RoomStatus) => {
+  const handleOpenMaintenance = (unit: Unit) => {
     setSelectedUnit(unit);
     setMaterials([{ id: Math.random().toString(), itemName: "", qty: "", unit: "" }]);
     setRequestingPIC("");
@@ -404,7 +339,6 @@ export default function StatusKondisiPage() {
 
   return (
     <div className="flex min-h-screen flex-col relative">
-      {/* Main UI - Hidden when printing */}
       <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24 text-foreground print:hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -606,13 +540,35 @@ export default function StatusKondisiPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredAndSortedData.length > 0 ? (
+                      {isUnitsLoading ? (
+                        Array.from({ length: 10 }).map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                            <TableCell>
+                              <Skeleton className="h-4 w-32 mb-1" />
+                              <Skeleton className="h-3 w-48" />
+                            </TableCell>
+                            <TableCell><Skeleton className="h-6 w-12 rounded-full" /></TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Skeleton className="h-7 w-7 rounded-full" />
+                                <div className="space-y-1">
+                                  <Skeleton className="h-3 w-24" />
+                                  <Skeleton className="h-2 w-16" />
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                            <TableCell><Skeleton className="h-4 w-20 mx-auto" /></TableCell>
+                            <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                          </TableRow>
+                        ))
+                      ) : filteredAndSortedData.length > 0 ? (
                         filteredAndSortedData.map((item) => (
                           <TableRow key={item.id} className="hover:bg-accent/50">
-                            <TableCell className="font-mono text-xs font-bold">{item.id}</TableCell>
+                            <TableCell className="font-mono text-xs font-bold">{item.unit_code}</TableCell>
                             <TableCell className="font-medium">
-                                <div>{item.name}</div>
-                                <DescriptionCell text={item.description} />
+                                <div>{item.unit_name}</div>
                             </TableCell>
                             <TableCell>
                                 <Popover>
@@ -621,32 +577,21 @@ export default function StatusKondisiPage() {
                                             variant="secondary" 
                                             className={cn(
                                                 "cursor-pointer hover:bg-primary hover:text-white transition-colors",
-                                                item.inhabitants.length >= item.capacity ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
+                                                item.current_occupancy >= item.capacity ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
                                             )}
                                         >
                                             <Users className="mr-1 h-3 w-3" />
-                                            {item.inhabitants.length}/{item.capacity}
+                                            {item.total_occupancy}
                                         </Badge>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-64 p-0" align="start">
                                         <div className="bg-muted/50 p-3 border-b">
                                             <h4 className="font-semibold text-xs uppercase flex items-center gap-2">
-                                                <Users className="h-3 w-3" /> Daftar Penghuni
+                                                <Users className="h-3 w-3" /> Info Penghuni
                                             </h4>
                                         </div>
-                                        <div className="p-2">
-                                            {item.inhabitants.length > 0 ? (
-                                                <div className="space-y-1">
-                                                    {item.inhabitants.map((p, i) => (
-                                                        <div key={i} className="flex flex-col p-2 rounded hover:bg-accent text-xs">
-                                                            <span className="font-bold">{p.name}</span>
-                                                            <span className="text-muted-foreground font-mono">NIP. {p.nip}</span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="p-4 text-center text-xs text-muted-foreground">Kamar Kosong</div>
-                                            )}
+                                        <div className="p-4 text-center text-xs text-muted-foreground italic border border-dashed m-2 rounded bg-white">
+                                            Data detail penghuni sedang dimuat...
                                         </div>
                                     </PopoverContent>
                                 </Popover>
@@ -658,15 +603,17 @@ export default function StatusKondisiPage() {
                                     </div>
                                     <div className="text-xs">
                                         <div className="font-semibold">{item.pic.name}</div>
-                                        <div className="text-muted-foreground">{item.pic.role}</div>
+                                        <div className="text-muted-foreground">{item.pic.position}</div>
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell>{getStatusBadge(item.status)}</TableCell>
-                            <TableCell className="text-center text-xs">{item.lastChecked}</TableCell>
+                            <TableCell>{getStatusBadge(item.condition_status)}</TableCell>
+                            <TableCell className="text-center text-xs">
+                              {item.last_check_date ? format(new Date(item.last_check_date), 'dd-MM-yyyy') : '-'}
+                            </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                {item.status !== "Baik" && (
+                                {item.condition_status.toUpperCase() !== "BAIK" && (
                                   <Button 
                                     variant="outline" 
                                     size="sm" 
@@ -709,7 +656,6 @@ export default function StatusKondisiPage() {
 
             {selectedUnit && (
               <div className="space-y-6 py-6">
-                {/* Info PIC Spesifik Unit */}
                 <div className="bg-slate-900 text-white rounded-lg p-4 shadow-md">
                     <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
@@ -729,7 +675,7 @@ export default function StatusKondisiPage() {
                     <div className="grid grid-cols-2 gap-4 text-[11px]">
                         <div>
                             <p className="text-blue-300 font-bold uppercase mb-0.5">Role/Jabatan</p>
-                            <p>{selectedUnit.pic.role}</p>
+                            <p>{selectedUnit.pic.position}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-blue-300 font-bold uppercase mb-0.5">Kontak</p>
@@ -738,48 +684,17 @@ export default function StatusKondisiPage() {
                     </div>
                 </div>
 
-                {/* Info Penghuni di Sheet */}
-                <div className="border rounded-lg p-4 bg-muted/30">
-                    <div className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2 mb-3">
-                        <Users className="h-3.5 w-3.5" /> Informasi Penghuni Kamar
-                    </div>
-                    {selectedUnit.inhabitants.length > 0 ? (
-                        <div className="grid gap-2">
-                            {selectedUnit.inhabitants.map((p, i) => (
-                                <div key={i} className="flex items-center gap-3 bg-white p-2 rounded border shadow-sm">
-                                    <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs border">
-                                        {i + 1}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-xs font-bold">{p.name}</span>
-                                        <span className="text-[10px] text-muted-foreground font-mono">NIP. {p.nip}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-4 text-xs text-muted-foreground italic border border-dashed rounded bg-white">
-                            Tidak ada penghuni saat ini.
-                        </div>
-                    )}
-                </div>
-
                 <div className="grid grid-cols-2 gap-4 rounded-lg bg-accent/30 p-4 border border-blue-100">
                   <div className="space-y-1">
                     <Label className="text-[10px] uppercase text-muted-foreground">Kondisi Unit</Label>
-                    <div>{getStatusBadge(selectedUnit.status)}</div>
+                    <div>{getStatusBadge(selectedUnit.condition_status)}</div>
                   </div>
                   <div className="space-y-1 text-right">
                     <Label className="text-[10px] uppercase text-muted-foreground">ID Unit</Label>
-                    <div className="text-sm font-bold">{selectedUnit.id}</div>
-                  </div>
-                  <div className="col-span-2 space-y-1">
-                    <Label className="text-[10px] uppercase text-muted-foreground">Masalah Dilaporkan</Label>
-                    <div className="text-sm italic border-l-2 border-blue-500 pl-3 py-1">"{selectedUnit.description}"</div>
+                    <div className="text-sm font-bold">{selectedUnit.unit_code}</div>
                   </div>
                 </div>
 
-                {/* Form Progres */}
                 <div className="space-y-4">
                   <div className="text-sm font-semibold flex items-center gap-2 border-b pb-2">
                     <Clock className="h-4 w-4 text-blue-600" /> Progres Pekerjaan
@@ -787,14 +702,14 @@ export default function StatusKondisiPage() {
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="next-status">Update Status Baru</Label>
-                      <Select defaultValue={selectedUnit.status}>
+                      <Select defaultValue={selectedUnit.condition_status}>
                         <SelectTrigger id="next-status">
                           <SelectValue placeholder="Pilih Status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Rusak">Rusak</SelectItem>
-                          <SelectItem value="Dalam Perbaikan">Sedang Dikerjakan</SelectItem>
-                          <SelectItem value="Baik">Selesai & Kembali Baik</SelectItem>
+                          <SelectItem value="RUSAK">Rusak</SelectItem>
+                          <SelectItem value="DALAM_PERBAIKAN">Sedang Dikerjakan</SelectItem>
+                          <SelectItem value="BAIK">Selesai & Kembali Baik</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -805,7 +720,6 @@ export default function StatusKondisiPage() {
                   </div>
                 </div>
 
-                {/* Material Section */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b pb-2">
                     <div className="text-sm font-semibold flex items-center gap-2">
@@ -867,29 +781,6 @@ export default function StatusKondisiPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Maintenance Log */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold border-b pb-2">
-                    <History className="h-4 w-4 text-slate-500" /> Riwayat Progres
-                  </div>
-                  <ScrollArea className="h-32 rounded-md border p-4 bg-slate-50/50">
-                    <div className="space-y-4">
-                      {selectedUnit.logs.length > 0 ? (
-                        selectedUnit.logs.map((log, idx) => (
-                          <div key={idx} className="relative pl-6 pb-4 border-l last:pb-0">
-                            <div className="absolute left-[-5px] top-1 h-2 w-2 rounded-full bg-blue-500" />
-                            <div className="text-[10px] text-muted-foreground">{log.date}</div>
-                            <div className="text-sm font-medium">{log.action}</div>
-                            <div className="text-[11px] text-muted-foreground">Oleh: {log.user}</div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-center text-xs text-muted-foreground py-6">Belum ada riwayat pengerjaan.</p>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
               </div>
             )}
 
@@ -913,7 +804,6 @@ export default function StatusKondisiPage() {
         </Card>
       </footer>
 
-      {/* PRINT-ONLY SECTION */}
       <div id="print-area" className="hidden print:block p-8 bg-white text-black w-full min-h-screen">
         <header className="text-center mb-8 border-b-2 border-black pb-4">
           <h1 className="text-2xl font-bold uppercase">Laporan Status Kondisi Bangunan</h1>
@@ -925,36 +815,29 @@ export default function StatusKondisiPage() {
           <thead>
             <tr className="bg-gray-100">
               <th className="border border-black p-2 text-center w-[80px]">ID Unit</th>
-              <th className="border border-black p-2 text-left">Nama Unit / Bangunan</th>
+              <th className="border border-black p-2 text-left">Nama Unit</th>
               <th className="border border-black p-2 text-center">Keterisian</th>
               <th className="border border-black p-2 text-left">PIC Penanggung Jawab</th>
               <th className="border border-black p-2 text-center">Status Kondisi</th>
-              <th className="border border-black p-2 text-left w-[25%]">Deskripsi Kerusakan</th>
               <th className="border border-black p-2 text-center">Tgl Cek</th>
             </tr>
           </thead>
           <tbody>
-            {dummyData.map((item) => (
+            {units.map((item) => (
               <tr key={item.id}>
-                <td className="border border-black p-2 text-center font-mono font-bold">{item.id}</td>
-                <td className="border border-black p-2">
-                  <div className="font-bold">{item.name}</div>
-                  <div className="text-[10px] text-gray-600">{item.building}</div>
-                </td>
-                <td className="border border-black p-2 text-center">
-                    {item.inhabitants.length}/{item.capacity}
-                </td>
+                <td className="border border-black p-2 text-center font-mono font-bold">{item.unit_code}</td>
+                <td className="border border-black p-2">{item.unit_name}</td>
+                <td className="border border-black p-2 text-center">{item.total_occupancy}</td>
                 <td className="border border-black p-2 text-left">
                   <div className="font-bold">{item.pic.name}</div>
-                  <div className="text-[10px]">{item.pic.role}</div>
+                  <div className="text-[10px]">{item.pic.position}</div>
                 </td>
                 <td className="border border-black p-2 text-center font-bold">
-                  {item.status.toUpperCase()}
+                  {item.condition_status.toUpperCase()}
                 </td>
-                <td className="border border-black p-2 text-[10px] italic leading-relaxed">
-                  {item.status === "Baik" ? "-" : item.description}
+                <td className="border border-black p-2 text-center">
+                  {item.last_check_date ? format(new Date(item.last_check_date), 'dd-MM-yyyy') : '-'}
                 </td>
-                <td className="border border-black p-2 text-center">{item.lastChecked}</td>
               </tr>
             ))}
           </tbody>

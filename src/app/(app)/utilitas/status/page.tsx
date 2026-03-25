@@ -125,7 +125,7 @@ const getStatusBadge = (status: string) => {
       return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"><AlertTriangle className="mr-1 h-3 w-3" /> Rusak</Badge>;
     case "DALAM_PERBAIKAN":
     case "DALAM PERBAIKAN":
-      return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200"><Clock className="mr-1 h-3 w-3" /> Dalam Perbaikan</Badge>;
+      return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-orange-200"><Wrench className="mr-1 h-3 w-3" /> Dalam Perbaikan</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -179,7 +179,6 @@ export default function StatusKondisiPage() {
     } catch (error: any) {
       console.error("Failed to fetch summary", error);
     } finally {
-      // Small artificial delay to ensure the pulse animation is noticeable
       setTimeout(() => {
         setIsSummaryLoading(false);
       }, 700);
@@ -207,7 +206,6 @@ export default function StatusKondisiPage() {
         description: "Terjadi kesalahan saat menghubungi server."
       });
     } finally {
-      // Artificial delay for smooth UX transition
       setTimeout(() => {
         setIsUnitsLoading(false);
       }, 1000);
@@ -338,7 +336,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-14 animate-pulse bg-green-200/50" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-slate-200" />
               ) : (
                 <div className="text-2xl font-bold text-green-700">{summary.kondisi_baik}</div>
               )}
@@ -351,7 +349,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-14 animate-pulse bg-red-200/50" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-slate-200" />
               ) : (
                 <div className="text-2xl font-bold text-red-700">{summary.kondisi_rusak}</div>
               )}
@@ -364,7 +362,7 @@ export default function StatusKondisiPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 min-h-[40px] flex items-center">
               {isSummaryLoading ? (
-                <Skeleton className="h-8 w-14 animate-pulse bg-blue-200/50" />
+                <Skeleton className="h-8 w-14 animate-pulse bg-slate-200" />
               ) : (
                 <div className="text-2xl font-bold text-blue-700">{summary.dalam_perbaikan}</div>
               )}
@@ -551,11 +549,13 @@ export default function StatusKondisiPage() {
                                         <Badge 
                                             variant="secondary" 
                                             className={cn(
-                                                "cursor-pointer hover:bg-primary hover:text-white transition-colors",
-                                                item.current_occupancy >= item.capacity ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"
+                                                "cursor-pointer transition-colors",
+                                                item.current_occupancy >= item.capacity 
+                                                  ? "bg-red-100 text-red-700 hover:bg-red-200" 
+                                                  : "bg-green-100 text-green-700 hover:bg-green-200"
                                             )}
                                         >
-                                            <Plus className="mr-1 h-3 w-3 rotate-45" /> {/* Users replacement for occupancy view */}
+                                            <Info className="mr-1 h-3 w-3" />
                                             {item.total_occupancy}
                                         </Badge>
                                     </PopoverTrigger>

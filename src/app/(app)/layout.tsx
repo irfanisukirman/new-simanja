@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   CalendarClock,
-  Library,
   Link2,
   ArrowRightLeft,
   Boxes,
@@ -43,9 +42,6 @@ import { Button } from '@/components/ui/button';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isBmdMenuOpen, setIsBmdMenuOpen] = useState(false);
-  const [isSchedulingMenuOpen, setIsSchedulingMenuOpen] = useState(false);
-  const [isInventarisMenuOpen, setIsInventarisMenuOpen] = useState(false);
   const [isUtilitasMenuOpen, setIsUtilitasMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -57,35 +53,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const role = localStorage.getItem('role');
     const isPublicPath = pathname === '/tautan';
     
-    const hasToken = !!token;
-    setIsLoggedIn(hasToken);
+    // Validasi token yang lebih ketat
+    const hasValidToken = token !== null && token !== '' && token !== 'undefined';
+    setIsLoggedIn(hasValidToken);
     setUserRole(role);
     
-    if (!hasToken && !isPublicPath) {
+    if (!hasValidToken && !isPublicPath) {
       router.replace('/login');
     }
   }, [router, pathname]);
 
   useEffect(() => {
-    const isBmdPath = pathname.startsWith('/bmd-management');
-    const isSchedulingPath = pathname.startsWith('/scheduling');
-    const isInventarisPath = pathname.startsWith('/inventaris');
     const isUtilitasPath = pathname.startsWith('/utilitas');
-    
-    setIsBmdMenuOpen(isBmdPath);
-    setIsSchedulingMenuOpen(isSchedulingPath);
-    setIsInventarisMenuOpen(isInventarisPath);
     setIsUtilitasMenuOpen(isUtilitasPath);
   }, [pathname]);
 
-  // Hanya tampilkan menu privat jika sudah mounted (client-side) dan status login benar (isLoggedIn)
-  const canShowPrivateMenu = mounted && isLoggedIn;
+  // Menu hanya ditampilkan jika sudah mounted untuk menghindari hydration mismatch
+  if (!mounted) return null;
 
   return (
     <Providers>
       <Sidebar>
         <SidebarHeader className="pl-0 pt-0 pr-0 pb-2">
-          <Link href={canShowPrivateMenu ? "/dashboard" : "/tautan"}>
+          <Link href={isLoggedIn ? "/dashboard" : "/tautan"}>
             <Image 
               src="/img_bg_nav_header.jpg" 
               alt="SIMANJA Header"
@@ -99,7 +89,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent className='pl-2 pr-2'>
           <SidebarMenu>
-            {canShowPrivateMenu && (
+            {/* MENU PRIVAT: Hanya muncul jika isLoggedIn adalah TRUE */}
+            {isLoggedIn && (
               <>
                 {userRole !== 'staff_barang' && userRole !== 'staff_gudang' && (
                   <SidebarMenuItem>
@@ -141,7 +132,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
 
-                {/* Menu Utilitas Gedung & Wisma */}
                 <Collapsible open={isUtilitasMenuOpen} onOpenChange={setIsUtilitasMenuOpen}>
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
@@ -219,6 +209,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </>
             )}
             
+            {/* MENU PUBLIK: Selalu muncul */}
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Tautan" isActive={pathname === '/tautan'}>
                 <Link href="/tautan">
@@ -231,19 +222,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
         <SidebarFooter>
           <SidebarSeparator />
-          {canShowPrivateMenu ? (
+          {isLoggedIn ? (
             <UserNav />
           ) : (
-            mounted && (
-              <div className="p-2">
-                <Button asChild variant="ghost" className="w-full justify-start gap-3">
-                  <Link href="/login">
-                    <LogIn className="h-4 w-4" />
-                    <span>Login</span>
-                  </Link>
-                </Button>
-              </div>
-            )
+            <div className="p-2">
+              <Button asChild variant="ghost" className="w-full justify-start gap-3">
+                <Link href="/login">
+                  <LogIn className="h-4 w-4" />
+                  <span>Login</span>
+                </Link>
+              </Button>
+            </div>
           )}
         </SidebarFooter>
       </Sidebar>

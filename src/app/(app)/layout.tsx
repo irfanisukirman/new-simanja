@@ -49,22 +49,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isUtilitasMenuOpen, setIsUtilitasMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
     const isPublicPath = pathname === '/tautan';
     
-    setIsLoggedIn(!!token);
+    const hasToken = !!token;
+    setIsLoggedIn(hasToken);
+    setUserRole(role);
     
-    if (!token && !isPublicPath) {
+    if (!hasToken && !isPublicPath) {
       router.replace('/login');
     }
   }, [router, pathname]);
 
   useEffect(() => {
-    const role = localStorage.getItem('role');
-    setUserRole(role);
-
     const isBmdPath = pathname.startsWith('/bmd-management');
     const isSchedulingPath = pathname.startsWith('/scheduling');
     const isInventarisPath = pathname.startsWith('/inventaris');
@@ -76,11 +78,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setIsUtilitasMenuOpen(isUtilitasPath);
   }, [pathname]);
 
+  // Hanya tampilkan menu privat jika sudah mounted (client-side) dan status login benar (isLoggedIn)
+  const canShowPrivateMenu = mounted && isLoggedIn;
+
   return (
     <Providers>
       <Sidebar>
         <SidebarHeader className="pl-0 pt-0 pr-0 pb-2">
-          <Link href={isLoggedIn ? "/dashboard" : "/tautan"}>
+          <Link href={canShowPrivateMenu ? "/dashboard" : "/tautan"}>
             <Image 
               src="/img_bg_nav_header.jpg" 
               alt="SIMANJA Header"
@@ -94,7 +99,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent className='pl-2 pr-2'>
           <SidebarMenu>
-            {isLoggedIn ? (
+            {canShowPrivateMenu && (
               <>
                 {userRole !== 'staff_barang' && userRole !== 'staff_gudang' && (
                   <SidebarMenuItem>
@@ -212,7 +217,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </CollapsibleContent>
                 </Collapsible>
               </>
-            ) : null}
+            )}
             
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Tautan" isActive={pathname === '/tautan'}>
@@ -226,17 +231,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
         <SidebarFooter>
           <SidebarSeparator />
-          {isLoggedIn ? (
+          {canShowPrivateMenu ? (
             <UserNav />
           ) : (
-            <div className="p-2">
-              <Button asChild variant="ghost" className="w-full justify-start gap-3">
-                <Link href="/login">
-                  <LogIn className="h-4 w-4" />
-                  <span>Login</span>
-                </Link>
-              </Button>
-            </div>
+            mounted && (
+              <div className="p-2">
+                <Button asChild variant="ghost" className="w-full justify-start gap-3">
+                  <Link href="/login">
+                    <LogIn className="h-4 w-4" />
+                    <span>Login</span>
+                  </Link>
+                </Button>
+              </div>
+            )
           )}
         </SidebarFooter>
       </Sidebar>

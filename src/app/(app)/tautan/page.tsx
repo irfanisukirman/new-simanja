@@ -66,6 +66,11 @@ const linkGroups = [
         url: "https://docs.google.com/spreadsheets/d/1Gs4zNJih6NW2OqZP8XTVH8nDnCZjxKx3KtfqFP-RS6I/edit?gid=1723776320#gid=1723776320",
       },
       {
+        title: "Denah Jaringan Internet BPSDM Provinsi Jawa Barat",
+        description: "Dokumen visual denah infrastruktur jaringan internet di lingkungan BPSDM.",
+        url: "https://drive.google.com/file/d/1x9mdvM5IoIN6kZAO2ANSelQUtr57lffm/view?usp=sharing",
+      },
+      {
         title: "Form Inventarisasi Barang",
         description: "Formulir online untuk pendataan dan inventarisasi barang.",
         url: "https://bit.ly/Form-Barang",

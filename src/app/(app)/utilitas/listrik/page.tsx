@@ -50,6 +50,7 @@ import { format } from "date-fns"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { uploadToCloudinary } from "@/app/actions/cloudinary"
 
 interface Bill {
   id: number;
@@ -116,9 +117,11 @@ export default function ListrikPage() {
   const [activeTab, setActiveTab] = useState("input")
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoadingBills, setIsLoadingBills] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // State for image selection
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleApiError = useCallback((error: any) => {
@@ -168,6 +171,7 @@ export default function ListrikPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       setSelectedFileName(file.name);
     }
   };
@@ -178,9 +182,81 @@ export default function ListrikPage() {
 
   const clearFile = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setSelectedFile(null);
     setSelectedFileName(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSaveData = async () => {
+    if (!selectedFile) {
+      toast({
+        variant: "destructive",
+        title: "Foto Diperlukan",
+        description: "Silakan pilih foto bukti meteran terlebih dahulu.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Algoritma 1: Upload image ke Cloudinary
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedFile);
+      reader.onloadend = async () => {
+        const base64Image = reader.result as string;
+        const uploadResult = await uploadToCloudinary(base64Image);
+
+        if (uploadResult.success && uploadResult.url) {
+          toast({
+            variant: "success",
+            title: "Upload Berhasil",
+            description: "Foto bukti meteran telah diunggah ke Cloudinary.",
+          });
+
+          // Algoritma 2: Get URL, jadikan parameter ke body
+          // const imageUrl = uploadResult.url;
+          // const body = {
+          //   tanggal: (document.getElementById('tanggal') as HTMLInputElement).value,
+          //   no_pelanggan: (document.getElementById('no_pelanggan') as HTMLInputElement).value,
+          //   lokasi: (document.querySelector('[data-id="lokasi-select"]') as any)?.value || 'utama_wisma',
+          //   jatuh_tempo: (document.getElementById('jatuh_tempo') as HTMLInputElement).value,
+          //   status: 'lunas',
+          //   stand_meter_awal: (document.getElementById('stand_meter_awal') as HTMLInputElement).value,
+          //   stand_meter_akhir: (document.getElementById('stand_meter_akhir') as HTMLInputElement).value,
+          //   total_pemakaian_kwh: (document.getElementById('total_pemakaian_kwh') as HTMLInputElement).value,
+          //   total_bruto: (document.getElementById('total_bruto') as HTMLInputElement).value,
+          //   pajak: (document.getElementById('pajak') as HTMLInputElement).value,
+          //   subsidi: (document.getElementById('subsidi') as HTMLInputElement).value,
+          //   total_bayar: (document.getElementById('total_bayar') as HTMLInputElement).value,
+          //   foto_meteran: imageUrl
+          // };
+
+          // Algoritma 3: Submit data mater menggunakan API
+          // const token = localStorage.getItem("token");
+          // await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/bills`, body, {
+          //   headers: { Authorization: `Bearer ${token}` }
+          // });
+
+          console.log("Upload Success! URL:", uploadResult.url);
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Upload Gagal",
+            description: uploadResult.error || "Gagal mengunggah gambar.",
+          });
+        }
+        setIsSubmitting(false);
+      };
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast({
+        variant: "destructive",
+        title: "Terjadi Kesalahan",
+        description: "Gagal memproses data.",
+      });
+      setIsSubmitting(false);
     }
   };
 
@@ -368,8 +444,19 @@ export default function ListrikPage() {
                       <Input id="total_bayar" type="number" className="font-bold text-lg border-primary/30" placeholder="0" />
                     </div>
                     <div className="pt-6">
-                      <Button className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-lg">
-                        Simpan Data Listrik
+                      <Button 
+                        className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-lg"
+                        onClick={handleSaveData}
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Memproses...
+                          </>
+                        ) : (
+                          "Simpan Data Listrik"
+                        )}
                       </Button>
                     </div>
                   </div>

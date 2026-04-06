@@ -56,8 +56,9 @@ interface Bill {
   total_pemakaian_kwh: string;
   stand_meter_awal: string;
   stand_meter_akhir: string;
-  tarif_dasar: string;
+  total_bruto: string;
   pajak: string;
+  subsidi: string;
   total_bayar: string;
   jatuh_tempo: string;
   status: string;
@@ -191,7 +192,6 @@ export default function ListrikPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab: Input Meter */}
           <TabsContent value="input" className="mt-0">
             <Card>
               <CardHeader>
@@ -241,7 +241,6 @@ export default function ListrikPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Tagihan PLN */}
           <TabsContent value="bills" className="mt-0">
             <Card>
               <CardHeader>
@@ -311,8 +310,12 @@ export default function ListrikPage() {
                                         <span className="font-medium">{parseFloat(bill.total_pemakaian_kwh).toLocaleString()} kWh</span>
                                       </div>
                                       <div className="flex justify-between border-b pb-2">
-                                        <span className="text-muted-foreground">Tarif Dasar</span>
-                                        <span className="font-medium">{formatCurrency(bill.tarif_dasar)}</span>
+                                        <span className="text-muted-foreground">Biaya Bruto</span>
+                                        <span className="font-medium">{formatCurrency(bill.total_bruto)}</span>
+                                      </div>
+                                      <div className="flex justify-between border-b pb-2 text-green-600">
+                                        <span className="text-muted-foreground">Subsidi</span>
+                                        <span className="font-medium">- {formatCurrency(bill.subsidi)}</span>
                                       </div>
                                       <div className="flex justify-between border-b pb-2">
                                         <span className="text-muted-foreground">Pajak (PPJ)</span>
@@ -342,7 +345,6 @@ export default function ListrikPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Riwayat Pemakaian */}
           <TabsContent value="history" className="mt-0">
             <Card>
               <CardHeader>
@@ -378,7 +380,6 @@ export default function ListrikPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Grafik kWh */}
           <TabsContent value="graph" className="mt-0">
             <Card>
               <CardHeader>

@@ -102,6 +102,12 @@ const history = [
   { id: 3, date: "01-04-2026", location: "Gedung Utama", meter: 41980, usage: 1600 },
 ]
 
+const locationMapping: Record<string, string> = {
+  utama_wisma: "Gedung BPSDM & Wisma",
+  masjid_at_tarbiyah: "Masjid At-Tarbiyah",
+  pos_satpam_koperasi: "Pos Satpam & Koperasi",
+};
+
 export default function ListrikPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("input")
@@ -259,6 +265,7 @@ export default function ListrikPage() {
                         <TableRow>
                           <TableHead>Periode</TableHead>
                           <TableHead>No. Pelanggan</TableHead>
+                          <TableHead>Lokasi</TableHead>
                           <TableHead className="text-right">Nominal Tagihan</TableHead>
                           <TableHead className="text-center">Jatuh Tempo</TableHead>
                           <TableHead className="text-center">Status</TableHead>
@@ -268,7 +275,7 @@ export default function ListrikPage() {
                       <TableBody>
                         {bills.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="h-24 text-center">
+                            <TableCell colSpan={7} className="h-24 text-center">
                               Tidak ada data tagihan.
                             </TableCell>
                           </TableRow>
@@ -277,6 +284,7 @@ export default function ListrikPage() {
                             <TableRow key={bill.id}>
                               <TableCell className="font-medium">{bill.periode}</TableCell>
                               <TableCell>{bill.no_pelanggan}</TableCell>
+                              <TableCell>{locationMapping[bill.lokasi] || bill.lokasi}</TableCell>
                               <TableCell className="text-right font-semibold">{formatCurrency(bill.total_bayar)}</TableCell>
                               <TableCell className="text-center">
                                 {bill.jatuh_tempo ? format(new Date(bill.jatuh_tempo), 'dd-MM-yyyy') : '-'}
@@ -304,6 +312,10 @@ export default function ListrikPage() {
                                       <div className="flex justify-between border-b pb-2">
                                         <span className="text-muted-foreground">No. Pelanggan</span>
                                         <span className="font-medium">{bill.no_pelanggan}</span>
+                                      </div>
+                                      <div className="flex justify-between border-b pb-2">
+                                        <span className="text-muted-foreground">Lokasi</span>
+                                        <span className="font-medium">{locationMapping[bill.lokasi] || bill.lokasi}</span>
                                       </div>
                                       <div className="flex justify-between border-b pb-2">
                                         <span className="text-muted-foreground">Total Pemakaian</span>

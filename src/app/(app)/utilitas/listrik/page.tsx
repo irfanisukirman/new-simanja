@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -34,7 +34,8 @@ import {
   LineChart as LineChartIcon, 
   PlusCircle, 
   Upload,
-  Info
+  Info,
+  Loader2
 } from "lucide-react"
 import {
   ChartConfig,
@@ -44,13 +45,32 @@ import {
 } from "@/components/ui/chart"
 import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import { format } from "date-fns"
+import axios from "axios"
+import { useToast } from "@/hooks/use-toast"
 
-const formatCurrency = (value: number) => {
+interface Bill {
+  id: number;
+  periode: string;
+  no_pelanggan: string;
+  lokasi: string;
+  total_pemakaian_kwh: string;
+  stand_meter_awal: string;
+  stand_meter_akhir: string;
+  tarif_dasar: string;
+  pajak: string;
+  total_bayar: string;
+  jatuh_tempo: string;
+  status: string;
+  foto_meteran: string;
+}
+
+const formatCurrency = (value: number | string) => {
+  const numericValue = typeof value === 'string' ? parseFloat(value) : value;
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0
-  }).format(value);
+  }).format(numericValue || 0);
 }
 
 const kwhData = [
@@ -75,12 +95,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const bills = [
-  { id: 1, period: "Juni 2026", amount: 5900000, status: "Lunas", due: "20-06-2026", noPel: "543210987654", usage: 1700 },
-  { id: 2, period: "Mei 2026", amount: 5500000, status: "Lunas", due: "20-05-2026", noPel: "543210987654", usage: 1550 },
-  { id: 3, period: "April 2026", amount: 6100000, status: "Lunas", due: "20-04-2026", noPel: "543210987654", usage: 1600 },
-]
-
 const history = [
   { id: 1, date: "01-06-2026", location: "Gedung Utama", meter: 45230, usage: 1700 },
   { id: 2, date: "01-05-2026", location: "Gedung Utama", meter: 43530, usage: 1550 },
@@ -88,7 +102,54 @@ const history = [
 ]
 
 export default function ListrikPage() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("input")
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [isLoadingBills, setIsLoadingBills] = useState(false);
+
+  const handleApiError = useCallback((error: any) => {
+    if (error.response?.status === 401) {
+      toast({
+        variant: "destructive",
+        title: "Sesi Habis",
+        description: "Sesi Anda telah berakhir. Silakan login kembali.",
+      });
+      localStorage.clear();
+      window.location.href = "/login";
+      return true;
+    }
+    return false;
+  }, [toast]);
+
+  const fetchBills = useCallback(async () => {
+    setIsLoadingBills(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/bills`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true'
+        },
+      });
+      if (response.data.code === 200) {
+        setBills(response.data.data);
+      }
+    } catch (error: any) {
+      if (!handleApiError(error)) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Mengambil Data Tagihan",
+          description: error.response?.data?.message || "Terjadi kesalahan pada server.",
+        });
+      }
+    } finally {
+      setIsLoadingBills(false);
+    }
+  }, [toast, handleApiError]);
+
+  useEffect(() => {
+    fetchBills();
+  }, [fetchBills]);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -146,15 +207,14 @@ export default function ListrikPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lokasi">Lokasi Panel / Gedung</Label>
-                      <Select defaultValue="utama">
+                      <Select defaultValue="utama_wisma">
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih Lokasi" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="utama">Gedung Utama (Kantor)</SelectItem>
-                          <SelectItem value="wisma-a">Wisma A</SelectItem>
-                          <SelectItem value="wisma-b">Wisma B</SelectItem>
-                          <SelectItem value="aula">Gedung Aula</SelectItem>
+                          <SelectItem value="utama_wisma">Gedung BPSDM & Wisma</SelectItem>
+                          <SelectItem value="masjid_at_tarbiyah">Masjid At-Tarbiyah</SelectItem>
+                          <SelectItem value="pos_satpam_koperasi">Pos Satpam & Koperasi</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -190,81 +250,93 @@ export default function ListrikPage() {
               </CardHeader>
               <CardContent>
                 <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Periode</TableHead>
-                        <TableHead>No. Pelanggan</TableHead>
-                        <TableHead className="text-right">Nominal Tagihan</TableHead>
-                        <TableHead className="text-center">Jatuh Tempo</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {bills.map((bill) => (
-                        <TableRow key={bill.id}>
-                          <TableCell className="font-medium">{bill.period}</TableCell>
-                          <TableCell>{bill.noPel}</TableCell>
-                          <TableCell className="text-right font-semibold">{formatCurrency(bill.amount)}</TableCell>
-                          <TableCell className="text-center">{bill.due}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
-                              {bill.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Info className="mr-2 h-3 w-3" /> Detail
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                  <DialogTitle>Rincian Tagihan {bill.period}</DialogTitle>
-                                  <DialogDescription>
-                                    Informasi lengkap pemakaian dan rincian biaya listrik.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                  <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">No. Pelanggan</span>
-                                    <span className="font-medium">{bill.noPel}</span>
-                                  </div>
-                                  <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Total Pemakaian</span>
-                                    <span className="font-medium">{bill.usage} kWh</span>
-                                  </div>
-                                  <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Tarif Dasar</span>
-                                    <span className="font-medium">{formatCurrency(bill.amount - 250000)}</span>
-                                  </div>
-                                  <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Pajak (PPJ)</span>
-                                    <span className="font-medium">{formatCurrency(245000)}</span>
-                                  </div>
-                                  <div className="flex justify-between border-b pb-2">
-                                    <span className="text-muted-foreground">Biaya Admin</span>
-                                    <span className="font-medium">{formatCurrency(5000)}</span>
-                                  </div>
-                                  <div className="flex justify-between pt-2">
-                                    <span className="font-bold">Total Bayar</span>
-                                    <span className="font-bold text-primary">{formatCurrency(bill.amount)}</span>
-                                  </div>
-                                </div>
-                                <DialogFooter>
-                                  <DialogClose asChild>
-                                    <Button type="button">Tutup</Button>
-                                  </DialogClose>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </TableCell>
+                  {isLoadingBills ? (
+                    <div className="h-64 flex justify-center items-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Periode</TableHead>
+                          <TableHead>No. Pelanggan</TableHead>
+                          <TableHead className="text-right">Nominal Tagihan</TableHead>
+                          <TableHead className="text-center">Jatuh Tempo</TableHead>
+                          <TableHead className="text-center">Status</TableHead>
+                          <TableHead className="text-right">Aksi</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {bills.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="h-24 text-center">
+                              Tidak ada data tagihan.
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          bills.map((bill) => (
+                            <TableRow key={bill.id}>
+                              <TableCell className="font-medium">{bill.periode}</TableCell>
+                              <TableCell>{bill.no_pelanggan}</TableCell>
+                              <TableCell className="text-right font-semibold">{formatCurrency(bill.total_bayar)}</TableCell>
+                              <TableCell className="text-center">
+                                {bill.jatuh_tempo ? format(new Date(bill.jatuh_tempo), 'dd-MM-yyyy') : '-'}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge className={bill.status.toLowerCase() === 'lunas' ? "bg-green-100 text-green-700 border-green-200 hover:bg-green-100" : "bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100"}>
+                                  {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Info className="mr-2 h-3 w-3" /> Detail
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="sm:max-w-[425px]">
+                                    <DialogHeader>
+                                      <DialogTitle>Rincian Tagihan {bill.periode}</DialogTitle>
+                                      <DialogDescription>
+                                        Informasi lengkap pemakaian dan rincian biaya listrik.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="grid gap-4 py-4">
+                                      <div className="flex justify-between border-b pb-2">
+                                        <span className="text-muted-foreground">No. Pelanggan</span>
+                                        <span className="font-medium">{bill.no_pelanggan}</span>
+                                      </div>
+                                      <div className="flex justify-between border-b pb-2">
+                                        <span className="text-muted-foreground">Total Pemakaian</span>
+                                        <span className="font-medium">{parseFloat(bill.total_pemakaian_kwh).toLocaleString()} kWh</span>
+                                      </div>
+                                      <div className="flex justify-between border-b pb-2">
+                                        <span className="text-muted-foreground">Tarif Dasar</span>
+                                        <span className="font-medium">{formatCurrency(bill.tarif_dasar)}</span>
+                                      </div>
+                                      <div className="flex justify-between border-b pb-2">
+                                        <span className="text-muted-foreground">Pajak (PPJ)</span>
+                                        <span className="font-medium">{formatCurrency(bill.pajak)}</span>
+                                      </div>
+                                      <div className="flex justify-between pt-2">
+                                        <span className="font-bold">Total Bayar</span>
+                                        <span className="font-bold text-primary">{formatCurrency(bill.total_bayar)}</span>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <DialogClose asChild>
+                                        <Button type="button">Tutup</Button>
+                                      </DialogClose>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  )}
                 </div>
               </CardContent>
             </Card>

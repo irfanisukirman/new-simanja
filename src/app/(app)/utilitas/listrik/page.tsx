@@ -263,6 +263,10 @@ export default function ListrikPage() {
                       <Label htmlFor="stand_meter_akhir">Stand Meter Akhir (kWh)</Label>
                       <Input id="stand_meter_akhir" type="number" placeholder="0" />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="total_pemakaian_kwh">Total Pemakaian (kWh)</Label>
+                      <Input id="total_pemakaian_kwh" type="number" placeholder="0" />
+                    </div>
                     <div className="pt-4 space-y-2">
                       <Label>Foto Bukti Meteran</Label>
                       <div className="border-2 border-dashed rounded-lg h-[200px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors">

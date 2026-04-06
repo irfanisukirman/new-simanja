@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -35,7 +35,9 @@ import {
   PlusCircle, 
   Upload,
   Info,
-  Loader2
+  Loader2,
+  Image as ImageIcon,
+  X
 } from "lucide-react"
 import {
   ChartConfig,
@@ -113,6 +115,10 @@ export default function ListrikPage() {
   const [activeTab, setActiveTab] = useState("input")
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoadingBills, setIsLoadingBills] = useState(false);
+  
+  // State for image selection
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleApiError = useCallback((error: any) => {
     if (error.response?.status === 401) {
@@ -157,6 +163,25 @@ export default function ListrikPage() {
   useEffect(() => {
     fetchBills();
   }, [fetchBills]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFileName(file.name);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const clearFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedFileName(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -269,10 +294,53 @@ export default function ListrikPage() {
                     </div>
                     <div className="pt-4 space-y-2">
                       <Label>Foto Bukti Meteran</Label>
-                      <div className="border-2 border-dashed rounded-lg h-[200px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors">
-                        <Upload className="h-8 w-8 mb-2" />
-                        <p className="text-sm">Klik untuk upload foto</p>
-                        <p className="text-[10px] mt-1 text-muted-foreground">JPG, PNG (Maks 2MB)</p>
+                      <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        onChange={handleFileChange} 
+                        className="hidden" 
+                        accept="image/*"
+                      />
+                      <div 
+                        onClick={triggerFileInput}
+                        className={cn(
+                          "border-2 border-dashed rounded-lg h-[200px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors relative group",
+                          selectedFileName ? "border-primary/50 bg-primary/5" : "border-muted"
+                        )}
+                      >
+                        {selectedFileName ? (
+                          <div className="flex flex-col items-center p-4 text-center">
+                            <ImageIcon className="h-10 w-10 mb-2 text-primary" />
+                            <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                              {selectedFileName}
+                            </p>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="mt-4"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                triggerFileInput();
+                              }}
+                            >
+                              Ganti Foto
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={clearFile}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 mb-2" />
+                            <p className="text-sm">Klik untuk pilih foto</p>
+                            <p className="text-[10px] mt-1 text-muted-foreground">JPG, PNG (Maks 2MB)</p>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

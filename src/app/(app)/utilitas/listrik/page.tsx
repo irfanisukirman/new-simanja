@@ -176,7 +176,7 @@ export default function ListrikPage() {
               value="input" 
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
             >
-              <PlusCircle className="h-4 w-4" /> Input Meter
+              <PlusCircle className="h-4 w-4" /> Input Tagihan & Meter
             </TabsTrigger>
             <TabsTrigger 
               value="bills" 
@@ -201,15 +201,23 @@ export default function ListrikPage() {
           <TabsContent value="input" className="mt-0">
             <Card>
               <CardHeader>
-                <CardTitle>Pencatatan Meter Mandiri</CardTitle>
-                <CardDescription>Input stand meter listrik untuk pemantauan pemakaian bulanan.</CardDescription>
+                <CardTitle>Form Input Tagihan & Meter Listrik</CardTitle>
+                <CardDescription>Lengkapi data tagihan bulanan dan stand meter listrik.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {/* Bagian 1: Informasi Dasar */}
                   <div className="space-y-4">
+                    <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" /> Informasi Tagihan
+                    </h3>
                     <div className="space-y-2">
                       <Label htmlFor="tanggal">Tanggal Pencatatan</Label>
                       <Input id="tanggal" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="no_pelanggan">Nomor Pelanggan</Label>
+                      <Input id="no_pelanggan" placeholder="Contoh: 535811797103" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lokasi">Lokasi Panel / Gedung</Label>
@@ -225,20 +233,70 @@ export default function ListrikPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="stand-meter">Stand Meter Terakhir (kWh)</Label>
-                      <Input id="stand-meter" type="number" placeholder="Contoh: 45230" />
+                      <Label htmlFor="jatuh_tempo">Jatuh Tempo</Label>
+                      <Input id="jatuh_tempo" type="date" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status Pembayaran</Label>
+                      <Select defaultValue="belum_lunas">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="lunas">Lunas</SelectItem>
+                          <SelectItem value="belum_lunas">Belum Lunas</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
+
+                  {/* Bagian 2: Data Meteran & Foto */}
                   <div className="space-y-4">
-                    <Label>Foto Bukti Meteran</Label>
-                    <div className="border-2 border-dashed rounded-lg h-[210px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors">
-                      <Upload className="h-8 w-8 mb-2" />
-                      <p className="text-sm">Klik atau seret foto untuk upload</p>
-                      <p className="text-xs mt-1">Format: JPG, PNG (Maks 2MB)</p>
+                    <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-yellow-500" /> Data Stand Meter
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="stand_meter_awal">Stand Meter Awal (kWh)</Label>
+                      <Input id="stand_meter_awal" type="number" placeholder="0" />
                     </div>
-                    <div className="pt-2">
-                      <Button className="w-full">
-                        Simpan Data Meter
+                    <div className="space-y-2">
+                      <Label htmlFor="stand_meter_akhir">Stand Meter Akhir (kWh)</Label>
+                      <Input id="stand_meter_akhir" type="number" placeholder="0" />
+                    </div>
+                    <div className="pt-4 space-y-2">
+                      <Label>Foto Bukti Meteran</Label>
+                      <div className="border-2 border-dashed rounded-lg h-[200px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors">
+                        <Upload className="h-8 w-8 mb-2" />
+                        <p className="text-sm">Klik untuk upload foto</p>
+                        <p className="text-[10px] mt-1 text-muted-foreground">JPG, PNG (Maks 2MB)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bagian 3: Rincian Biaya */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
+                      <Info className="h-4 w-4 text-blue-500" /> Rincian Biaya (Rp)
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="total_bruto">Total Bruto</Label>
+                      <Input id="total_bruto" type="number" placeholder="0" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="pajak">Pajak (PPJ)</Label>
+                      <Input id="pajak" type="number" placeholder="0" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subsidi">Subsidi</Label>
+                      <Input id="subsidi" type="number" placeholder="0" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="total_bayar" className="text-primary font-bold">Total Bayar</Label>
+                      <Input id="total_bayar" type="number" className="font-bold text-lg border-primary/30" placeholder="0" />
+                    </div>
+                    <div className="pt-6">
+                      <Button className="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 shadow-lg">
+                        Simpan Data Listrik
                       </Button>
                     </div>
                   </div>

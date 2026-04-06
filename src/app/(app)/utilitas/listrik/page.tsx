@@ -49,6 +49,7 @@ import { Line, LineChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } fro
 import { format } from "date-fns"
 import axios from "axios"
 import { useToast } from "@/hooks/use-toast"
+import { cn } from "@/lib/utils"
 
 interface Bill {
   id: number;

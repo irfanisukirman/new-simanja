@@ -257,15 +257,15 @@ export default function ListrikPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="stand_meter_awal">Stand Meter Awal (kWh)</Label>
-                      <Input id="stand_meter_awal" type="number" placeholder="0" />
+                      <Input id="stand_meter_awal" type="number" step="0.01" placeholder="0.00" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="stand_meter_akhir">Stand Meter Akhir (kWh)</Label>
-                      <Input id="stand_meter_akhir" type="number" placeholder="0" />
+                      <Input id="stand_meter_akhir" type="number" step="0.01" placeholder="0.00" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="total_pemakaian_kwh">Total Pemakaian (kWh)</Label>
-                      <Input id="total_pemakaian_kwh" type="number" placeholder="0" />
+                      <Input id="total_pemakaian_kwh" type="number" step="0.01" placeholder="0.00" />
                     </div>
                     <div className="pt-4 space-y-2">
                       <Label>Foto Bukti Meteran</Label>

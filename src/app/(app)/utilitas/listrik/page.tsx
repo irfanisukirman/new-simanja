@@ -29,7 +29,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { 
   Zap, 
-  History, 
   FileText, 
   LineChart as LineChartIcon, 
   PlusCircle, 
@@ -88,12 +87,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-const history = [
-  { id: 1, date: "01-06-2026", location: "Gedung Utama", meter: 45230, usage: 1700 },
-  { id: 2, date: "01-05-2026", location: "Gedung Utama", meter: 43530, usage: 1550 },
-  { id: 3, date: "01-04-2026", location: "Gedung Utama", meter: 41980, usage: 1600 },
-]
-
 const locationMapping: Record<string, string> = {
   utama_wisma: "Gedung BPSDM & Wisma",
   masjid_at_tarbiyah: "Masjid At-Tarbiyah",
@@ -127,20 +120,16 @@ export default function ListrikPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Kalkulasi data grafik dari state bills
   const dynamicChartData = useMemo(() => {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
     const fullMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const idFullMonthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
-    // Inisialisasi data 12 bulan
     const data = monthNames.map(m => ({ month: m, kwh: 0 }));
 
     bills.forEach(bill => {
-      // bill.periode biasanya "April 2026"
       const monthPart = bill.periode.split(' ')[0];
       
-      // Cari index bulan (cek Inggris atau Indonesia)
       let monthIndex = fullMonthNames.findIndex(m => m.toLowerCase() === monthPart.toLowerCase());
       if (monthIndex === -1) {
         monthIndex = idFullMonthNames.findIndex(m => m.toLowerCase() === monthPart.toLowerCase());
@@ -386,12 +375,6 @@ export default function ListrikPage() {
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
             >
               <FileText className="h-4 w-4" /> Tagihan
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-3 flex items-center gap-2"
-            >
-              <History className="h-4 w-4" /> Riwayat
             </TabsTrigger>
             <TabsTrigger 
               value="graph" 
@@ -788,41 +771,6 @@ export default function ListrikPage() {
                       </TableBody>
                     </Table>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="history" className="mt-0">
-            <Card>
-              <CardHeader>
-                <CardTitle>Riwayat Pemakaian Listrik</CardTitle>
-                <CardDescription>Catatan pemakaian kWh dari waktu ke waktu.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Tanggal Catat</TableHead>
-                        <TableHead>Lokasi</TableHead>
-                        <TableHead className="text-right">Stand Meter</TableHead>
-                        <TableHead className="text-right">Pemakaian (kWh)</TableHead>
-                        <TableHead className="text-center">Petugas</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {history.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>{item.date}</TableCell>
-                          <TableCell>{item.location}</TableCell>
-                          <TableCell className="text-right">{item.meter.toLocaleString()}</TableCell>
-                          <TableCell className="text-right font-bold text-primary">{item.usage.toLocaleString()} kWh</TableCell>
-                          <TableCell className="text-center">Irfan I.</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
                 </div>
               </CardContent>
             </Card>

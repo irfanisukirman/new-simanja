@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -81,21 +81,6 @@ const formatCurrency = (value: number | string) => {
   }).format(numericValue || 0);
 }
 
-const kwhData = [
-  { month: "Jan", kwh: 1200 },
-  { month: "Feb", kwh: 1450 },
-  { month: "Mar", kwh: 1300 },
-  { month: "Apr", kwh: 1600 },
-  { month: "Mei", kwh: 1550 },
-  { month: "Jun", kwh: 1700 },
-  { month: "Jul", kwh: 1650 },
-  { month: "Agu", kwh: 1800 },
-  { month: "Sep", kwh: 1750 },
-  { month: "Okt", kwh: 1900 },
-  { month: "Nov", kwh: 1850 },
-  { month: "Des", kwh: 2100 },
-]
-
 const chartConfig = {
   kwh: {
     label: "Pemakaian (kWh)",
@@ -122,7 +107,6 @@ export default function ListrikPage() {
   const [isLoadingBills, setIsLoadingBills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State for validation errors
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   
   const [formData, setFormData] = useState({
@@ -143,7 +127,33 @@ export default function ListrikPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Logic: Total Bayar = Total Bruto - Subsidi
+  // Kalkulasi data grafik dari state bills
+  const dynamicChartData = useMemo(() => {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const fullMonthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const idFullMonthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+    // Inisialisasi data 12 bulan
+    const data = monthNames.map(m => ({ month: m, kwh: 0 }));
+
+    bills.forEach(bill => {
+      // bill.periode biasanya "April 2026"
+      const monthPart = bill.periode.split(' ')[0];
+      
+      // Cari index bulan (cek Inggris atau Indonesia)
+      let monthIndex = fullMonthNames.findIndex(m => m.toLowerCase() === monthPart.toLowerCase());
+      if (monthIndex === -1) {
+        monthIndex = idFullMonthNames.findIndex(m => m.toLowerCase() === monthPart.toLowerCase());
+      }
+
+      if (monthIndex !== -1) {
+        data[monthIndex].kwh += parseFloat(bill.total_pemakaian_kwh || "0");
+      }
+    });
+
+    return data;
+  }, [bills]);
+
   useEffect(() => {
     const bruto = parseFloat(formData.total_bruto || "0");
     const sub = parseFloat(formData.subsidi || "0");
@@ -153,7 +163,6 @@ export default function ListrikPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user types
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: false }));
     }
@@ -208,14 +217,10 @@ export default function ListrikPage() {
     if (file) {
       setSelectedFile(file);
       setSelectedFileName(file.name);
-      
-      // Create preview URL
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
       setPreviewUrl(URL.createObjectURL(file));
-      
-      // Clear photo error
       if (formErrors.foto) {
         setFormErrors(prev => ({ ...prev, foto: false }));
       }
@@ -263,7 +268,6 @@ export default function ListrikPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Upload to Cloudinary first
       const reader = new FileReader();
       reader.readAsDataURL(selectedFile!);
       
@@ -281,10 +285,9 @@ export default function ListrikPage() {
         throw new Error(uploadResult.error || "Gagal mengunggah gambar.");
       }
 
-      // 2. Prepare Payload
       const token = localStorage.getItem("token");
       const selectedDate = new Date(formData.tanggal);
-      const periode = format(selectedDate, 'MMMM yyyy'); // e.g. "April 2026"
+      const periode = format(selectedDate, 'MMMM yyyy'); 
       
       const jtDate = new Date(formData.jatuh_tempo);
       const formattedJatuhTempo = format(jtDate, 'MM-dd-yyyy');
@@ -305,7 +308,6 @@ export default function ListrikPage() {
         foto_meteran: uploadResult.url
       };
 
-      // 3. Post to API
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/bills`, payload, {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -321,7 +323,6 @@ export default function ListrikPage() {
           description: "Data telah berhasil disimpan.",
         });
 
-        // 4. Reset & Redirect
         setFormData({
           tanggal: format(new Date(), 'yyyy-MM-dd'),
           no_pelanggan: '',
@@ -341,7 +342,7 @@ export default function ListrikPage() {
         if (fileInputRef.current) fileInputRef.current.value = "";
 
         fetchBills();
-        setActiveTab("bills"); // Direct to Tagihan tab
+        setActiveTab("bills"); 
       } else {
         throw new Error(response.data.message || "Gagal menyimpan data.");
       }
@@ -400,7 +401,6 @@ export default function ListrikPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab: Input Meter Listrik */}
           <TabsContent value="input" className="mt-0">
             <Card>
               <CardHeader>
@@ -409,7 +409,6 @@ export default function ListrikPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {/* Column 1: Bill Info */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
                       <FileText className="h-4 w-4 text-primary" /> Informasi Tagihan
@@ -486,7 +485,6 @@ export default function ListrikPage() {
                     </div>
                   </div>
 
-                  {/* Column 2: Meter Data */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
                       <Zap className="h-4 w-4 text-yellow-500" /> Data Stand Meter
@@ -555,7 +553,6 @@ export default function ListrikPage() {
                     </div>
                   </div>
 
-                  {/* Column 3: Costs */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
                       <Info className="h-4 w-4 text-blue-500" /> Rincian Biaya (Rp)
@@ -628,7 +625,6 @@ export default function ListrikPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Tagihan PLN */}
           <TabsContent value="bills" className="mt-0">
             <Card>
               <CardHeader>
@@ -695,7 +691,6 @@ export default function ListrikPage() {
                                     </DialogHeader>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
-                                      {/* Left Column: Data & Costs */}
                                       <div className="space-y-6">
                                         <div className="space-y-3">
                                           <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Informasi Umum</h4>
@@ -747,7 +742,6 @@ export default function ListrikPage() {
                                         </div>
                                       </div>
 
-                                      {/* Right Column: Image Preview */}
                                       <div className="space-y-3 flex flex-col">
                                         <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                                           <ImageIcon className="h-3 w-3" /> Foto Bukti Meteran
@@ -799,7 +793,6 @@ export default function ListrikPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Riwayat Pemakaian */}
           <TabsContent value="history" className="mt-0">
             <Card>
               <CardHeader>
@@ -835,17 +828,16 @@ export default function ListrikPage() {
             </Card>
           </TabsContent>
 
-          {/* Tab: Grafik kWh */}
           <TabsContent value="graph" className="mt-0">
             <Card>
               <CardHeader>
                 <CardTitle>Tren Konsumsi Listrik</CardTitle>
-                <CardDescription>Grafik pemakaian kWh selama 12 bulan terakhir.</CardDescription>
+                <CardDescription>Grafik pemakaian kWh dinamis dari seluruh data tagihan.</CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
                 <ChartContainer config={chartConfig} className="h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={kwhData}>
+                    <LineChart data={dynamicChartData}>
                       <CartesianGrid vertical={false} strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="month" 

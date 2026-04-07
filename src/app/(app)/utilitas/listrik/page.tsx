@@ -118,7 +118,6 @@ export default function ListrikPage() {
   const [isLoadingBills, setIsLoadingBills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Form States
   const [formData, setFormData] = useState({
     tanggal: format(new Date(), 'yyyy-MM-dd'),
     no_pelanggan: '',
@@ -216,7 +215,6 @@ export default function ListrikPage() {
   };
 
   const handleSaveData = async () => {
-    // Basic Validation
     if (!formData.no_pelanggan || !formData.total_pemakaian_kwh || !formData.total_bayar) {
       toast({
         variant: "destructive",
@@ -237,7 +235,6 @@ export default function ListrikPage() {
 
     setIsSubmitting(true);
     try {
-      // 1. Upload image to Cloudinary
       const reader = new FileReader();
       reader.readAsDataURL(selectedFile);
       
@@ -255,12 +252,10 @@ export default function ListrikPage() {
         throw new Error(uploadResult.error || "Gagal mengunggah gambar.");
       }
 
-      // 2. Prepare payload
       const token = localStorage.getItem("token");
       const selectedDate = new Date(formData.tanggal);
-      const periode = format(selectedDate, 'MMMM yyyy'); // e.g., "April 2026"
+      const periode = format(selectedDate, 'MMMM yyyy');
       
-      // format jatuh_tempo from yyyy-MM-dd to MM-dd-yyyy for the API body example
       let formattedJatuhTempo = "";
       if (formData.jatuh_tempo) {
         const jtDate = new Date(formData.jatuh_tempo);
@@ -282,7 +277,6 @@ export default function ListrikPage() {
         foto_meteran: uploadResult.url
       };
 
-      // 3. Submit data using API
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/bills`, payload, {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -298,7 +292,6 @@ export default function ListrikPage() {
           description: "Data tagihan listrik berhasil disimpan.",
         });
 
-        // Reset Form
         setFormData({
           tanggal: format(new Date(), 'yyyy-MM-dd'),
           no_pelanggan: '',
@@ -316,9 +309,8 @@ export default function ListrikPage() {
         setPreviewUrl(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
 
-        // Refresh List
         fetchBills();
-        setActiveTab("bills"); // Switch to bills tab to see results
+        setActiveTab("bills");
       } else {
         throw new Error(response.data.message || "Gagal menyimpan data ke database.");
       }
@@ -485,7 +477,7 @@ export default function ListrikPage() {
                         onClick={triggerFileInput}
                         className={cn(
                           "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-all relative group overflow-hidden cursor-pointer",
-                          previewUrl ? "border-slate-400 bg-slate-100" : "border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400"
+                          previewUrl ? "border-slate-400 bg-slate-100" : "border-slate-400 bg-slate-100 hover:bg-slate-200 transition-colors"
                         )}
                       >
                         {previewUrl ? (

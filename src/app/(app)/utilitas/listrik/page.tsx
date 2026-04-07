@@ -138,6 +138,14 @@ export default function ListrikPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Kalkulasi otomatis Total Bayar: Total Bruto - Subsidi
+  useEffect(() => {
+    const bruto = parseFloat(formData.total_bruto || "0");
+    const sub = parseFloat(formData.subsidi || "0");
+    const total = bruto - sub;
+    setFormData(prev => ({ ...prev, total_bayar: total.toFixed(2) }));
+  }, [formData.total_bruto, formData.subsidi]);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -217,11 +225,11 @@ export default function ListrikPage() {
   };
 
   const handleSaveData = async () => {
-    if (!formData.no_pelanggan || !formData.total_pemakaian_kwh || !formData.total_bayar) {
+    if (!formData.no_pelanggan || !formData.total_pemakaian_kwh) {
       toast({
         variant: "destructive",
         title: "Data Tidak Lengkap",
-        description: "Harap isi Nomor Pelanggan, Total Pemakaian, dan Total Bayar.",
+        description: "Harap isi Nomor Pelanggan dan Total Pemakaian.",
       });
       return;
     }
@@ -274,6 +282,7 @@ export default function ListrikPage() {
         total_bruto: parseFloat(formData.total_bruto || "0"),
         pajak: parseFloat(formData.pajak || "0"),
         subsidi: parseFloat(formData.subsidi || "0"),
+        total_bayar: parseFloat(formData.total_bayar || "0"),
         jatuh_tempo: formattedJatuhTempo,
         status: formData.status,
         foto_meteran: uploadResult.url
@@ -559,13 +568,13 @@ export default function ListrikPage() {
                     <div className="space-y-2">
                       <Label htmlFor="total_bayar" className="text-primary font-bold">Total Bayar</Label>
                       <Input 
+                        disabled
                         id="total_bayar" 
                         type="number" 
                         step="0.01"
-                        className="font-bold text-lg border-primary/30" 
+                        className="font-bold text-lg border-primary/30 bg-muted/50" 
                         placeholder="0.00" 
                         value={formData.total_bayar}
-                        onChange={(e) => handleInputChange('total_bayar', e.target.value)}
                       />
                     </div>
                     <div className="pt-6">

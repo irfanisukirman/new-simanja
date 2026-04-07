@@ -37,7 +37,8 @@ import {
   Info,
   Loader2,
   X,
-  Calendar
+  Calendar,
+  Image as ImageIcon
 } from "lucide-react"
 import {
   ChartConfig,
@@ -120,7 +121,6 @@ export default function ListrikPage() {
   const [isLoadingBills, setIsLoadingBills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Form Errors State
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
   
   const [formData, setFormData] = useState({
@@ -150,7 +150,6 @@ export default function ListrikPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for this field
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: false }));
     }
@@ -211,7 +210,6 @@ export default function ListrikPage() {
       }
       setPreviewUrl(URL.createObjectURL(file));
       
-      // Clear photo error
       if (formErrors.foto) {
         setFormErrors(prev => ({ ...prev, foto: false }));
       }
@@ -314,7 +312,6 @@ export default function ListrikPage() {
           description: "Data telah berhasil disimpan.",
         });
 
-        // Reset Form
         setFormData({
           tanggal: format(new Date(), 'yyyy-MM-dd'),
           no_pelanggan: '',
@@ -678,35 +675,51 @@ export default function ListrikPage() {
                                         Informasi lengkap pemakaian dan rincian biaya listrik.
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <div className="grid gap-4 py-4">
-                                      <div className="flex justify-between border-b pb-2">
+                                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
+                                      <div className="flex justify-between border-b pb-2 text-sm">
                                         <span className="text-muted-foreground">No. Pelanggan</span>
                                         <span className="font-medium">{bill.no_pelanggan}</span>
                                       </div>
-                                      <div className="flex justify-between border-b pb-2">
+                                      <div className="flex justify-between border-b pb-2 text-sm">
                                         <span className="text-muted-foreground">Lokasi</span>
                                         <span className="font-medium">{locationMapping[bill.lokasi] || bill.lokasi}</span>
                                       </div>
-                                      <div className="flex justify-between border-b pb-2">
+                                      <div className="flex justify-between border-b pb-2 text-sm">
                                         <span className="text-muted-foreground">Total Pemakaian</span>
                                         <span className="font-medium">{parseFloat(bill.total_pemakaian_kwh).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh</span>
                                       </div>
-                                      <div className="flex justify-between border-b pb-2">
+                                      <div className="flex justify-between border-b pb-2 text-sm">
                                         <span className="text-muted-foreground">Biaya Bruto</span>
                                         <span className="font-medium">{formatCurrency(bill.total_bruto)}</span>
                                       </div>
-                                      <div className="flex justify-between border-b pb-2 text-green-600">
+                                      <div className="flex justify-between border-b pb-2 text-green-600 text-sm">
                                         <span className="text-muted-foreground">Subsidi</span>
                                         <span className="font-medium">- {formatCurrency(bill.subsidi)}</span>
                                       </div>
-                                      <div className="flex justify-between border-b pb-2">
+                                      <div className="flex justify-between border-b pb-2 text-sm">
                                         <span className="text-muted-foreground">Pajak (PPJ)</span>
                                         <span className="font-medium">{formatCurrency(bill.pajak)}</span>
                                       </div>
-                                      <div className="flex justify-between pt-2">
-                                        <span className="font-bold">Total Bayar</span>
+                                      <div className="flex justify-between border-b pb-2">
+                                        <span className="font-bold text-sm">Total Bayar</span>
                                         <span className="font-bold text-primary">{formatCurrency(bill.total_bayar)}</span>
                                       </div>
+                                      
+                                      {bill.foto_meteran && (
+                                        <div className="space-y-2 pt-2">
+                                          <Label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
+                                            <ImageIcon className="h-3 w-3" /> Foto Bukti Meteran
+                                          </Label>
+                                          <div className="rounded-md border overflow-hidden bg-muted flex items-center justify-center min-h-[200px]">
+                                            <img 
+                                              src={bill.foto_meteran} 
+                                              alt="Foto Meteran" 
+                                              className="max-w-full h-auto object-contain cursor-zoom-in"
+                                              onClick={() => window.open(bill.foto_meteran, '_blank')}
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                     <DialogFooter>
                                       <DialogClose asChild>

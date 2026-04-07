@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -369,8 +368,8 @@ export default function ListrikPage() {
                         className={cn(
                           "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-all relative group overflow-hidden cursor-pointer",
                           selectedFileName 
-                            ? "border-slate-400 bg-slate-50" 
-                            : "border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400"
+                            ? "border-slate-400 bg-slate-100" 
+                            : "border-slate-400 bg-slate-100 hover:bg-slate-200 hover:border-slate-500"
                         )}
                       >
                         {previewUrl ? (
@@ -391,7 +390,7 @@ export default function ListrikPage() {
                           </div>
                         ) : (
                           <>
-                            <Upload className="h-8 w-8 mb-2" />
+                            <Upload className="h-8 w-8 mb-2 text-slate-400" />
                             <p className="text-sm">Klik untuk pilih foto</p>
                             <p className="text-[10px] mt-1 text-muted-foreground">JPG, PNG (Maks 2MB)</p>
                           </>

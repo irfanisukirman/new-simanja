@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
@@ -117,10 +118,28 @@ export default function ListrikPage() {
   const [isLoadingBills, setIsLoadingBills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Form States
+  const [formData, setFormData] = useState({
+    tanggal: format(new Date(), 'yyyy-MM-dd'),
+    no_pelanggan: '',
+    lokasi: 'utama_wisma',
+    jatuh_tempo: '',
+    status: 'belum_lunas',
+    total_pemakaian_kwh: '',
+    total_bruto: '',
+    pajak: '',
+    subsidi: '',
+    total_bayar: '',
+  });
+
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleApiError = useCallback((error: any) => {
     if (error.response?.status === 401) {
@@ -197,6 +216,16 @@ export default function ListrikPage() {
   };
 
   const handleSaveData = async () => {
+    // Basic Validation
+    if (!formData.no_pelanggan || !formData.total_pemakaian_kwh || !formData.total_bayar) {
+      toast({
+        variant: "destructive",
+        title: "Data Tidak Lengkap",
+        description: "Harap isi Nomor Pelanggan, Total Pemakaian, dan Total Bayar.",
+      });
+      return;
+    }
+
     if (!selectedFile) {
       toast({
         variant: "destructive",
@@ -208,41 +237,102 @@ export default function ListrikPage() {
 
     setIsSubmitting(true);
     try {
+      // 1. Upload image to Cloudinary
       const reader = new FileReader();
       reader.readAsDataURL(selectedFile);
-      reader.onloadend = async () => {
-        const base64Image = reader.result as string;
-        const uploadResult = await uploadToCloudinary(base64Image);
-
-        if (uploadResult.success && uploadResult.url) {
-          toast({
-            variant: "success",
-            title: "Upload Berhasil",
-            description: "Foto bukti meteran telah diunggah ke Cloudinary.",
-          });
-
-          // Poin 2 & 3: Get URL dan Submit API (Dikomulasikan sesuai instruksi)
-          // const imageUrl = uploadResult.url;
-          // const body = { ... };
-          // const response = await axios.post(...);
-
-          console.log("Upload Success! URL:", uploadResult.url);
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Upload Gagal",
-            description: uploadResult.error || "Gagal mengunggah gambar.",
-          });
-        }
-        setIsSubmitting(false);
-      };
-    } catch (error) {
-      console.error("Submit error:", error);
-      toast({
-        variant: "destructive",
-        title: "Terjadi Kesalahan",
-        description: "Gagal memproses data.",
+      
+      const uploadPromise = new Promise<{success: boolean, url?: string, error?: string}>((resolve) => {
+        reader.onloadend = async () => {
+          const base64Image = reader.result as string;
+          const result = await uploadToCloudinary(base64Image);
+          resolve(result);
+        };
       });
+
+      const uploadResult = await uploadPromise;
+
+      if (!uploadResult.success || !uploadResult.url) {
+        throw new Error(uploadResult.error || "Gagal mengunggah gambar.");
+      }
+
+      // 2. Prepare payload
+      const token = localStorage.getItem("token");
+      const selectedDate = new Date(formData.tanggal);
+      const periode = format(selectedDate, 'MMMM yyyy'); // e.g., "April 2026"
+      
+      // format jatuh_tempo from yyyy-MM-dd to MM-dd-yyyy for the API body example
+      let formattedJatuhTempo = "";
+      if (formData.jatuh_tempo) {
+        const jtDate = new Date(formData.jatuh_tempo);
+        formattedJatuhTempo = format(jtDate, 'MM-dd-yyyy');
+      }
+
+      const payload = {
+        periode: periode,
+        no_pelanggan: formData.no_pelanggan,
+        total_pemakaian_kwh: parseFloat(formData.total_pemakaian_kwh),
+        lokasi: formData.lokasi,
+        stand_meter_awal: 0,
+        stand_meter_akhir: 0,
+        total_bruto: parseFloat(formData.total_bruto || "0"),
+        pajak: parseFloat(formData.pajak || "0"),
+        subsidi: parseFloat(formData.subsidi || "0"),
+        jatuh_tempo: formattedJatuhTempo,
+        status: formData.status,
+        foto_meteran: uploadResult.url
+      };
+
+      // 3. Submit data using API
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/bills`, payload, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+      });
+
+      if (response.data.code === 200) {
+        toast({
+          variant: "success",
+          title: "Berhasil",
+          description: "Data tagihan listrik berhasil disimpan.",
+        });
+
+        // Reset Form
+        setFormData({
+          tanggal: format(new Date(), 'yyyy-MM-dd'),
+          no_pelanggan: '',
+          lokasi: 'utama_wisma',
+          jatuh_tempo: '',
+          status: 'belum_lunas',
+          total_pemakaian_kwh: '',
+          total_bruto: '',
+          pajak: '',
+          subsidi: '',
+          total_bayar: '',
+        });
+        setSelectedFile(null);
+        setSelectedFileName(null);
+        setPreviewUrl(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+
+        // Refresh List
+        fetchBills();
+        setActiveTab("bills"); // Switch to bills tab to see results
+      } else {
+        throw new Error(response.data.message || "Gagal menyimpan data ke database.");
+      }
+
+    } catch (error: any) {
+      console.error("Submit error:", error);
+      if (!handleApiError(error)) {
+        toast({
+          variant: "destructive",
+          title: "Gagal Menyimpan Data",
+          description: error.message || "Terjadi kesalahan saat memproses data.",
+        });
+      }
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -251,7 +341,7 @@ export default function ListrikPage() {
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24">
         <div className="flex items-center justify-between space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Manajemen Listrik</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Manajemen Listrik</h1>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
               <Zap className="mr-1 h-3 w-3" /> PLN Pasca Bayar
@@ -301,15 +391,28 @@ export default function ListrikPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="tanggal">Tanggal Pencatatan</Label>
-                      <Input id="tanggal" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+                      <Input 
+                        id="tanggal" 
+                        type="date" 
+                        value={formData.tanggal} 
+                        onChange={(e) => handleInputChange('tanggal', e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="no_pelanggan">Nomor Pelanggan</Label>
-                      <Input id="no_pelanggan" placeholder="Contoh: 535811797103" />
+                      <Input 
+                        id="no_pelanggan" 
+                        placeholder="Contoh: 535811797103" 
+                        value={formData.no_pelanggan}
+                        onChange={(e) => handleInputChange('no_pelanggan', e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lokasi">Lokasi Panel / Gedung</Label>
-                      <Select defaultValue="utama_wisma">
+                      <Select 
+                        value={formData.lokasi} 
+                        onValueChange={(value) => handleInputChange('lokasi', value)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih Lokasi" />
                         </SelectTrigger>
@@ -322,11 +425,19 @@ export default function ListrikPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="jatuh_tempo">Jatuh Tempo</Label>
-                      <Input id="jatuh_tempo" type="date" />
+                      <Input 
+                        id="jatuh_tempo" 
+                        type="date" 
+                        value={formData.jatuh_tempo}
+                        onChange={(e) => handleInputChange('jatuh_tempo', e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="status">Status Pembayaran</Label>
-                      <Select defaultValue="belum_lunas">
+                      <Select 
+                        value={formData.status} 
+                        onValueChange={(value) => handleInputChange('status', value)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih Status" />
                         </SelectTrigger>
@@ -344,15 +455,22 @@ export default function ListrikPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="stand_meter_awal">Stand Meter Awal (kWh)</Label>
-                      <Input disabled id="stand_meter_awal" type="number" step="0.01" placeholder="0.00" />
+                      <Input disabled id="stand_meter_awal" type="number" step="0.01" value="0" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="stand_meter_akhir">Stand Meter Akhir (kWh)</Label>
-                      <Input disabled id="stand_meter_akhir" type="number" step="0.01" placeholder="0.00" />
+                      <Input disabled id="stand_meter_akhir" type="number" step="0.01" value="0" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="total_pemakaian_kwh">Total Pemakaian (kWh)</Label>
-                      <Input id="total_pemakaian_kwh" type="number" step="0.01" placeholder="0.00" />
+                      <Input 
+                        id="total_pemakaian_kwh" 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="0.00" 
+                        value={formData.total_pemakaian_kwh}
+                        onChange={(e) => handleInputChange('total_pemakaian_kwh', e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Foto Bukti Meteran</Label>
@@ -367,9 +485,7 @@ export default function ListrikPage() {
                         onClick={triggerFileInput}
                         className={cn(
                           "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-all relative group overflow-hidden cursor-pointer",
-                          selectedFileName 
-                            ? "border-slate-400 bg-slate-50" 
-                            : "border-slate-400 bg-slate-50 hover:bg-slate-100 hover:border-slate-400"
+                          previewUrl ? "border-slate-400 bg-slate-100" : "border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400"
                         )}
                       >
                         {previewUrl ? (
@@ -405,19 +521,44 @@ export default function ListrikPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="total_bruto">Total Bruto</Label>
-                      <Input id="total_bruto" type="number" placeholder="0" />
+                      <Input 
+                        id="total_bruto" 
+                        type="number" 
+                        placeholder="0" 
+                        value={formData.total_bruto}
+                        onChange={(e) => handleInputChange('total_bruto', e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="pajak">Pajak (PPJ)</Label>
-                      <Input id="pajak" type="number" placeholder="0" />
+                      <Input 
+                        id="pajak" 
+                        type="number" 
+                        placeholder="0" 
+                        value={formData.pajak}
+                        onChange={(e) => handleInputChange('pajak', e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="subsidi">Subsidi</Label>
-                      <Input id="subsidi" type="number" placeholder="0" />
+                      <Input 
+                        id="subsidi" 
+                        type="number" 
+                        placeholder="0" 
+                        value={formData.subsidi}
+                        onChange={(e) => handleInputChange('subsidi', e.target.value)}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="total_bayar" className="text-primary font-bold">Total Bayar</Label>
-                      <Input id="total_bayar" type="number" className="font-bold text-lg border-primary/30" placeholder="0" />
+                      <Input 
+                        id="total_bayar" 
+                        type="number" 
+                        className="font-bold text-lg border-primary/30" 
+                        placeholder="0" 
+                        value={formData.total_bayar}
+                        onChange={(e) => handleInputChange('total_bayar', e.target.value)}
+                      />
                     </div>
                     <div className="pt-6">
                       <Button 

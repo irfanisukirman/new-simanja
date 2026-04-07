@@ -344,14 +344,14 @@ export default function ListrikPage() {
                     <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
                       <Zap className="h-4 w-4 text-yellow-500" /> Data Stand Meter
                     </h3>
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label htmlFor="stand_meter_awal">Stand Meter Awal (kWh)</Label>
                       <Input id="stand_meter_awal" type="number" step="0.01" placeholder="0.00" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="stand_meter_akhir">Stand Meter Akhir (kWh)</Label>
                       <Input id="stand_meter_akhir" type="number" step="0.01" placeholder="0.00" />
-                    </div>
+                    </div> */}
                     <div className="space-y-2">
                       <Label htmlFor="total_pemakaian_kwh">Total Pemakaian (kWh)</Label>
                       <Input id="total_pemakaian_kwh" type="number" step="0.01" placeholder="0.00" />
@@ -371,7 +371,7 @@ export default function ListrikPage() {
                           "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-colors relative group overflow-hidden cursor-pointer",
                           selectedFileName 
                             ? "border-primary/50 bg-slate-100" 
-                            : "border-muted bg-slate-100/50 hover:bg-slate-200"
+                            : "border-muted bg-slate-100/50 hover:bg-slate-100"
                         )}
                       >
                         {previewUrl ? (

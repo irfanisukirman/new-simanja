@@ -122,6 +122,7 @@ export default function ListrikPage() {
   // State for image selection
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleApiError = useCallback((error: any) => {
@@ -173,6 +174,12 @@ export default function ListrikPage() {
     if (file) {
       setSelectedFile(file);
       setSelectedFileName(file.name);
+      
+      // Clean up previous preview URL if any
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -184,6 +191,10 @@ export default function ListrikPage() {
     e.stopPropagation();
     setSelectedFile(null);
     setSelectedFileName(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -381,31 +392,21 @@ export default function ListrikPage() {
                       <div 
                         onClick={triggerFileInput}
                         className={cn(
-                          "border-2 border-dashed rounded-lg h-[200px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors relative group",
+                          "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors relative group overflow-hidden",
                           selectedFileName ? "border-primary/50 bg-primary/5" : "border-muted"
                         )}
                       >
-                        {selectedFileName ? (
-                          <div className="flex flex-col items-center p-4 text-center">
-                            <ImageIcon className="h-10 w-10 mb-2 text-primary" />
-                            <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
-                              {selectedFileName}
-                            </p>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="mt-4"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                triggerFileInput();
-                              }}
-                            >
-                              Ganti Foto
-                            </Button>
+                        {previewUrl ? (
+                          <div className="relative w-full h-full flex flex-col items-center justify-center">
+                            <img src={previewUrl} alt="Preview" className="max-h-full max-w-full object-contain" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-2">
+                               <p className="text-xs font-medium truncate max-w-[150px] mb-2">{selectedFileName}</p>
+                               <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); triggerFileInput(); }}>Ganti Foto</Button>
+                            </div>
                             <Button
-                              variant="ghost"
+                              variant="destructive"
                               size="icon"
-                              className="absolute top-2 right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full"
                               onClick={clearFile}
                             >
                               <X className="h-4 w-4" />

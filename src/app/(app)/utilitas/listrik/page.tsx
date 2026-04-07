@@ -36,7 +36,8 @@ import {
   Upload,
   Info,
   Loader2,
-  X
+  X,
+  Calendar
 } from "lucide-react"
 import {
   ChartConfig,
@@ -384,13 +385,16 @@ export default function ListrikPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="tanggal">Tanggal Pencatatan</Label>
-                      <input 
-                        id="tanggal" 
-                        type="date" 
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        value={formData.tanggal} 
-                        onChange={(e) => handleInputChange('tanggal', e.target.value)}
-                      />
+                      <div className="relative">
+                        <input 
+                          id="tanggal" 
+                          type="date" 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pr-10 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                          value={formData.tanggal} 
+                          onChange={(e) => handleInputChange('tanggal', e.target.value)}
+                        />
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none text-muted-foreground" />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="no_pelanggan">Nomor Pelanggan</Label>
@@ -419,13 +423,16 @@ export default function ListrikPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="jatuh_tempo">Jatuh Tempo</Label>
-                      <input 
-                        id="jatuh_tempo" 
-                        type="date" 
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                        value={formData.jatuh_tempo}
-                        onChange={(e) => handleInputChange('jatuh_tempo', e.target.value)}
-                      />
+                      <div className="relative">
+                        <input 
+                          id="jatuh_tempo" 
+                          type="date" 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pr-10 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                          value={formData.jatuh_tempo}
+                          onChange={(e) => handleInputChange('jatuh_tempo', e.target.value)}
+                        />
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none text-muted-foreground" />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="status">Status Pembayaran</Label>

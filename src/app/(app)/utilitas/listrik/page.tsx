@@ -38,7 +38,8 @@ import {
   Loader2,
   X,
   Calendar,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Receipt
 } from "lucide-react"
 import {
   ChartConfig,
@@ -668,62 +669,106 @@ export default function ListrikPage() {
                                       <Info className="mr-2 h-3 w-3" /> Detail
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent className="sm:max-w-[425px]">
+                                  <DialogContent className="sm:max-w-4xl w-[95vw]">
                                     <DialogHeader>
-                                      <DialogTitle>Rincian Tagihan {bill.periode}</DialogTitle>
+                                      <DialogTitle className="flex items-center gap-2">
+                                        <Receipt className="h-5 w-5 text-primary" />
+                                        Rincian Tagihan {bill.periode}
+                                      </DialogTitle>
                                       <DialogDescription>
                                         Informasi lengkap pemakaian dan rincian biaya listrik.
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2">
-                                      <div className="flex justify-between border-b pb-2 text-sm">
-                                        <span className="text-muted-foreground">No. Pelanggan</span>
-                                        <span className="font-medium">{bill.no_pelanggan}</span>
-                                      </div>
-                                      <div className="flex justify-between border-b pb-2 text-sm">
-                                        <span className="text-muted-foreground">Lokasi</span>
-                                        <span className="font-medium">{locationMapping[bill.lokasi] || bill.lokasi}</span>
-                                      </div>
-                                      <div className="flex justify-between border-b pb-2 text-sm">
-                                        <span className="text-muted-foreground">Total Pemakaian</span>
-                                        <span className="font-medium">{parseFloat(bill.total_pemakaian_kwh).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh</span>
-                                      </div>
-                                      <div className="flex justify-between border-b pb-2 text-sm">
-                                        <span className="text-muted-foreground">Biaya Bruto</span>
-                                        <span className="font-medium">{formatCurrency(bill.total_bruto)}</span>
-                                      </div>
-                                      <div className="flex justify-between border-b pb-2 text-green-600 text-sm">
-                                        <span className="text-muted-foreground">Subsidi</span>
-                                        <span className="font-medium">- {formatCurrency(bill.subsidi)}</span>
-                                      </div>
-                                      <div className="flex justify-between border-b pb-2 text-sm">
-                                        <span className="text-muted-foreground">Pajak (PPJ)</span>
-                                        <span className="font-medium">{formatCurrency(bill.pajak)}</span>
-                                      </div>
-                                      <div className="flex justify-between border-b pb-2">
-                                        <span className="font-bold text-sm">Total Bayar</span>
-                                        <span className="font-bold text-primary">{formatCurrency(bill.total_bayar)}</span>
-                                      </div>
-                                      
-                                      {bill.foto_meteran && (
-                                        <div className="space-y-2 pt-2">
-                                          <Label className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-2">
-                                            <ImageIcon className="h-3 w-3" /> Foto Bukti Meteran
-                                          </Label>
-                                          <div className="rounded-md border overflow-hidden bg-muted flex items-center justify-center min-h-[200px]">
-                                            <img 
-                                              src={bill.foto_meteran} 
-                                              alt="Foto Meteran" 
-                                              className="max-w-full h-auto object-contain cursor-zoom-in"
-                                              onClick={() => window.open(bill.foto_meteran, '_blank')}
-                                            />
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-4">
+                                      {/* Left Column: Data & Costs */}
+                                      <div className="space-y-6">
+                                        <div className="space-y-3">
+                                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Informasi Umum</h4>
+                                          <div className="grid grid-cols-2 gap-4 text-sm bg-muted/30 p-3 rounded-lg border">
+                                            <div>
+                                              <p className="text-muted-foreground text-[10px] uppercase font-semibold">Nomor Pelanggan</p>
+                                              <p className="font-mono font-medium">{bill.no_pelanggan}</p>
+                                            </div>
+                                            <div>
+                                              <p className="text-muted-foreground text-[10px] uppercase font-semibold">Lokasi</p>
+                                              <p className="font-medium truncate">{locationMapping[bill.lokasi] || bill.lokasi}</p>
+                                            </div>
+                                            <div className="mt-2">
+                                              <p className="text-muted-foreground text-[10px] uppercase font-semibold">Status</p>
+                                              <Badge variant="outline" className={cn(
+                                                "mt-1",
+                                                bill.status.toLowerCase() === 'lunas' ? "border-green-200 bg-green-50 text-green-700" : "border-yellow-200 bg-yellow-50 text-yellow-700"
+                                              )}>
+                                                {bill.status.toUpperCase()}
+                                              </Badge>
+                                            </div>
+                                            <div className="mt-2">
+                                              <p className="text-muted-foreground text-[10px] uppercase font-semibold">Total Pemakaian</p>
+                                              <p className="font-bold text-primary">{parseFloat(bill.total_pemakaian_kwh).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh</p>
+                                            </div>
                                           </div>
                                         </div>
-                                      )}
+
+                                        <div className="space-y-3">
+                                          <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rincian Biaya</h4>
+                                          <div className="space-y-2">
+                                            <div className="flex justify-between text-sm">
+                                              <span className="text-muted-foreground">Biaya Bruto</span>
+                                              <span className="font-medium">{formatCurrency(bill.total_bruto)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm text-green-600">
+                                              <span className="text-muted-foreground">Subsidi</span>
+                                              <span className="font-medium">- {formatCurrency(bill.subsidi)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                              <span className="text-muted-foreground">Pajak (PPJ)</span>
+                                              <span className="font-medium">{formatCurrency(bill.pajak)}</span>
+                                            </div>
+                                            <div className="border-t pt-3 flex justify-between">
+                                              <span className="font-bold text-base">Total Bayar</span>
+                                              <span className="font-bold text-base text-primary">{formatCurrency(bill.total_bayar)}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Right Column: Image Preview */}
+                                      <div className="space-y-3 flex flex-col">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                          <ImageIcon className="h-3 w-3" /> Foto Bukti Meteran
+                                        </h4>
+                                        <div className="flex-1 rounded-xl border-2 border-dashed bg-muted/50 overflow-hidden flex items-center justify-center min-h-[300px] relative group">
+                                          {bill.foto_meteran ? (
+                                            <>
+                                              <img 
+                                                src={bill.foto_meteran} 
+                                                alt="Foto Meteran" 
+                                                className="absolute inset-0 w-full h-full object-contain p-2"
+                                              />
+                                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <Button 
+                                                  variant="secondary" 
+                                                  size="sm"
+                                                  onClick={() => window.open(bill.foto_meteran, '_blank')}
+                                                >
+                                                  Lihat Ukuran Penuh
+                                                </Button>
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <div className="text-center p-6 space-y-2">
+                                              <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto opacity-20" />
+                                              <p className="text-xs text-muted-foreground italic">Tidak ada foto bukti</p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
                                     </div>
-                                    <DialogFooter>
+
+                                    <DialogFooter className="mt-2 border-t pt-4">
                                       <DialogClose asChild>
-                                        <Button type="button">Tutup</Button>
+                                        <Button type="button" variant="outline">Tutup</Button>
                                       </DialogClose>
                                     </DialogFooter>
                                   </DialogContent>

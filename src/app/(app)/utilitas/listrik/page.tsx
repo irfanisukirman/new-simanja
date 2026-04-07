@@ -345,11 +345,11 @@ export default function ListrikPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="stand_meter_awal">Stand Meter Awal (kWh)</Label>
-                      <Input id="stand_meter_awal" type="number" step="0.01" placeholder="0.00" />
+                      <Input disabled id="stand_meter_awal" type="number" step="0.01" placeholder="0.00" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="stand_meter_akhir">Stand Meter Akhir (kWh)</Label>
-                      <Input id="stand_meter_akhir" type="number" step="0.01" placeholder="0.00" />
+                      <Input disabled id="stand_meter_akhir" type="number" step="0.01" placeholder="0.00" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="total_pemakaian_kwh">Total Pemakaian (kWh)</Label>
@@ -369,8 +369,8 @@ export default function ListrikPage() {
                         className={cn(
                           "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-all relative group overflow-hidden cursor-pointer",
                           selectedFileName 
-                            ? "border-slate-400 bg-slate-100" 
-                            : "border-slate-300 bg-slate-100 hover:bg-slate-200 hover:border-slate-400"
+                            ? "border-slate-400 bg-slate-50" 
+                            : "border-slate-300 bg-slate-50 hover:bg-slate-100 hover:border-slate-400"
                         )}
                       >
                         {previewUrl ? (

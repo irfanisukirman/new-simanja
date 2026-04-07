@@ -369,7 +369,7 @@ export default function ListrikPage() {
                       <Label htmlFor="total_pemakaian_kwh">Total Pemakaian (kWh)</Label>
                       <Input id="total_pemakaian_kwh" type="number" step="0.01" placeholder="0.00" />
                     </div>
-                    <div className="pt-4 space-y-2">
+                    <div className="space-y-2">
                       <Label>Foto Bukti Meteran</Label>
                       <input 
                         type="file" 

@@ -119,7 +119,6 @@ export default function ListrikPage() {
   const [isLoadingBills, setIsLoadingBills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // State for image selection
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -175,7 +174,6 @@ export default function ListrikPage() {
       setSelectedFile(file);
       setSelectedFileName(file.name);
       
-      // Clean up previous preview URL if any
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
@@ -212,7 +210,6 @@ export default function ListrikPage() {
 
     setIsSubmitting(true);
     try {
-      // Algoritma 1: Upload image ke Cloudinary
       const reader = new FileReader();
       reader.readAsDataURL(selectedFile);
       reader.onloadend = async () => {
@@ -226,29 +223,10 @@ export default function ListrikPage() {
             description: "Foto bukti meteran telah diunggah ke Cloudinary.",
           });
 
-          // Algoritma 2: Get URL, jadikan parameter ke body
+          // Poin 2 & 3: Get URL dan Submit API (Dikomulasikan sesuai instruksi)
           // const imageUrl = uploadResult.url;
-          // const body = {
-          //   tanggal: (document.getElementById('tanggal') as HTMLInputElement).value,
-          //   no_pelanggan: (document.getElementById('no_pelanggan') as HTMLInputElement).value,
-          //   lokasi: (document.querySelector('[data-id="lokasi-select"]') as any)?.value || 'utama_wisma',
-          //   jatuh_tempo: (document.getElementById('jatuh_tempo') as HTMLInputElement).value,
-          //   status: 'lunas',
-          //   stand_meter_awal: (document.getElementById('stand_meter_awal') as HTMLInputElement).value,
-          //   stand_meter_akhir: (document.getElementById('stand_meter_akhir') as HTMLInputElement).value,
-          //   total_pemakaian_kwh: (document.getElementById('total_pemakaian_kwh') as HTMLInputElement).value,
-          //   total_bruto: (document.getElementById('total_bruto') as HTMLInputElement).value,
-          //   pajak: (document.getElementById('pajak') as HTMLInputElement).value,
-          //   subsidi: (document.getElementById('subsidi') as HTMLInputElement).value,
-          //   total_bayar: (document.getElementById('total_bayar') as HTMLInputElement).value,
-          //   foto_meteran: imageUrl
-          // };
-
-          // Algoritma 3: Submit data mater menggunakan API
-          // const token = localStorage.getItem("token");
-          // await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/bills`, body, {
-          //   headers: { Authorization: `Bearer ${token}` }
-          // });
+          // const body = { ... };
+          // const response = await axios.post(...);
 
           console.log("Upload Success! URL:", uploadResult.url);
         } else {
@@ -319,7 +297,6 @@ export default function ListrikPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {/* Bagian 1: Informasi Dasar */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
                       <FileText className="h-4 w-4 text-primary" /> Informasi Tagihan
@@ -363,7 +340,6 @@ export default function ListrikPage() {
                     </div>
                   </div>
 
-                  {/* Bagian 2: Data Meteran & Foto */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
                       <Zap className="h-4 w-4 text-yellow-500" /> Data Stand Meter
@@ -392,14 +368,16 @@ export default function ListrikPage() {
                       <div 
                         onClick={triggerFileInput}
                         className={cn(
-                          "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground hover:bg-accent/50 cursor-pointer transition-colors relative group overflow-hidden",
-                          selectedFileName ? "border-primary/50 bg-primary/5" : "border-muted"
+                          "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-colors relative group overflow-hidden cursor-pointer",
+                          selectedFileName 
+                            ? "border-primary/50 bg-slate-100" 
+                            : "border-muted bg-slate-100/50 hover:bg-slate-200"
                         )}
                       >
                         {previewUrl ? (
                           <div className="relative w-full h-full flex flex-col items-center justify-center">
                             <img src={previewUrl} alt="Preview" className="max-h-full max-w-full object-contain" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-2">
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white p-2 text-center">
                                <p className="text-xs font-medium truncate max-w-[150px] mb-2">{selectedFileName}</p>
                                <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); triggerFileInput(); }}>Ganti Foto</Button>
                             </div>
@@ -423,7 +401,6 @@ export default function ListrikPage() {
                     </div>
                   </div>
 
-                  {/* Bagian 3: Rincian Biaya */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-semibold border-b pb-2 flex items-center gap-2">
                       <Info className="h-4 w-4 text-blue-500" /> Rincian Biaya (Rp)

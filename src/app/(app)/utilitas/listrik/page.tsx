@@ -294,6 +294,7 @@ export default function ListrikPage() {
           description: "Data tagihan listrik berhasil disimpan.",
         });
 
+        // Reset Form
         setFormData({
           tanggal: format(new Date(), 'yyyy-MM-dd'),
           no_pelanggan: '',
@@ -311,6 +312,7 @@ export default function ListrikPage() {
         setPreviewUrl(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
 
+        // Refresh data and switch tab
         fetchBills();
         setActiveTab("bills");
       } else {

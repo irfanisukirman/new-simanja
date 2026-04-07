@@ -73,7 +73,8 @@ const formatCurrency = (value: number | string) => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
-    minimumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   }).format(numericValue || 0);
 }
 
@@ -383,9 +384,10 @@ export default function ListrikPage() {
                     </h3>
                     <div className="space-y-2">
                       <Label htmlFor="tanggal">Tanggal Pencatatan</Label>
-                      <Input 
+                      <input 
                         id="tanggal" 
                         type="date" 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         value={formData.tanggal} 
                         onChange={(e) => handleInputChange('tanggal', e.target.value)}
                       />
@@ -417,9 +419,10 @@ export default function ListrikPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="jatuh_tempo">Jatuh Tempo</Label>
-                      <Input 
+                      <input 
                         id="jatuh_tempo" 
                         type="date" 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                         value={formData.jatuh_tempo}
                         onChange={(e) => handleInputChange('jatuh_tempo', e.target.value)}
                       />
@@ -477,7 +480,7 @@ export default function ListrikPage() {
                         onClick={triggerFileInput}
                         className={cn(
                           "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-all relative group overflow-hidden cursor-pointer",
-                          previewUrl ? "border-slate-400 bg-slate-100" : "border-slate-400 bg-slate-100 hover:bg-slate-200 transition-colors"
+                          previewUrl ? "border-slate-400 bg-slate-100" : "border-slate-400 bg-slate-100 hover:bg-slate-200"
                         )}
                       >
                         {previewUrl ? (
@@ -516,7 +519,8 @@ export default function ListrikPage() {
                       <Input 
                         id="total_bruto" 
                         type="number" 
-                        placeholder="0" 
+                        step="0.01"
+                        placeholder="0.00" 
                         value={formData.total_bruto}
                         onChange={(e) => handleInputChange('total_bruto', e.target.value)}
                       />
@@ -526,7 +530,8 @@ export default function ListrikPage() {
                       <Input 
                         id="pajak" 
                         type="number" 
-                        placeholder="0" 
+                        step="0.01"
+                        placeholder="0.00" 
                         value={formData.pajak}
                         onChange={(e) => handleInputChange('pajak', e.target.value)}
                       />
@@ -536,7 +541,8 @@ export default function ListrikPage() {
                       <Input 
                         id="subsidi" 
                         type="number" 
-                        placeholder="0" 
+                        step="0.01"
+                        placeholder="0.00" 
                         value={formData.subsidi}
                         onChange={(e) => handleInputChange('subsidi', e.target.value)}
                       />
@@ -546,8 +552,9 @@ export default function ListrikPage() {
                       <Input 
                         id="total_bayar" 
                         type="number" 
+                        step="0.01"
                         className="font-bold text-lg border-primary/30" 
-                        placeholder="0" 
+                        placeholder="0.00" 
                         value={formData.total_bayar}
                         onChange={(e) => handleInputChange('total_bayar', e.target.value)}
                       />
@@ -646,7 +653,7 @@ export default function ListrikPage() {
                                       </div>
                                       <div className="flex justify-between border-b pb-2">
                                         <span className="text-muted-foreground">Total Pemakaian</span>
-                                        <span className="font-medium">{parseFloat(bill.total_pemakaian_kwh).toLocaleString()} kWh</span>
+                                        <span className="font-medium">{parseFloat(bill.total_pemakaian_kwh).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kWh</span>
                                       </div>
                                       <div className="flex justify-between border-b pb-2">
                                         <span className="text-muted-foreground">Biaya Bruto</span>

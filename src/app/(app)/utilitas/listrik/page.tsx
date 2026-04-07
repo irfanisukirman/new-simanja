@@ -120,6 +120,9 @@ export default function ListrikPage() {
   const [isLoadingBills, setIsLoadingBills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Form Errors State
+  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+  
   const [formData, setFormData] = useState({
     tanggal: format(new Date(), 'yyyy-MM-dd'),
     no_pelanggan: '',
@@ -138,7 +141,6 @@ export default function ListrikPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Kalkulasi otomatis Total Bayar: Total Bruto - Subsidi
   useEffect(() => {
     const bruto = parseFloat(formData.total_bruto || "0");
     const sub = parseFloat(formData.subsidi || "0");
@@ -148,6 +150,10 @@ export default function ListrikPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: false }));
+    }
   };
 
   const handleApiError = useCallback((error: any) => {
@@ -181,8 +187,8 @@ export default function ListrikPage() {
       if (!handleApiError(error)) {
         toast({
           variant: "destructive",
-          title: "Gagal Mengambil Data Tagihan",
-          description: error.response?.data?.message || "Terjadi kesalahan pada server.",
+          title: "Terjadi Kesalahan",
+          description: "Gagal mengambil data tagihan dari server.",
         });
       }
     } finally {
@@ -204,6 +210,11 @@ export default function ListrikPage() {
         URL.revokeObjectURL(previewUrl);
       }
       setPreviewUrl(URL.createObjectURL(file));
+      
+      // Clear photo error
+      if (formErrors.foto) {
+        setFormErrors(prev => ({ ...prev, foto: false }));
+      }
     }
   };
 
@@ -224,21 +235,24 @@ export default function ListrikPage() {
     }
   };
 
-  const handleSaveData = async () => {
-    if (!formData.no_pelanggan || !formData.total_pemakaian_kwh) {
-      toast({
-        variant: "destructive",
-        title: "Data Tidak Lengkap",
-        description: "Harap isi Nomor Pelanggan dan Total Pemakaian.",
-      });
-      return;
-    }
+  const validateForm = () => {
+    const errors: Record<string, boolean> = {};
+    if (!formData.no_pelanggan) errors.no_pelanggan = true;
+    if (!formData.jatuh_tempo) errors.jatuh_tempo = true;
+    if (!formData.total_pemakaian_kwh || parseFloat(formData.total_pemakaian_kwh) <= 0) errors.total_pemakaian_kwh = true;
+    if (!formData.total_bruto || parseFloat(formData.total_bruto) <= 0) errors.total_bruto = true;
+    if (!selectedFile) errors.foto = true;
 
-    if (!selectedFile) {
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSaveData = async () => {
+    if (!validateForm()) {
       toast({
         variant: "destructive",
-        title: "Foto Diperlukan",
-        description: "Silakan pilih foto bukti meteran terlebih dahulu.",
+        title: "Input Tidak Lengkap",
+        description: "Harap lengkapi semua kolom yang wajib diisi.",
       });
       return;
     }
@@ -246,7 +260,7 @@ export default function ListrikPage() {
     setIsSubmitting(true);
     try {
       const reader = new FileReader();
-      reader.readAsDataURL(selectedFile);
+      reader.readAsDataURL(selectedFile!);
       
       const uploadPromise = new Promise<{success: boolean, url?: string, error?: string}>((resolve) => {
         reader.onloadend = async () => {
@@ -266,11 +280,8 @@ export default function ListrikPage() {
       const selectedDate = new Date(formData.tanggal);
       const periode = format(selectedDate, 'MMMM yyyy');
       
-      let formattedJatuhTempo = "";
-      if (formData.jatuh_tempo) {
-        const jtDate = new Date(formData.jatuh_tempo);
-        formattedJatuhTempo = format(jtDate, 'MM-dd-yyyy');
-      }
+      const jtDate = new Date(formData.jatuh_tempo);
+      const formattedJatuhTempo = format(jtDate, 'MM-dd-yyyy');
 
       const payload = {
         periode: periode,
@@ -279,10 +290,10 @@ export default function ListrikPage() {
         lokasi: formData.lokasi,
         stand_meter_awal: 0,
         stand_meter_akhir: 0,
-        total_bruto: parseFloat(formData.total_bruto || "0"),
+        total_bruto: parseFloat(formData.total_bruto),
         pajak: parseFloat(formData.pajak || "0"),
         subsidi: parseFloat(formData.subsidi || "0"),
-        total_bayar: parseFloat(formData.total_bayar || "0"),
+        total_bayar: parseFloat(formData.total_bayar),
         jatuh_tempo: formattedJatuhTempo,
         status: formData.status,
         foto_meteran: uploadResult.url
@@ -300,7 +311,7 @@ export default function ListrikPage() {
         toast({
           variant: "success",
           title: "Berhasil",
-          description: "Data tagihan listrik berhasil disimpan.",
+          description: "Data telah berhasil disimpan.",
         });
 
         // Reset Form
@@ -319,13 +330,13 @@ export default function ListrikPage() {
         setSelectedFile(null);
         setSelectedFileName(null);
         setPreviewUrl(null);
+        setFormErrors({});
         if (fileInputRef.current) fileInputRef.current.value = "";
 
-        // Refresh data and switch tab
         fetchBills();
         setActiveTab("bills");
       } else {
-        throw new Error(response.data.message || "Gagal menyimpan data ke database.");
+        throw new Error(response.data.message || "Gagal menyimpan data.");
       }
 
     } catch (error: any) {
@@ -333,8 +344,8 @@ export default function ListrikPage() {
       if (!handleApiError(error)) {
         toast({
           variant: "destructive",
-          title: "Gagal Menyimpan Data",
-          description: error.message || "Terjadi kesalahan saat memproses data.",
+          title: "Gagal Menyimpan",
+          description: "Terjadi kesalahan saat memproses data. Silakan coba lagi.",
         });
       }
     } finally {
@@ -412,6 +423,7 @@ export default function ListrikPage() {
                       <Input 
                         id="no_pelanggan" 
                         placeholder="Contoh: 535811797103" 
+                        className={cn(formErrors.no_pelanggan && "border-destructive focus-visible:ring-destructive")}
                         value={formData.no_pelanggan}
                         onChange={(e) => handleInputChange('no_pelanggan', e.target.value)}
                       />
@@ -438,7 +450,10 @@ export default function ListrikPage() {
                         <input 
                           id="jatuh_tempo" 
                           type="date" 
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pr-10 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                          className={cn(
+                            "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pr-10 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer",
+                            formErrors.jatuh_tempo && "border-destructive focus-visible:ring-destructive"
+                          )}
                           value={formData.jatuh_tempo}
                           onChange={(e) => handleInputChange('jatuh_tempo', e.target.value)}
                         />
@@ -481,6 +496,7 @@ export default function ListrikPage() {
                         type="number" 
                         step="0.01" 
                         placeholder="0.00" 
+                        className={cn(formErrors.total_pemakaian_kwh && "border-destructive focus-visible:ring-destructive")}
                         value={formData.total_pemakaian_kwh}
                         onChange={(e) => handleInputChange('total_pemakaian_kwh', e.target.value)}
                       />
@@ -498,7 +514,8 @@ export default function ListrikPage() {
                         onClick={triggerFileInput}
                         className={cn(
                           "border-2 border-dashed rounded-lg h-[220px] flex flex-col items-center justify-center text-muted-foreground transition-all relative group overflow-hidden cursor-pointer",
-                          previewUrl ? "border-slate-400 bg-slate-100" : "border-slate-400 bg-slate-100 hover:bg-slate-200"
+                          previewUrl ? "border-slate-400 bg-slate-100" : "border-slate-400 bg-slate-100 hover:bg-slate-200",
+                          formErrors.foto && "border-destructive bg-destructive/5"
                         )}
                       >
                         {previewUrl ? (
@@ -519,8 +536,8 @@ export default function ListrikPage() {
                           </div>
                         ) : (
                           <>
-                            <Upload className="h-8 w-8 mb-2 text-slate-400" />
-                            <p className="text-sm">Klik untuk pilih foto</p>
+                            <Upload className={cn("h-8 w-8 mb-2 text-slate-400", formErrors.foto && "text-destructive")} />
+                            <p className={cn("text-sm", formErrors.foto && "text-destructive")}>Klik untuk pilih foto</p>
                             <p className="text-[10px] mt-1 text-muted-foreground">JPG, PNG (Maks 2MB)</p>
                           </>
                         )}
@@ -539,6 +556,7 @@ export default function ListrikPage() {
                         type="number" 
                         step="0.01"
                         placeholder="0.00" 
+                        className={cn(formErrors.total_bruto && "border-destructive focus-visible:ring-destructive")}
                         value={formData.total_bruto}
                         onChange={(e) => handleInputChange('total_bruto', e.target.value)}
                       />

@@ -598,7 +598,7 @@ export default function ListrikPage() {
                             Memproses...
                           </>
                         ) : (
-                          "Simpan Data Listrik"
+                          "Simpan"
                         )}
                       </Button>
                     </div>

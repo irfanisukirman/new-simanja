@@ -257,23 +257,27 @@ export default function ListrikPage() {
 
     setIsSubmitting(true);
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(selectedFile!);
-      
-      const uploadPromise = new Promise<{success: boolean, url?: string, error?: string}>((resolve) => {
-        reader.onloadend = async () => {
-          const base64Image = reader.result as string;
-          const result = await uploadToCloudinary(base64Image);
-          resolve(result);
-        };
-      });
+      // Helper function to read file as base64
+      const readFileAsBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      };
 
-      const uploadResult = await uploadPromise;
+      const base64Image = await readFileAsBase64(selectedFile!);
+      
+      // Step 1: Upload to Cloudinary via Server Action
+      const uploadResult = await uploadToCloudinary(base64Image);
 
       if (!uploadResult.success || !uploadResult.url) {
-        throw new Error(uploadResult.error || "Gagal mengunggah gambar.");
+        console.error("Cloudinary Error:", uploadResult.error);
+        throw new Error(uploadResult.error || "Gagal mengunggah gambar ke Cloudinary.");
       }
 
+      // Step 2: Prepare Payload for Backend
       const token = localStorage.getItem("token");
       const selectedDate = new Date(formData.tanggal);
       const periode = format(selectedDate, 'MMMM yyyy'); 
@@ -297,6 +301,7 @@ export default function ListrikPage() {
         foto_meteran: uploadResult.url
       };
 
+      // Step 3: Send to Backend API
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/utility/bills`, payload, {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -312,6 +317,7 @@ export default function ListrikPage() {
           description: "Data telah berhasil disimpan.",
         });
 
+        // Reset Form
         setFormData({
           tanggal: format(new Date(), 'yyyy-MM-dd'),
           no_pelanggan: '',
@@ -330,19 +336,22 @@ export default function ListrikPage() {
         setFormErrors({});
         if (fileInputRef.current) fileInputRef.current.value = "";
 
-        fetchBills();
+        await fetchBills();
         setActiveTab("bills"); 
       } else {
-        throw new Error(response.data.message || "Gagal menyimpan data.");
+        throw new Error(response.data.message || "Gagal menyimpan data ke database.");
       }
 
     } catch (error: any) {
-      console.error("Submit error:", error);
+      console.error("DEBUG - handleSaveData error details:", error);
+      
+      const errorMessage = error.response?.data?.message || error.message || "Terjadi kesalahan sistem.";
+      
       if (!handleApiError(error)) {
         toast({
           variant: "destructive",
           title: "Gagal Menyimpan",
-          description: "Terjadi kesalahan saat memproses data. Silakan coba lagi.",
+          description: errorMessage,
         });
       }
     } finally {

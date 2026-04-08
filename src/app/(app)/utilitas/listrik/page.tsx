@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
@@ -257,12 +256,12 @@ export default function ListrikPage() {
 
     setIsSubmitting(true);
     try {
-      // Helper function to read file as base64
+      // Helper function to read file as base64 with cleaner Promise
       const readFileAsBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
+          reader.onerror = (e) => reject(new Error('Gagal membaca file gambar.'));
           reader.readAsDataURL(file);
         });
       };
@@ -273,7 +272,6 @@ export default function ListrikPage() {
       const uploadResult = await uploadToCloudinary(base64Image);
 
       if (!uploadResult.success || !uploadResult.url) {
-        console.error("Cloudinary Error:", uploadResult.error);
         throw new Error(uploadResult.error || "Gagal mengunggah gambar ke Cloudinary.");
       }
 
@@ -314,7 +312,7 @@ export default function ListrikPage() {
         toast({
           variant: "success",
           title: "Berhasil",
-          description: "Data telah berhasil disimpan.",
+          description: "Data tagihan listrik telah berhasil disimpan.",
         });
 
         // Reset Form
@@ -343,14 +341,14 @@ export default function ListrikPage() {
       }
 
     } catch (error: any) {
-      console.error("DEBUG - handleSaveData error details:", error);
+      console.error("DEBUG - handleSaveData error:", error);
       
-      const errorMessage = error.response?.data?.message || error.message || "Terjadi kesalahan sistem.";
+      const errorMessage = error.message || "Terjadi kesalahan sistem saat memproses data.";
       
       if (!handleApiError(error)) {
         toast({
           variant: "destructive",
-          title: "Gagal Menyimpan",
+          title: "Proses Gagal",
           description: errorMessage,
         });
       }

@@ -78,7 +78,7 @@ const linkGroups = [
       {
         title: "Denah Jaringan Listrik BPSDM Provinsi Jawa Barat",
         description: "Dokumen visual denah infrastruktur jaringan listrik di lingkungan BPSDM.",
-        url: "https://drive.google.com/file/d/1cBrvuZL311wqqS8OKtuu85st0tZOpk9Z/view?usp=sharing",
+        url: "https://drive.google.com/file/d/1Z7rmuteHc1PKdZLex8iSfxao_ulGJ_38/view?usp=sharing",
       },
       {
         title: "Form Inventarisasi Barang",

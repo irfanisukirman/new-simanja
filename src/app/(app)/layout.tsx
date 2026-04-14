@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -19,7 +20,8 @@ import {
   FileBarChart,
   Settings,
   ClipboardList,
-  LogIn
+  LogIn,
+  FileOutput
 } from 'lucide-react';
 import {
   Sidebar,
@@ -96,7 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Master Data Pegawai" isActive={pathname === '/master-data-pegawai'}>
                         <Link href="/master-data-pegawai">
-                          <Users />
+                          Users />
                           <span>Master Data Pegawai</span>
                         </Link>
                       </SidebarMenuButton>
@@ -122,6 +124,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Mutasi Persediaan" isActive={pathname === '/inventaris/mutasi'}>
+                    <Link href="/inventaris/mutasi">
+                      <FileOutput />
+                      <span>Mutasi Persediaan</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
 
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Barang Keluar" isActive={pathname === '/inventaris/barang-keluar'}>

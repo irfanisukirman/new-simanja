@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, ChevronRight, FileDown, Loader2, Search } from "lucide-react"
+import { ChevronDown, ChevronRight, FileDown, Loader2, Search, Package, Landmark } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import * as XLSX from "xlsx"
@@ -204,35 +204,38 @@ export default function MutasiPersediaanPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-slate-50/50">
       <main className="flex-1 space-y-6 p-4 pt-6 md:p-8 pb-24">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">Mutasi Persediaan</h1>
-          <Button onClick={handleExportExcel} className="bg-success hover:bg-success/90">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Mutasi Persediaan</h1>
+            <p className="text-sm text-muted-foreground">Laporan rincian mutasi barang persediaan berdasarkan kategori dan unit kerja.</p>
+          </div>
+          <Button onClick={handleExportExcel} className="bg-success hover:bg-success/90 shadow-sm transition-all active:scale-95">
             <FileDown className="mr-2 h-4 w-4" />
             Export Excel
           </Button>
         </div>
 
         {/* Filters */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Filter Laporan</CardTitle>
+        <Card className="shadow-sm border-slate-200">
+          <CardHeader className="pb-3 bg-slate-50/50 border-b">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-500">Filter Laporan</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-2">
-                <Label>Dari Tanggal</Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <Label className="text-[11px] font-bold uppercase text-slate-500">Dari Tanggal</Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="focus-visible:ring-primary h-9" />
               </div>
               <div className="space-y-2">
-                <Label>Sampai Tanggal</Label>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <Label className="text-[11px] font-bold uppercase text-slate-500">Sampai Tanggal</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="focus-visible:ring-primary h-9" />
               </div>
               <div className="space-y-2">
-                <Label>Kategori Belanja</Label>
+                <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
                 <Select value={filterKategori} onValueChange={setFilterKategori}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Semua Kategori" />
                   </SelectTrigger>
                   <SelectContent>
@@ -244,9 +247,9 @@ export default function MutasiPersediaanPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Unit Kerja</Label>
+                <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
                 <Select value={filterUnit} onValueChange={setFilterUnit}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Semua Unit" />
                   </SelectTrigger>
                   <SelectContent>
@@ -260,12 +263,12 @@ export default function MutasiPersediaanPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Cari Barang</Label>
+                <Label className="text-[11px] font-bold uppercase text-slate-500">Cari Barang</Label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Nama barang..." 
-                    className="pl-8" 
+                    className="pl-8 h-9 focus-visible:ring-primary" 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -276,34 +279,34 @@ export default function MutasiPersediaanPage() {
         </Card>
 
         {/* Report Table */}
-        <div className="rounded-md border overflow-x-auto bg-white">
+        <div className="rounded-xl border shadow-md overflow-x-auto bg-white overflow-hidden">
           <Table className="min-w-[1200px]">
             <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead rowSpan={2} className="w-[50px] text-center border-r">No</TableHead>
-                <TableHead rowSpan={2} className="min-w-[200px] border-r">Nama Barang</TableHead>
-                <TableHead rowSpan={2} className="w-[80px] text-center border-r">Satuan</TableHead>
-                <TableHead colSpan={3} className="text-center border-r bg-blue-50/50">SALDO AWAL</TableHead>
-                <TableHead colSpan={3} className="text-center border-r bg-green-50/50">PEMBELIAN</TableHead>
-                <TableHead colSpan={3} className="text-center border-r bg-red-50/50">PEMAKAIAN</TableHead>
-                <TableHead colSpan={3} className="text-center bg-orange-50/50">SALDO AKHIR</TableHead>
+              <TableRow className="bg-slate-900 hover:bg-slate-900 border-none">
+                <TableHead rowSpan={2} className="w-[50px] text-center text-white border-r border-slate-700 font-bold">No</TableHead>
+                <TableHead rowSpan={2} className="min-w-[200px] text-white border-r border-slate-700 font-bold">Nama Barang</TableHead>
+                <TableHead rowSpan={2} className="w-[80px] text-center text-white border-r border-slate-700 font-bold">Satuan</TableHead>
+                <TableHead colSpan={3} className="text-center border-r border-slate-700 bg-blue-600/20 text-blue-100 font-bold py-2">SALDO AWAL</TableHead>
+                <TableHead colSpan={3} className="text-center border-r border-slate-700 bg-emerald-600/20 text-emerald-100 font-bold py-2">PEMBELIAN</TableHead>
+                <TableHead colSpan={3} className="text-center border-r border-slate-700 bg-rose-600/20 text-rose-100 font-bold py-2">PEMAKAIAN</TableHead>
+                <TableHead colSpan={3} className="text-center bg-amber-600/20 text-amber-100 font-bold py-2">SALDO AKHIR</TableHead>
               </TableRow>
-              <TableRow className="bg-muted/50 text-[10px] uppercase font-bold">
+              <TableRow className="bg-slate-800 hover:bg-slate-800 text-[10px] uppercase font-black tracking-widest text-slate-300">
                 {/* Saldo Awal */}
-                <TableHead className="text-center border-r">Qty</TableHead>
-                <TableHead className="text-center border-r">Harga</TableHead>
-                <TableHead className="text-center border-r">Jumlah</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
                 {/* Pembelian */}
-                <TableHead className="text-center border-r">Qty</TableHead>
-                <TableHead className="text-center border-r">Harga</TableHead>
-                <TableHead className="text-center border-r">Jumlah</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
                 {/* Pemakaian */}
-                <TableHead className="text-center border-r">Qty</TableHead>
-                <TableHead className="text-center border-r">Harga</TableHead>
-                <TableHead className="text-center border-r">Jumlah</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
                 {/* Saldo Akhir */}
-                <TableHead className="text-center border-r">Qty</TableHead>
-                <TableHead className="text-center border-r">Harga</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
                 <TableHead className="text-center">Jumlah</TableHead>
               </TableRow>
             </TableHeader>
@@ -316,25 +319,28 @@ export default function MutasiPersediaanPage() {
                   <React.Fragment key={cat.name}>
                     {/* Category Row */}
                     <TableRow 
-                      className="bg-yellow-100 hover:bg-yellow-200 cursor-pointer"
+                      className="bg-amber-50/80 hover:bg-amber-100/80 cursor-pointer transition-colors border-l-4 border-l-amber-500"
                       onClick={() => toggleCategory(cat.name)}
                     >
-                      <TableCell className="text-center border-r font-bold">{catIdx + 1}</TableCell>
-                      <TableCell colSpan={2} className="border-r font-bold">
+                      <TableCell className="text-center border-r border-amber-100 font-black text-amber-900">{catIdx + 1}</TableCell>
+                      <TableCell colSpan={2} className="border-r border-amber-100 font-black text-amber-900">
                         <div className="flex items-center gap-2">
-                          {isCatExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          {cat.name} (KATEGORI)
+                          <div className="bg-amber-500 rounded-md p-1">
+                            {isCatExpanded ? <ChevronDown className="h-3 w-3 text-white" /> : <ChevronRight className="h-3 w-3 text-white" />}
+                          </div>
+                          <Landmark className="h-4 w-4 opacity-50" />
+                          {cat.name.toUpperCase()}
                         </div>
                       </TableCell>
                       {/* Subtotal columns */}
-                      <TableCell className="border-r" colSpan={2}></TableCell>
-                      <TableCell className="text-right border-r font-bold">{formatCurrency(catSubtotal.initialVal)}</TableCell>
-                      <TableCell className="border-r" colSpan={2}></TableCell>
-                      <TableCell className="text-right border-r font-bold">{formatCurrency(catSubtotal.purchaseVal)}</TableCell>
-                      <TableCell className="border-r" colSpan={2}></TableCell>
-                      <TableCell className="text-right border-r font-bold">{formatCurrency(catSubtotal.usageVal)}</TableCell>
-                      <TableCell className="border-r" colSpan={2}></TableCell>
-                      <TableCell className="text-right font-bold">{formatCurrency(catSubtotal.finalVal)}</TableCell>
+                      <TableCell className="border-r border-amber-100" colSpan={2}></TableCell>
+                      <TableCell className="text-right border-r border-amber-100 font-bold text-blue-700 text-xs">{formatCurrency(catSubtotal.initialVal)}</TableCell>
+                      <TableCell className="border-r border-amber-100" colSpan={2}></TableCell>
+                      <TableCell className="text-right border-r border-amber-100 font-bold text-emerald-700 text-xs">{formatCurrency(catSubtotal.purchaseVal)}</TableCell>
+                      <TableCell className="border-r border-amber-100" colSpan={2}></TableCell>
+                      <TableCell className="text-right border-r border-amber-100 font-bold text-rose-700 text-xs">{formatCurrency(catSubtotal.usageVal)}</TableCell>
+                      <TableCell className="border-r border-amber-100" colSpan={2}></TableCell>
+                      <TableCell className="text-right font-black text-amber-700 text-sm">{formatCurrency(catSubtotal.finalVal)}</TableCell>
                     </TableRow>
 
                     {isCatExpanded && cat.units.map((unit) => {
@@ -346,54 +352,59 @@ export default function MutasiPersediaanPage() {
                         <React.Fragment key={unitKey}>
                           {/* Unit Row */}
                           <TableRow 
-                            className="bg-slate-100 hover:bg-slate-200 cursor-pointer"
+                            className="bg-indigo-50/30 hover:bg-indigo-50 cursor-pointer transition-colors border-l-4 border-l-indigo-400"
                             onClick={() => toggleUnit(cat.name, unit.name)}
                           >
-                            <TableCell className="border-r"></TableCell>
-                            <TableCell colSpan={2} className="border-r pl-8 font-semibold">
+                            <TableCell className="border-r border-indigo-100"></TableCell>
+                            <TableCell colSpan={2} className="border-r border-indigo-100 pl-8 font-bold text-indigo-900">
                               <div className="flex items-center gap-2">
-                                {isUnitExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                {isUnitExpanded ? <ChevronDown className="h-3 w-3 opacity-50" /> : <ChevronRight className="h-3 w-3 opacity-50" />}
                                 {unit.name}
                               </div>
                             </TableCell>
-                            <TableCell className="border-r" colSpan={2}></TableCell>
-                            <TableCell className="text-right border-r font-semibold">{formatCurrency(unitSubtotal.initialVal)}</TableCell>
-                            <TableCell className="border-r" colSpan={2}></TableCell>
-                            <TableCell className="text-right border-r font-semibold">{formatCurrency(unitSubtotal.purchaseVal)}</TableCell>
-                            <TableCell className="border-r" colSpan={2}></TableCell>
-                            <TableCell className="text-right border-r font-semibold">{formatCurrency(unitSubtotal.usageVal)}</TableCell>
-                            <TableCell className="border-r" colSpan={2}></TableCell>
-                            <TableCell className="text-right font-semibold">{formatCurrency(unitSubtotal.finalVal)}</TableCell>
+                            <TableCell className="border-r border-indigo-100" colSpan={2}></TableCell>
+                            <TableCell className="text-right border-r border-indigo-100 font-bold text-indigo-600/70 text-[10px] italic">{formatCurrency(unitSubtotal.initialVal)}</TableCell>
+                            <TableCell className="border-r border-indigo-100" colSpan={2}></TableCell>
+                            <TableCell className="text-right border-r border-indigo-100 font-bold text-indigo-600/70 text-[10px] italic">{formatCurrency(unitSubtotal.purchaseVal)}</TableCell>
+                            <TableCell className="border-r border-indigo-100" colSpan={2}></TableCell>
+                            <TableCell className="text-right border-r border-indigo-100 font-bold text-indigo-600/70 text-[10px] italic">{formatCurrency(unitSubtotal.usageVal)}</TableCell>
+                            <TableCell className="border-r border-indigo-100" colSpan={2}></TableCell>
+                            <TableCell className="text-right font-bold text-indigo-700 text-xs">{formatCurrency(unitSubtotal.finalVal)}</TableCell>
                           </TableRow>
 
                           {/* Item Rows */}
                           {isUnitExpanded && unit.items.map((item, itemIdx) => {
                             const finalQty = item.initialQty + item.purchaseQty - item.usageQty;
                             return (
-                              <TableRow key={item.id} className="hover:bg-muted/30">
-                                <TableCell className="border-r text-center text-xs text-muted-foreground">{catIdx + 1}.{itemIdx + 1}</TableCell>
-                                <TableCell className="border-r pl-12 text-sm">{item.name}</TableCell>
-                                <TableCell className="border-r text-center text-sm">{item.unit}</TableCell>
+                              <TableRow key={item.id} className="hover:bg-slate-50 transition-colors">
+                                <TableCell className="border-r border-slate-100 text-center text-[10px] text-muted-foreground">{catIdx + 1}.{itemIdx + 1}</TableCell>
+                                <TableCell className="border-r border-slate-100 pl-12 text-sm text-slate-700 font-medium">
+                                  <div className="flex items-center gap-2">
+                                    <Package className="h-3 w-3 opacity-30" />
+                                    {item.name}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="border-r border-slate-100 text-center text-xs font-semibold text-slate-500">{item.unit}</TableCell>
                                 
                                 {/* Saldo Awal */}
-                                <TableCell className="border-r text-center">{item.initialQty}</TableCell>
-                                <TableCell className="border-r text-right text-xs">{formatNumber(item.price)}</TableCell>
-                                <TableCell className="border-r text-right text-sm">{formatCurrency(item.initialQty * item.price)}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-center bg-blue-50/30 font-medium">{item.initialQty}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-blue-50/30">{formatNumber(item.price)}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-right text-xs font-semibold text-blue-600 bg-blue-50/30">{formatCurrency(item.initialQty * item.price)}</TableCell>
                                 
                                 {/* Pembelian */}
-                                <TableCell className="border-r text-center">{item.purchaseQty}</TableCell>
-                                <TableCell className="border-r text-right text-xs">{formatNumber(item.price)}</TableCell>
-                                <TableCell className="border-r text-right text-sm">{formatCurrency(item.purchaseQty * item.price)}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-center bg-emerald-50/30 font-medium">{item.purchaseQty}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-emerald-50/30">{formatNumber(item.price)}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-right text-xs font-semibold text-emerald-600 bg-emerald-50/30">{formatCurrency(item.purchaseQty * item.price)}</TableCell>
                                 
                                 {/* Pemakaian */}
-                                <TableCell className="border-r text-center">{item.usageQty}</TableCell>
-                                <TableCell className="border-r text-right text-xs">{formatNumber(item.price)}</TableCell>
-                                <TableCell className="border-r text-right text-sm">{formatCurrency(item.usageQty * item.price)}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-center bg-rose-50/30 font-medium">{item.usageQty}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-rose-50/30">{formatNumber(item.price)}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-right text-xs font-semibold text-rose-600 bg-rose-50/30">{formatCurrency(item.usageQty * item.price)}</TableCell>
                                 
                                 {/* Saldo Akhir */}
-                                <TableCell className="border-r text-center font-medium">{finalQty}</TableCell>
-                                <TableCell className="border-r text-right text-xs">{formatNumber(item.price)}</TableCell>
-                                <TableCell className="text-right text-sm font-medium">{formatCurrency(finalQty * item.price)}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-center font-black bg-amber-50/30 text-amber-900">{finalQty}</TableCell>
+                                <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-amber-50/30">{formatNumber(item.price)}</TableCell>
+                                <TableCell className="text-right text-xs font-black bg-amber-50/30 text-amber-700">{formatCurrency(finalQty * item.price)}</TableCell>
                               </TableRow>
                             );
                           })}
@@ -405,16 +416,16 @@ export default function MutasiPersediaanPage() {
               })}
 
               {/* Grand Total Row */}
-              <TableRow className="bg-slate-900 text-white hover:bg-slate-800">
-                <TableCell colSpan={3} className="text-center font-bold text-lg border-r">GRAND TOTAL</TableCell>
-                <TableCell className="border-r" colSpan={2}></TableCell>
-                <TableCell className="text-right border-r font-bold">{formatCurrency(grandTotal.initialVal)}</TableCell>
-                <TableCell className="border-r" colSpan={2}></TableCell>
-                <TableCell className="text-right border-r font-bold">{formatCurrency(grandTotal.purchaseVal)}</TableCell>
-                <TableCell className="border-r" colSpan={2}></TableCell>
-                <TableCell className="text-right border-r font-bold">{formatCurrency(grandTotal.usageVal)}</TableCell>
-                <TableCell className="border-r" colSpan={2}></TableCell>
-                <TableCell className="text-right font-bold text-lg">{formatCurrency(grandTotal.finalVal)}</TableCell>
+              <TableRow className="bg-primary hover:bg-primary/95 text-white shadow-inner">
+                <TableCell colSpan={3} className="text-center font-black text-lg border-r border-white/10 py-6 tracking-widest">GRAND TOTAL</TableCell>
+                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.initialVal)}</TableCell>
+                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.purchaseVal)}</TableCell>
+                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.usageVal)}</TableCell>
+                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                <TableCell className="text-right font-black text-xl py-6 underline decoration-white/30 underline-offset-8">{formatCurrency(grandTotal.finalVal)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

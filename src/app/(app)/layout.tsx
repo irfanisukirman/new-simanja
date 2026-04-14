@@ -98,7 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <SidebarMenuItem>
                       <SidebarMenuButton asChild tooltip="Master Data Pegawai" isActive={pathname === '/master-data-pegawai'}>
                         <Link href="/master-data-pegawai">
-                          Users />
+                          <Users />
                           <span>Master Data Pegawai</span>
                         </Link>
                       </SidebarMenuButton>

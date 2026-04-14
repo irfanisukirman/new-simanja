@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import React, { useState, useMemo } from "react"
 import {
   Table,
   TableBody,
@@ -313,16 +313,18 @@ export default function MutasiPersediaanPage() {
                 const catSubtotal = calculateSubtotal(cat.units.flatMap(u => u.items));
                 
                 return (
-                  <component key={cat.name}>
+                  <React.Fragment key={cat.name}>
                     {/* Category Row */}
                     <TableRow 
                       className="bg-yellow-100 hover:bg-yellow-200 cursor-pointer"
                       onClick={() => toggleCategory(cat.name)}
                     >
                       <TableCell className="text-center border-r font-bold">{catIdx + 1}</TableCell>
-                      <TableCell colSpan={2} className="border-r font-bold flex items-center gap-2">
-                        {isCatExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                        {cat.name} (KATEGORI)
+                      <TableCell colSpan={2} className="border-r font-bold">
+                        <div className="flex items-center gap-2">
+                          {isCatExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          {cat.name} (KATEGORI)
+                        </div>
                       </TableCell>
                       {/* Subtotal columns */}
                       <TableCell className="border-r" colSpan={2}></TableCell>
@@ -341,16 +343,18 @@ export default function MutasiPersediaanPage() {
                       const unitSubtotal = calculateSubtotal(unit.items);
 
                       return (
-                        <component key={unitKey}>
+                        <React.Fragment key={unitKey}>
                           {/* Unit Row */}
                           <TableRow 
                             className="bg-slate-100 hover:bg-slate-200 cursor-pointer"
                             onClick={() => toggleUnit(cat.name, unit.name)}
                           >
                             <TableCell className="border-r"></TableCell>
-                            <TableCell colSpan={2} className="border-r pl-8 font-semibold flex items-center gap-2">
-                              {isUnitExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                              {unit.name}
+                            <TableCell colSpan={2} className="border-r pl-8 font-semibold">
+                              <div className="flex items-center gap-2">
+                                {isUnitExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                                {unit.name}
+                              </div>
                             </TableCell>
                             <TableCell className="border-r" colSpan={2}></TableCell>
                             <TableCell className="text-right border-r font-semibold">{formatCurrency(unitSubtotal.initialVal)}</TableCell>
@@ -393,10 +397,10 @@ export default function MutasiPersediaanPage() {
                               </TableRow>
                             );
                           })}
-                        </component>
+                        </React.Fragment>
                       );
                     })}
-                  </component>
+                  </React.Fragment>
                 );
               })}
 

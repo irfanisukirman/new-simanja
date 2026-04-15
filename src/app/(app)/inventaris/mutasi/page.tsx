@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect, useCallback } from "react"
 import {
   Table,
   TableBody,
@@ -35,6 +35,7 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import * as XLSX from "xlsx"
 import { useToast } from "@/hooks/use-toast"
+import axios from "axios"
 
 // Types
 interface MutationItem {
@@ -57,7 +58,16 @@ interface CategoryGroup {
   units: UnitGroup[];
 }
 
-// Dummy Data for Table
+interface MasterItem {
+  item_id: number;
+  item_name: string;
+  nama_kategori: string;
+  unit: string;
+  unit_price: string;
+  current_stock: number;
+}
+
+// Dummy Data for Table (Laporan tetap menggunakan dummy sesuai instruksi sebelumnya)
 const DUMMY_MUTATION_DATA: CategoryGroup[] = [
   {
     name: "Alat Tulis Kantor",
@@ -96,14 +106,6 @@ const DUMMY_MUTATION_DATA: CategoryGroup[] = [
   }
 ];
 
-const DUMMY_BARANG = [
-  { id: "1", name: "Pulpen Boxy" },
-  { id: "2", name: "Kertas A4 80gr" },
-  { id: "3", name: "Spidol Whiteboard" },
-  { id: "4", name: "Sabun Cuci Tangan" },
-  { id: "5", name: "Pembersih Lantai" },
-];
-
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -127,6 +129,10 @@ export default function MutasiPersediaanPage() {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(DUMMY_MUTATION_DATA.map(c => c.name));
   const [expandedUnits, setExpandedUnits] = useState<string[]>(DUMMY_MUTATION_DATA.flatMap(c => c.units.map(u => `${c.name}-${u.name}`)));
 
+  // Master Items State from API
+  const [masterItems, setMasterItems] = useState<MasterItem[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -144,6 +150,30 @@ export default function MutasiPersediaanPage() {
   const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
 
   const totalTransaksi = formData.qty * formData.harga_satuan;
+
+  const fetchItems = useCallback(async () => {
+    setIsLoadingItems(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?page=1&limit=10000`, {
+        headers: { 
+          Authorization: `Bearer ${token}`, 
+          'ngrok-skip-browser-warning': 'true' 
+        },
+      });
+      if (response.data.code === 200) {
+        setMasterItems(response.data.data);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil data barang:", error);
+    } finally {
+      setIsLoadingItems(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
   const toggleCategory = (catName: string) => {
     setExpandedCategories(prev => 
@@ -221,6 +251,20 @@ export default function MutasiPersediaanPage() {
     if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: false }));
   };
 
+  const handleBarangChange = (val: string) => {
+    const selectedItem = masterItems.find(item => item.item_id.toString() === val);
+    if (selectedItem) {
+      setFormData(prev => ({
+        ...prev,
+        barang_id: val,
+        kategori: selectedItem.nama_kategori,
+        harga_satuan: parseFloat(selectedItem.unit_price) || 0
+      }));
+    } else {
+      handleInputChange('barang_id', val);
+    }
+  };
+
   const handleResetForm = () => {
     setFormData({
       barang_id: "",
@@ -242,6 +286,7 @@ export default function MutasiPersediaanPage() {
     if (!formData.kategori) errors.kategori = true;
     if (!formData.unit_kerja) errors.unit_kerja = true;
     if (formData.qty <= 0) errors.qty = true;
+    if (formData.harga_satuan < 0) errors.harga_satuan = true;
     
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
@@ -250,9 +295,10 @@ export default function MutasiPersediaanPage() {
     }
 
     setIsSubmitting(true);
+    // Simulasi Save ke API
     setTimeout(() => {
       setIsSubmitting(false);
-      toast({ variant: "success", title: "Berhasil!", description: "Transaksi telah disimpan." });
+      toast({ variant: "success", title: "Berhasil!", description: "Transaksi persediaan telah disimpan." });
       setIsModalOpen(false);
       handleResetForm();
     }, 1000);
@@ -269,7 +315,7 @@ export default function MutasiPersediaanPage() {
           <div className="flex gap-2">
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90 shadow-sm">
+                <Button className="bg-primary hover:bg-primary/90 shadow-sm" onClick={() => fetchItems()}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Tambah Transaksi
                 </Button>
@@ -280,19 +326,23 @@ export default function MutasiPersediaanPage() {
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Bagian 1 */}
+                    {/* Bagian 1: Informasi Barang */}
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold uppercase text-slate-500 flex items-center gap-2">
                         <Package className="h-3.5 w-3.5" /> Informasi Barang
                       </h4>
                       <div className="space-y-2">
                         <Label className={cn(formErrors.barang_id && "text-destructive")}>Nama Barang</Label>
-                        <Select value={formData.barang_id} onValueChange={(val) => handleInputChange('barang_id', val)}>
+                        <Select value={formData.barang_id} onValueChange={handleBarangChange}>
                           <SelectTrigger className={cn(formErrors.barang_id && "border-destructive")}>
-                            <SelectValue placeholder="Pilih Barang" />
+                            <SelectValue placeholder={isLoadingItems ? "Memuat..." : "Pilih Barang"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {DUMMY_BARANG.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                            {masterItems.map(b => (
+                              <SelectItem key={b.item_id} value={b.item_id.toString()}>
+                                {b.item_name} ({b.unit})
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -303,9 +353,14 @@ export default function MutasiPersediaanPage() {
                             <SelectValue placeholder="Pilih Kategori" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="ATK">ATK</SelectItem>
                             <SelectItem value="Alat Tulis Kantor">Alat Tulis Kantor</SelectItem>
                             <SelectItem value="Bahan Pembersih">Bahan Pembersih</SelectItem>
-                            <SelectItem value="Elektronik">Elektronik</SelectItem>
+                            <SelectItem value="Elektronik & IT">Elektronik & IT</SelectItem>
+                            <SelectItem value="Material Bangunan">Material Bangunan</SelectItem>
+                            <SelectItem value="Peralatan Kantor">Peralatan Kantor</SelectItem>
+                            <SelectItem value="Peralatan Listrik">Peralatan Listrik</SelectItem>
+                            <SelectItem value="Perlengkapan Umum">Perlengkapan Umum</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -319,12 +374,14 @@ export default function MutasiPersediaanPage() {
                             <SelectItem value="Sekretariat">Sekretariat</SelectItem>
                             <SelectItem value="Bidang 1">Bidang 1</SelectItem>
                             <SelectItem value="Bidang 2">Bidang 2</SelectItem>
+                            <SelectItem value="Bidang 3">Bidang 3</SelectItem>
+                            <SelectItem value="Bidang 4">Bidang 4</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
-                    {/* Bagian 2 */}
+                    {/* Bagian 2: Informasi Transaksi */}
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold uppercase text-slate-500 flex items-center gap-2">
                         <Info className="h-3.5 w-3.5" /> Informasi Transaksi
@@ -358,8 +415,8 @@ export default function MutasiPersediaanPage() {
                           <Input type="number" value={formData.qty} onChange={(e) => handleInputChange('qty', parseInt(e.target.value) || 0)} className={cn(formErrors.qty && "border-destructive")} />
                         </div>
                         <div className="space-y-2">
-                          <Label>Harga Satuan</Label>
-                          <Input type="number" value={formData.harga_satuan} onChange={(e) => handleInputChange('harga_satuan', parseInt(e.target.value) || 0)} />
+                          <Label className={cn(formErrors.harga_satuan && "text-destructive")}>Harga Satuan</Label>
+                          <Input type="number" value={formData.harga_satuan} onChange={(e) => handleInputChange('harga_satuan', parseFloat(e.target.value) || 0)} className={cn(formErrors.harga_satuan && "border-destructive")} />
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -370,11 +427,11 @@ export default function MutasiPersediaanPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Keterangan (Opsional)</Label>
-                    <Textarea placeholder="Catatan tambahan..." value={formData.keterangan} onChange={(e) => handleInputChange('keterangan', e.target.value)} />
+                    <Textarea placeholder="Catatan tambahan transaksi..." value={formData.keterangan} onChange={(e) => handleInputChange('keterangan', e.target.value)} />
                   </div>
-                  <div className="bg-slate-900 text-white p-4 rounded-lg flex justify-between items-center">
+                  <div className="bg-slate-900 text-white p-4 rounded-lg flex justify-between items-center shadow-lg border border-slate-800">
                     <div>
-                      <p className="text-[10px] uppercase text-slate-400 font-bold">Total Nilai</p>
+                      <p className="text-[10px] uppercase text-slate-400 font-bold">Estimasi Total Nilai</p>
                       <p className="text-xl font-black text-amber-400">{formatCurrency(totalTransaksi)}</p>
                     </div>
                     <div className="flex gap-2">

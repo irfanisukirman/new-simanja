@@ -17,15 +17,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, ChevronRight, FileDown, Search, Package, Landmark, PlusCircle } from "lucide-react"
+import { ChevronDown, ChevronRight, FileDown, Search, Package, Landmark, PlusCircle, Save, RotateCcw, Info, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import * as XLSX from "xlsx"
-import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
 
 // Types
 interface MutationItem {
@@ -48,7 +57,7 @@ interface CategoryGroup {
   units: UnitGroup[];
 }
 
-// Dummy Data
+// Dummy Data for Table
 const DUMMY_MUTATION_DATA: CategoryGroup[] = [
   {
     name: "Alat Tulis Kantor",
@@ -84,18 +93,15 @@ const DUMMY_MUTATION_DATA: CategoryGroup[] = [
         ]
       }
     ]
-  },
-  {
-    name: "Elektronik",
-    units: [
-      {
-        name: "Sekretariat",
-        items: [
-          { id: "6", name: "Baterai AA", unit: "Pack", price: 35000, initialQty: 15, purchaseQty: 10, usageQty: 20 },
-        ]
-      }
-    ]
   }
+];
+
+const DUMMY_BARANG = [
+  { id: "1", name: "Pulpen Boxy" },
+  { id: "2", name: "Kertas A4 80gr" },
+  { id: "3", name: "Spidol Whiteboard" },
+  { id: "4", name: "Sabun Cuci Tangan" },
+  { id: "5", name: "Pembersih Lantai" },
 ];
 
 const formatCurrency = (value: number) => {
@@ -111,6 +117,7 @@ const formatNumber = (value: number) => {
 };
 
 export default function MutasiPersediaanPage() {
+  const { toast } = useToast();
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-01'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [filterKategori, setFilterKategori] = useState("all");
@@ -119,6 +126,24 @@ export default function MutasiPersediaanPage() {
   
   const [expandedCategories, setExpandedCategories] = useState<string[]>(DUMMY_MUTATION_DATA.map(c => c.name));
   const [expandedUnits, setExpandedUnits] = useState<string[]>(DUMMY_MUTATION_DATA.flatMap(c => c.units.map(u => `${c.name}-${u.name}`)));
+
+  // Form State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    barang_id: "",
+    kategori: "",
+    unit_kerja: "",
+    tipe: "MASUK",
+    sumber: "PEMBELIAN",
+    qty: 0,
+    harga_satuan: 0,
+    tanggal: format(new Date(), 'yyyy-MM-dd'),
+    keterangan: ""
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, boolean>>({});
+
+  const totalTransaksi = formData.qty * formData.harga_satuan;
 
   const toggleCategory = (catName: string) => {
     setExpandedCategories(prev => 
@@ -171,37 +196,66 @@ export default function MutasiPersediaanPage() {
 
   const handleExportExcel = () => {
     const flatData: any[] = [];
-    
     filteredData.forEach(cat => {
-      flatData.push({ "Kategori": cat.name, "Nama Barang": "", "Satuan": "", "Saldo Awal Qty": "", "Saldo Awal Jml": "", "Pembelian Qty": "", "Pembelian Jml": "", "Pemakaian Qty": "", "Pemakaian Jml": "", "Saldo Akhir Qty": "", "Saldo Akhir Jml": "" });
-      
       cat.units.forEach(unit => {
-        flatData.push({ "Kategori": "", "Unit Kerja": unit.name, "Nama Barang": "", "Satuan": "", "Saldo Awal Qty": "", "Saldo Awal Jml": "", "Pembelian Qty": "", "Pembelian Jml": "", "Pemakaian Qty": "", "Pemakaian Jml": "", "Saldo Akhir Qty": "", "Saldo Akhir Jml": "" });
-        
         unit.items.forEach(item => {
-          const finalQty = item.initialQty + item.purchaseQty - item.usageQty;
           flatData.push({
-            "Kategori": "",
-            "Unit Kerja": "",
+            "Kategori": cat.name,
+            "Unit Kerja": unit.name,
             "Nama Barang": item.name,
             "Satuan": item.unit,
-            "Saldo Awal Qty": item.initialQty,
-            "Saldo Awal Jml": item.initialQty * item.price,
-            "Pembelian Qty": item.purchaseQty,
-            "Pembelian Jml": item.purchaseQty * item.price,
-            "Pemakaian Qty": item.usageQty,
-            "Pemakaian Jml": item.usageQty * item.price,
-            "Saldo Akhir Qty": finalQty,
-            "Saldo Akhir Jml": finalQty * item.price
+            "Saldo Akhir Qty": item.initialQty + item.purchaseQty - item.usageQty,
+            "Saldo Akhir Jml": (item.initialQty + item.purchaseQty - item.usageQty) * item.price
           });
         });
       });
     });
-
     const worksheet = XLSX.utils.json_to_sheet(flatData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Mutasi Persediaan");
-    XLSX.writeFile(workbook, `Mutasi_Persediaan_${startDate}_${endDate}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Mutasi");
+    XLSX.writeFile(workbook, `Mutasi_${startDate}.xlsx`);
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: false }));
+  };
+
+  const handleResetForm = () => {
+    setFormData({
+      barang_id: "",
+      kategori: "",
+      unit_kerja: "",
+      tipe: "MASUK",
+      sumber: "PEMBELIAN",
+      qty: 0,
+      harga_satuan: 0,
+      tanggal: format(new Date(), 'yyyy-MM-dd'),
+      keterangan: ""
+    });
+    setFormErrors({});
+  };
+
+  const handleSubmit = async () => {
+    const errors: Record<string, boolean> = {};
+    if (!formData.barang_id) errors.barang_id = true;
+    if (!formData.kategori) errors.kategori = true;
+    if (!formData.unit_kerja) errors.unit_kerja = true;
+    if (formData.qty <= 0) errors.qty = true;
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast({ variant: "destructive", title: "Validasi Gagal", description: "Lengkapi semua field wajib." });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      toast({ variant: "success", title: "Berhasil!", description: "Transaksi telah disimpan." });
+      setIsModalOpen(false);
+      handleResetForm();
+    }, 1000);
   };
 
   return (
@@ -213,12 +267,129 @@ export default function MutasiPersediaanPage() {
             <p className="text-sm text-muted-foreground">Laporan rincian mutasi barang persediaan berdasarkan kategori dan unit kerja.</p>
           </div>
           <div className="flex gap-2">
-            <Button asChild className="bg-primary hover:bg-primary/90 shadow-sm">
-              <Link href="/inventaris/mutasi/tambah">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Tambah Transaksi
-              </Link>
-            </Button>
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary hover:bg-primary/90 shadow-sm">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Tambah Transaksi
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Tambah Transaksi Persediaan</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-6 py-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Bagian 1 */}
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-bold uppercase text-slate-500 flex items-center gap-2">
+                        <Package className="h-3.5 w-3.5" /> Informasi Barang
+                      </h4>
+                      <div className="space-y-2">
+                        <Label className={cn(formErrors.barang_id && "text-destructive")}>Nama Barang</Label>
+                        <Select value={formData.barang_id} onValueChange={(val) => handleInputChange('barang_id', val)}>
+                          <SelectTrigger className={cn(formErrors.barang_id && "border-destructive")}>
+                            <SelectValue placeholder="Pilih Barang" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DUMMY_BARANG.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className={cn(formErrors.kategori && "text-destructive")}>Kategori</Label>
+                        <Select value={formData.kategori} onValueChange={(val) => handleInputChange('kategori', val)}>
+                          <SelectTrigger className={cn(formErrors.kategori && "border-destructive")}>
+                            <SelectValue placeholder="Pilih Kategori" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Alat Tulis Kantor">Alat Tulis Kantor</SelectItem>
+                            <SelectItem value="Bahan Pembersih">Bahan Pembersih</SelectItem>
+                            <SelectItem value="Elektronik">Elektronik</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className={cn(formErrors.unit_kerja && "text-destructive")}>Unit Kerja</Label>
+                        <Select value={formData.unit_kerja} onValueChange={(val) => handleInputChange('unit_kerja', val)}>
+                          <SelectTrigger className={cn(formErrors.unit_kerja && "border-destructive")}>
+                            <SelectValue placeholder="Pilih Unit Kerja" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Sekretariat">Sekretariat</SelectItem>
+                            <SelectItem value="Bidang 1">Bidang 1</SelectItem>
+                            <SelectItem value="Bidang 2">Bidang 2</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Bagian 2 */}
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-bold uppercase text-slate-500 flex items-center gap-2">
+                        <Info className="h-3.5 w-3.5" /> Informasi Transaksi
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label>Tipe</Label>
+                          <Select value={formData.tipe} onValueChange={(val) => handleInputChange('tipe', val)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MASUK">MASUK</SelectItem>
+                              <SelectItem value="KELUAR">KELUAR</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Sumber</Label>
+                          <Select value={formData.sumber} onValueChange={(val) => handleInputChange('sumber', val)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="SALDO_AWAL">SALDO AWAL</SelectItem>
+                              <SelectItem value="PEMBELIAN">PEMBELIAN</SelectItem>
+                              <SelectItem value="PEMAKAIAN">PEMAKAIAN</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label className={cn(formErrors.qty && "text-destructive")}>Qty</Label>
+                          <Input type="number" value={formData.qty} onChange={(e) => handleInputChange('qty', parseInt(e.target.value) || 0)} className={cn(formErrors.qty && "border-destructive")} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Harga Satuan</Label>
+                          <Input type="number" value={formData.harga_satuan} onChange={(e) => handleInputChange('harga_satuan', parseInt(e.target.value) || 0)} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Tanggal</Label>
+                        <Input type="date" value={formData.tanggal} onChange={(e) => handleInputChange('tanggal', e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Keterangan (Opsional)</Label>
+                    <Textarea placeholder="Catatan tambahan..." value={formData.keterangan} onChange={(e) => handleInputChange('keterangan', e.target.value)} />
+                  </div>
+                  <div className="bg-slate-900 text-white p-4 rounded-lg flex justify-between items-center">
+                    <div>
+                      <p className="text-[10px] uppercase text-slate-400 font-bold">Total Nilai</p>
+                      <p className="text-xl font-black text-amber-400">{formatCurrency(totalTransaksi)}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleResetForm} className="bg-transparent border-slate-700 text-white hover:bg-slate-800">
+                        <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
+                      </Button>
+                      <Button size="sm" onClick={handleSubmit} disabled={isSubmitting} className="bg-amber-500 text-slate-950 font-bold hover:bg-amber-600">
+                        {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />} 
+                        Simpan
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button onClick={handleExportExcel} variant="outline" className="border-success text-success hover:bg-success/10 shadow-sm">
               <FileDown className="mr-2 h-4 w-4" />
               Export Excel
@@ -251,7 +422,6 @@ export default function MutasiPersediaanPage() {
                     <SelectItem value="all">Semua Kategori</SelectItem>
                     <SelectItem value="Alat Tulis Kantor">Alat Tulis Kantor</SelectItem>
                     <SelectItem value="Bahan Pembersih">Bahan Pembersih</SelectItem>
-                    <SelectItem value="Elektronik">Elektronik</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -266,8 +436,6 @@ export default function MutasiPersediaanPage() {
                     <SelectItem value="Sekretariat">Sekretariat</SelectItem>
                     <SelectItem value="Bidang 1">Bidang 1</SelectItem>
                     <SelectItem value="Bidang 2">Bidang 2</SelectItem>
-                    <SelectItem value="Bidang 3">Bidang 3</SelectItem>
-                    <SelectItem value="Bidang 4">Bidang 4</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -301,19 +469,15 @@ export default function MutasiPersediaanPage() {
                 <TableHead colSpan={3} className="text-center bg-amber-600/20 text-amber-100 font-bold py-2">SALDO AKHIR</TableHead>
               </TableRow>
               <TableRow className="bg-slate-800 hover:bg-slate-800 text-[10px] uppercase font-black tracking-widest text-slate-300">
-                {/* Saldo Awal */}
                 <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
                 <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
                 <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
-                {/* Pembelian */}
                 <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
                 <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
                 <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
-                {/* Pemakaian */}
                 <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
                 <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
                 <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
-                {/* Saldo Akhir */}
                 <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
                 <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
                 <TableHead className="text-center">Jumlah</TableHead>
@@ -326,7 +490,6 @@ export default function MutasiPersediaanPage() {
                 
                 return (
                   <React.Fragment key={cat.name}>
-                    {/* Category Row */}
                     <TableRow 
                       className="bg-amber-50/80 hover:bg-amber-100/80 cursor-pointer transition-colors border-l-4 border-l-amber-500"
                       onClick={() => toggleCategory(cat.name)}
@@ -341,7 +504,6 @@ export default function MutasiPersediaanPage() {
                           {cat.name.toUpperCase()}
                         </div>
                       </TableCell>
-                      {/* Subtotal columns */}
                       <TableCell className="border-r border-amber-100" colSpan={2}></TableCell>
                       <TableCell className="text-right border-r border-amber-100 font-bold text-blue-700 text-xs">{formatCurrency(catSubtotal.initialVal)}</TableCell>
                       <TableCell className="border-r border-amber-100" colSpan={2}></TableCell>
@@ -359,7 +521,6 @@ export default function MutasiPersediaanPage() {
 
                       return (
                         <React.Fragment key={unitKey}>
-                          {/* Unit Row */}
                           <TableRow 
                             className="bg-indigo-50/30 hover:bg-indigo-50 cursor-pointer transition-colors border-l-4 border-l-indigo-400"
                             onClick={() => toggleUnit(cat.name, unit.name)}
@@ -381,7 +542,6 @@ export default function MutasiPersediaanPage() {
                             <TableCell className="text-right font-bold text-indigo-700 text-xs">{formatCurrency(unitSubtotal.finalVal)}</TableCell>
                           </TableRow>
 
-                          {/* Item Rows */}
                           {isUnitExpanded && unit.items.map((item, itemIdx) => {
                             const finalQty = item.initialQty + item.purchaseQty - item.usageQty;
                             return (
@@ -394,23 +554,15 @@ export default function MutasiPersediaanPage() {
                                   </div>
                                 </TableCell>
                                 <TableCell className="border-r border-slate-100 text-center text-xs font-semibold text-slate-500">{item.unit}</TableCell>
-                                
-                                {/* Saldo Awal */}
                                 <TableCell className="border-r border-slate-100 text-center bg-blue-50/30 font-medium">{item.initialQty}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-blue-50/30">{formatNumber(item.price)}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-xs font-semibold text-blue-600 bg-blue-50/30">{formatCurrency(item.initialQty * item.price)}</TableCell>
-                                
-                                {/* Pembelian */}
                                 <TableCell className="border-r border-slate-100 text-center bg-emerald-50/30 font-medium">{item.purchaseQty}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-emerald-50/30">{formatNumber(item.price)}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-xs font-semibold text-emerald-600 bg-emerald-50/30">{formatCurrency(item.purchaseQty * item.price)}</TableCell>
-                                
-                                {/* Pemakaian */}
                                 <TableCell className="border-r border-slate-100 text-center bg-rose-50/30 font-medium">{item.usageQty}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-rose-50/30">{formatNumber(item.price)}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-xs font-semibold text-rose-600 bg-rose-50/30">{formatCurrency(item.usageQty * item.price)}</TableCell>
-                                
-                                {/* Saldo Akhir */}
                                 <TableCell className="border-r border-slate-100 text-center font-black bg-amber-50/30 text-amber-900">{finalQty}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-amber-50/30">{formatNumber(item.price)}</TableCell>
                                 <TableCell className="text-right text-xs font-black bg-amber-50/30 text-amber-700">{formatCurrency(finalQty * item.price)}</TableCell>
@@ -424,7 +576,6 @@ export default function MutasiPersediaanPage() {
                 );
               })}
 
-              {/* Grand Total Row */}
               <TableRow className="bg-primary hover:bg-primary/95 text-white shadow-inner">
                 <TableCell colSpan={3} className="text-center font-black text-lg border-r border-white/10 py-6 tracking-widest">GRAND TOTAL</TableCell>
                 <TableCell className="border-r border-white/10" colSpan={2}></TableCell>

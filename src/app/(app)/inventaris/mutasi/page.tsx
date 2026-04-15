@@ -67,7 +67,12 @@ interface MasterItem {
   current_stock: number;
 }
 
-// Dummy Data for Table (Laporan tetap menggunakan dummy sesuai instruksi sebelumnya)
+interface ItemCategory {
+  id: number;
+  nama_kategori: string;
+}
+
+// Dummy Data for Table
 const DUMMY_MUTATION_DATA: CategoryGroup[] = [
   {
     name: "Alat Tulis Kantor",
@@ -129,9 +134,10 @@ export default function MutasiPersediaanPage() {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(DUMMY_MUTATION_DATA.map(c => c.name));
   const [expandedUnits, setExpandedUnits] = useState<string[]>(DUMMY_MUTATION_DATA.flatMap(c => c.units.map(u => `${c.name}-${u.name}`)));
 
-  // Master Items State from API
+  // Master Data from API
   const [masterItems, setMasterItems] = useState<MasterItem[]>([]);
-  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [categories, setCategories] = useState<ItemCategory[]>([]);
+  const [isLoadingMaster, setIsLoadingMaster] = useState(false);
 
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -151,29 +157,37 @@ export default function MutasiPersediaanPage() {
 
   const totalTransaksi = formData.qty * formData.harga_satuan;
 
-  const fetchItems = useCallback(async () => {
-    setIsLoadingItems(true);
+  const fetchDataMaster = useCallback(async () => {
+    setIsLoadingMaster(true);
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?page=1&limit=10000`, {
-        headers: { 
-          Authorization: `Bearer ${token}`, 
-          'ngrok-skip-browser-warning': 'true' 
-        },
-      });
-      if (response.data.code === 200) {
-        setMasterItems(response.data.data);
+      const headers = { 
+        Authorization: `Bearer ${token}`, 
+        'ngrok-skip-browser-warning': 'true' 
+      };
+
+      const [itemsRes, catsRes] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?page=1&limit=10000`, { headers }),
+        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/item-categories`, { headers })
+      ]);
+
+      if (itemsRes.data.code === 200) {
+        setMasterItems(itemsRes.data.data);
+      }
+      if (catsRes.data.code === 200) {
+        setCategories(catsRes.data.data);
       }
     } catch (error) {
-      console.error("Gagal mengambil data barang:", error);
+      console.error("Gagal mengambil data master:", error);
+      toast({ variant: "destructive", title: "Error", description: "Gagal mengambil data dari server." });
     } finally {
-      setIsLoadingItems(false);
+      setIsLoadingMaster(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    fetchDataMaster();
+  }, [fetchDataMaster]);
 
   const toggleCategory = (catName: string) => {
     setExpandedCategories(prev => 
@@ -315,7 +329,7 @@ export default function MutasiPersediaanPage() {
           <div className="flex gap-2">
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90 shadow-sm" onClick={() => fetchItems()}>
+                <Button className="bg-primary hover:bg-primary/90 shadow-sm" onClick={() => fetchDataMaster()}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Tambah Transaksi
                 </Button>
@@ -335,7 +349,7 @@ export default function MutasiPersediaanPage() {
                         <Label className={cn(formErrors.barang_id && "text-destructive")}>Nama Barang</Label>
                         <Select value={formData.barang_id} onValueChange={handleBarangChange}>
                           <SelectTrigger className={cn(formErrors.barang_id && "border-destructive")}>
-                            <SelectValue placeholder={isLoadingItems ? "Memuat..." : "Pilih Barang"} />
+                            <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Barang"} />
                           </SelectTrigger>
                           <SelectContent>
                             {masterItems.map(b => (
@@ -350,17 +364,14 @@ export default function MutasiPersediaanPage() {
                         <Label className={cn(formErrors.kategori && "text-destructive")}>Kategori</Label>
                         <Select value={formData.kategori} onValueChange={(val) => handleInputChange('kategori', val)}>
                           <SelectTrigger className={cn(formErrors.kategori && "border-destructive")}>
-                            <SelectValue placeholder="Pilih Kategori" />
+                            <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Kategori"} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="ATK">ATK</SelectItem>
-                            <SelectItem value="Alat Tulis Kantor">Alat Tulis Kantor</SelectItem>
-                            <SelectItem value="Bahan Pembersih">Bahan Pembersih</SelectItem>
-                            <SelectItem value="Elektronik & IT">Elektronik & IT</SelectItem>
-                            <SelectItem value="Material Bangunan">Material Bangunan</SelectItem>
-                            <SelectItem value="Peralatan Kantor">Peralatan Kantor</SelectItem>
-                            <SelectItem value="Peralatan Listrik">Peralatan Listrik</SelectItem>
-                            <SelectItem value="Perlengkapan Umum">Perlengkapan Umum</SelectItem>
+                            {categories.map(cat => (
+                              <SelectItem key={cat.id} value={cat.nama_kategori}>
+                                {cat.nama_kategori}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -435,10 +446,10 @@ export default function MutasiPersediaanPage() {
                       <p className="text-xl font-black text-amber-400">{formatCurrency(totalTransaksi)}</p>
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={handleResetForm} className="bg-transparent border-slate-700 text-white hover:bg-slate-800">
+                      <Button variant="outline" type="button" size="sm" onClick={handleResetForm} className="bg-transparent border-slate-700 text-white hover:bg-slate-800">
                         <RotateCcw className="h-3.5 w-3.5 mr-1" /> Reset
                       </Button>
-                      <Button size="sm" onClick={handleSubmit} disabled={isSubmitting} className="bg-amber-500 text-slate-950 font-bold hover:bg-amber-600">
+                      <Button size="sm" type="button" onClick={handleSubmit} disabled={isSubmitting} className="bg-amber-500 text-slate-950 font-bold hover:bg-amber-600">
                         {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />} 
                         Simpan
                       </Button>
@@ -477,8 +488,9 @@ export default function MutasiPersediaanPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Kategori</SelectItem>
-                    <SelectItem value="Alat Tulis Kantor">Alat Tulis Kantor</SelectItem>
-                    <SelectItem value="Bahan Pembersih">Bahan Pembersih</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.nama_kategori}>{cat.nama_kategori}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

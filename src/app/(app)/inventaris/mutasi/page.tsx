@@ -21,10 +21,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, ChevronRight, FileDown, Loader2, Search, Package, Landmark } from "lucide-react"
+import { ChevronDown, ChevronRight, FileDown, Search, Package, Landmark, PlusCircle } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import * as XLSX from "xlsx"
+import Link from "next/link"
 
 // Types
 interface MutationItem {
@@ -211,10 +212,18 @@ export default function MutasiPersediaanPage() {
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">Mutasi Persediaan</h1>
             <p className="text-sm text-muted-foreground">Laporan rincian mutasi barang persediaan berdasarkan kategori dan unit kerja.</p>
           </div>
-          <Button onClick={handleExportExcel} className="bg-success hover:bg-success/90 shadow-sm transition-all active:scale-95">
-            <FileDown className="mr-2 h-4 w-4" />
-            Export Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild className="bg-primary hover:bg-primary/90 shadow-sm">
+              <Link href="/inventaris/mutasi/tambah">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Tambah Transaksi
+              </Link>
+            </Button>
+            <Button onClick={handleExportExcel} variant="outline" className="border-success text-success hover:bg-success/10 shadow-sm">
+              <FileDown className="mr-2 h-4 w-4" />
+              Export Excel
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}

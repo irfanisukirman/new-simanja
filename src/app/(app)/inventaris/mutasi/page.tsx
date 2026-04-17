@@ -348,7 +348,7 @@ export default function MutasiPersediaanPage() {
                       <div className="space-y-2">
                         <Label className={cn(formErrors.barang_id && "text-destructive")}>Nama Barang</Label>
                         <Select value={formData.barang_id} onValueChange={handleBarangChange}>
-                          <SelectTrigger className={cn(formErrors.barang_id && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.barang_id && "border-destructive")}>
                             <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Barang"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -363,7 +363,7 @@ export default function MutasiPersediaanPage() {
                       <div className="space-y-2">
                         <Label className={cn(formErrors.kategori && "text-destructive")}>Kategori</Label>
                         <Select value={formData.kategori} onValueChange={(val) => handleInputChange('kategori', val)}>
-                          <SelectTrigger className={cn(formErrors.kategori && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.kategori && "border-destructive")}>
                             <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Kategori"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -378,7 +378,7 @@ export default function MutasiPersediaanPage() {
                       <div className="space-y-2">
                         <Label className={cn(formErrors.unit_kerja && "text-destructive")}>Unit Kerja</Label>
                         <Select value={formData.unit_kerja} onValueChange={(val) => handleInputChange('unit_kerja', val)}>
-                          <SelectTrigger className={cn(formErrors.unit_kerja && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.unit_kerja && "border-destructive")}>
                             <SelectValue placeholder="Pilih Unit Kerja" />
                           </SelectTrigger>
                           <SelectContent>
@@ -401,7 +401,7 @@ export default function MutasiPersediaanPage() {
                         <div className="space-y-2">
                           <Label>Tipe</Label>
                           <Select value={formData.tipe} onValueChange={(val) => handleInputChange('tipe', val)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full text-left truncate [&>span]:line-clamp-1"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="MASUK">MASUK</SelectItem>
                               <SelectItem value="KELUAR">KELUAR</SelectItem>
@@ -411,7 +411,7 @@ export default function MutasiPersediaanPage() {
                         <div className="space-y-2">
                           <Label>Sumber</Label>
                           <Select value={formData.sumber} onValueChange={(val) => handleInputChange('sumber', val)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full text-left truncate [&>span]:line-clamp-1"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="SALDO_AWAL">SALDO AWAL</SelectItem>
                               <SelectItem value="PEMBELIAN">PEMBELIAN</SelectItem>
@@ -483,7 +483,7 @@ export default function MutasiPersediaanPage() {
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
                 <Select value={filterKategori} onValueChange={setFilterKategori}>
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9 truncate text-left [&>span]:line-clamp-1">
                     <SelectValue placeholder="Semua Kategori" />
                   </SelectTrigger>
                   <SelectContent>
@@ -497,7 +497,7 @@ export default function MutasiPersediaanPage() {
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
                 <Select value={filterUnit} onValueChange={setFilterUnit}>
-                  <SelectTrigger className="h-9">
+                  <SelectTrigger className="h-9 truncate text-left [&>span]:line-clamp-1">
                     <SelectValue placeholder="Semua Unit" />
                   </SelectTrigger>
                   <SelectContent>

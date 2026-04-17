@@ -1,7 +1,8 @@
 
 "use client"
 
-import React, { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
+import React from "react"
 import {
   Table,
   TableBody,
@@ -72,6 +73,11 @@ interface ItemCategory {
   nama_kategori: string;
 }
 
+interface WorkUnit {
+  id: number;
+  nama_unit: string;
+}
+
 // Dummy Data for Table
 const DUMMY_MUTATION_DATA: CategoryGroup[] = [
   {
@@ -137,6 +143,7 @@ export default function MutasiPersediaanPage() {
   // Master Data from API
   const [masterItems, setMasterItems] = useState<MasterItem[]>([]);
   const [categories, setCategories] = useState<ItemCategory[]>([]);
+  const [workUnits, setWorkUnits] = useState<WorkUnit[]>([]);
   const [isLoadingMaster, setIsLoadingMaster] = useState(false);
 
   // Form State
@@ -166,9 +173,10 @@ export default function MutasiPersediaanPage() {
         'ngrok-skip-browser-warning': 'true' 
       };
 
-      const [itemsRes, catsRes] = await Promise.all([
+      const [itemsRes, catsRes, unitsRes] = await Promise.all([
         axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?page=1&limit=10000`, { headers }),
-        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/item-categories`, { headers })
+        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/item-categories`, { headers }),
+        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/units`, { headers })
       ]);
 
       if (itemsRes.data.code === 200) {
@@ -176,6 +184,9 @@ export default function MutasiPersediaanPage() {
       }
       if (catsRes.data.code === 200) {
         setCategories(catsRes.data.data);
+      }
+      if (unitsRes.data.code === 200) {
+        setWorkUnits(unitsRes.data.data);
       }
     } catch (error) {
       console.error("Gagal mengambil data master:", error);
@@ -379,14 +390,14 @@ export default function MutasiPersediaanPage() {
                         <Label className={cn(formErrors.unit_kerja && "text-destructive")}>Unit Kerja</Label>
                         <Select value={formData.unit_kerja} onValueChange={(val) => handleInputChange('unit_kerja', val)}>
                           <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.unit_kerja && "border-destructive")}>
-                            <SelectValue placeholder="Pilih Unit Kerja" />
+                            <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Unit Kerja"} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Sekretariat">Sekretariat</SelectItem>
-                            <SelectItem value="Bidang 1">Bidang 1</SelectItem>
-                            <SelectItem value="Bidang 2">Bidang 2</SelectItem>
-                            <SelectItem value="Bidang 3">Bidang 3</SelectItem>
-                            <SelectItem value="Bidang 4">Bidang 4</SelectItem>
+                            {workUnits.map(unit => (
+                              <SelectItem key={unit.id} value={unit.nama_unit}>
+                                {unit.nama_unit}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -484,7 +495,7 @@ export default function MutasiPersediaanPage() {
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
                 <Select value={filterKategori} onValueChange={setFilterKategori}>
                   <SelectTrigger className="h-9 truncate text-left [&>span]:line-clamp-1">
-                    <SelectValue placeholder="Semua Kategori" />
+                    <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Kategori"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Kategori</SelectItem>
@@ -498,13 +509,13 @@ export default function MutasiPersediaanPage() {
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
                 <Select value={filterUnit} onValueChange={setFilterUnit}>
                   <SelectTrigger className="h-9 truncate text-left [&>span]:line-clamp-1">
-                    <SelectValue placeholder="Semua Unit" />
+                    <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Unit"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Unit Kerja</SelectItem>
-                    <SelectItem value="Sekretariat">Sekretariat</SelectItem>
-                    <SelectItem value="Bidang 1">Bidang 1</SelectItem>
-                    <SelectItem value="Bidang 2">Bidang 2</SelectItem>
+                    {workUnits.map(unit => (
+                      <SelectItem key={unit.id} value={unit.nama_unit}>{unit.nama_unit}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

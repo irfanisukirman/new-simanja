@@ -493,8 +493,8 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
-                <Select value={filterKategori} onValueChange={setFilterKategori}>
-                  <SelectTrigger className="h-9 truncate text-left [&>span]:line-clamp-1">
+                <Select value={isLoadingMaster ? "" : filterKategori} onValueChange={setFilterKategori}>
+                  <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
                     <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Kategori"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -507,9 +507,9 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
-                <Select value={filterUnit} onValueChange={setFilterUnit}>
-                  <SelectTrigger className="h-9 truncate text-left [&>span]:line-clamp-1">
-                    <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Unit"} />
+                <Select value={isLoadingMaster ? "" : filterUnit} onValueChange={setFilterUnit}>
+                  <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
+                    <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Unit Kerja"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Semua Unit Kerja</SelectItem>

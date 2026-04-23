@@ -103,6 +103,21 @@ const formatNumber = (value: number) => {
   return new Intl.NumberFormat('id-ID').format(value);
 };
 
+// Define sorting order for unit_kerja
+const UNIT_ORDER = [
+  "Sekretariat",
+  "Bidang 1 - SKPK",
+  "Bidang 2 - PKTI",
+  "Bidang 3 - PKTU",
+  "Bidang 4 - PKM",
+  "Umum"
+];
+
+const getUnitPriority = (name: string) => {
+  const index = UNIT_ORDER.indexOf(name);
+  return index === -1 ? 999 : index;
+};
+
 export default function MutasiPersediaanPage() {
   const { toast } = useToast();
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-01'));
@@ -230,13 +245,15 @@ export default function MutasiPersediaanPage() {
           if (tx.sumber === 'PEMAKAIAN') item.usageQty += tx.qty;
         });
 
-        // Convert to UI structure
+        // Convert to UI structure with custom sorting
         const finalReport: CategoryGroup[] = Object.keys(grouped).map(catName => ({
           name: catName,
-          units: Object.keys(grouped[catName]).map(unitName => ({
-            name: unitName,
-            items: Object.values(grouped[catName][unitName])
-          }))
+          units: Object.keys(grouped[catName])
+            .map(unitName => ({
+              name: unitName,
+              items: Object.values(grouped[catName][unitName])
+            }))
+            .sort((a, b) => getUnitPriority(a.name) - getUnitPriority(b.name)) // CUSTOM SORTING APPLIED HERE
         }));
 
         setReportData(finalReport);
@@ -574,11 +591,16 @@ export default function MutasiPersediaanPage() {
                     <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Semua Kategori"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="loading" disabled className="hidden">Memuat...</SelectItem>
-                    <SelectItem value="all">Semua Kategori</SelectItem>
-                    {categories.map(cat => (
-                      <SelectItem key={cat.id} value={cat.nama_kategori}>{cat.nama_kategori}</SelectItem>
-                    ))}
+                    {isLoadingCategories ? (
+                      <SelectItem value="loading" disabled>Memuat...</SelectItem>
+                    ) : (
+                      <>
+                        <SelectItem value="all">Semua Kategori</SelectItem>
+                        {categories.map(cat => (
+                          <SelectItem key={cat.id} value={cat.nama_kategori}>{cat.nama_kategori}</SelectItem>
+                        ))}
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -589,11 +611,16 @@ export default function MutasiPersediaanPage() {
                     <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Semua Unit Kerja"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="loading" disabled className="hidden">Memuat...</SelectItem>
-                    <SelectItem value="all">Semua Unit Kerja</SelectItem>
-                    {workUnits.map(unit => (
-                      <SelectItem key={unit.id} value={unit.nama_unit}>{unit.nama_unit}</SelectItem>
-                    ))}
+                    {isLoadingUnits ? (
+                      <SelectItem value="loading" disabled>Memuat...</SelectItem>
+                    ) : (
+                      <>
+                        <SelectItem value="all">Semua Unit Kerja</SelectItem>
+                        {workUnits.map(unit => (
+                          <SelectItem key={unit.id} value={unit.nama_unit}>{unit.nama_unit}</SelectItem>
+                        ))}
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

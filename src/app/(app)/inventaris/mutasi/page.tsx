@@ -627,7 +627,7 @@ export default function MutasiPersediaanPage() {
             <TableHeader>
               <TableRow className="bg-slate-100 hover:bg-slate-100 border-b border-slate-200">
                 <TableHead rowSpan={2} className="w-[50px] text-center text-slate-900 border-r border-slate-200 font-bold">No</TableHead>
-                <TableHead rowSpan={2} className="min-w-[200px] text-slate-900 border-r border-slate-200 font-bold">Nama Barang</TableHead>
+                <TableHead rowSpan={2} className="min-w-[200px] text-center text-slate-900 border-r border-slate-200 font-bold">Nama Barang</TableHead>
                 <TableHead rowSpan={2} className="w-[80px] text-center text-slate-900 border-r border-slate-200 font-bold">Satuan</TableHead>
                 <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-blue-50/80 text-blue-900 font-bold py-2">SALDO AWAL</TableHead>
                 <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-emerald-50/80 text-emerald-900 font-bold py-2">PEMBELIAN</TableHead>

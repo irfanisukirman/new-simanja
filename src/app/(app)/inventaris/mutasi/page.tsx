@@ -78,44 +78,19 @@ interface WorkUnit {
   nama_unit: string;
 }
 
-// Dummy Data for Table
-const DUMMY_MUTATION_DATA: CategoryGroup[] = [
-  {
-    name: "Alat Tulis Kantor",
-    units: [
-      {
-        name: "Sekretariat",
-        items: [
-          { id: "1", name: "Pulpen Boxy", unit: "Pcs", price: 15000, initialQty: 10, purchaseQty: 50, usageQty: 40 },
-          { id: "2", name: "Kertas A4 80gr", unit: "Rim", price: 55000, initialQty: 5, purchaseQty: 20, usageQty: 15 },
-        ]
-      },
-      {
-        name: "Bidang 1",
-        items: [
-          { id: "3", name: "Spidol Whiteboard", unit: "Buah", price: 12000, initialQty: 20, purchaseQty: 30, usageQty: 45 },
-        ]
-      }
-    ]
-  },
-  {
-    name: "Bahan Pembersih",
-    units: [
-      {
-        name: "Sekretariat",
-        items: [
-          { id: "4", name: "Sabun Cuci Tangan", unit: "Botol", price: 25000, initialQty: 8, purchaseQty: 12, usageQty: 10 },
-        ]
-      },
-      {
-        name: "Bidang 2",
-        items: [
-          { id: "5", name: "Pembersih Lantai", unit: "Galon", price: 85000, initialQty: 2, purchaseQty: 5, usageQty: 4 },
-        ]
-      }
-    ]
-  }
-];
+interface InventoryTransaction {
+  id: number;
+  tanggal: string;
+  tipe: string;
+  sumber: string;
+  qty: number;
+  harga_satuan: string;
+  total: string;
+  nama_barang: string;
+  kategori_barang: string;
+  kategori_persediaan: string;
+  unit_kerja: string;
+}
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -137,14 +112,18 @@ export default function MutasiPersediaanPage() {
   const [filterUnit, setFilterUnit] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(DUMMY_MUTATION_DATA.map(c => c.name));
-  const [expandedUnits, setExpandedUnits] = useState<string[]>(DUMMY_MUTATION_DATA.flatMap(c => c.units.map(u => `${c.name}-${u.name}`)));
+  const [reportData, setReportData] = useState<CategoryGroup[]>([]);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [expandedUnits, setExpandedUnits] = useState<string[]>([]);
+  const [isLoadingReport, setIsLoadingReport] = useState(false);
 
   // Master Data from API
   const [masterItems, setMasterItems] = useState<MasterItem[]>([]);
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [workUnits, setWorkUnits] = useState<WorkUnit[]>([]);
   const [isLoadingMaster, setIsLoadingMaster] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingUnits, setIsLoadingUnits] = useState(false);
 
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -168,37 +147,120 @@ export default function MutasiPersediaanPage() {
     setIsLoadingMaster(true);
     try {
       const token = localStorage.getItem("token");
-      const headers = { 
-        Authorization: `Bearer ${token}`, 
-        'ngrok-skip-browser-warning': 'true' 
-      };
-
-      const [itemsRes, catsRes, unitsRes] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?page=1&limit=10000`, { headers }),
-        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/item-categories`, { headers }),
-        axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/units`, { headers })
-      ]);
-
-      if (itemsRes.data.code === 200) {
-        setMasterItems(itemsRes.data.data);
-      }
-      if (catsRes.data.code === 200) {
-        setCategories(catsRes.data.data);
-      }
-      if (unitsRes.data.code === 200) {
-        setWorkUnits(unitsRes.data.data);
-      }
+      const headers = { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' };
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/items?page=1&limit=10000`, { headers });
+      if (res.data.code === 200) setMasterItems(res.data.data);
     } catch (error) {
-      console.error("Gagal mengambil data master:", error);
-      toast({ variant: "destructive", title: "Error", description: "Gagal mengambil data dari server." });
+      console.error(error);
     } finally {
       setIsLoadingMaster(false);
     }
-  }, [toast]);
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    setIsLoadingCategories(true);
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' };
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/item-categories`, { headers });
+      if (res.data.code === 200) setCategories(res.data.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, []);
+
+  const fetchUnits = useCallback(async () => {
+    setIsLoadingUnits(true);
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' };
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/units`, { headers });
+      if (res.data.code === 200) setWorkUnits(res.data.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingUnits(false);
+    }
+  }, []);
+
+  const fetchReportData = useCallback(async () => {
+    setIsLoadingReport(true);
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' };
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/inventory`, {
+        params: {
+          tipe: 'MASUK,KELUAR',
+          start_date: startDate,
+          end_date: endDate
+        },
+        headers
+      });
+
+      if (response.data.code === 200) {
+        const transactions: InventoryTransaction[] = response.data.data;
+        
+        // Grouping Logic
+        const grouped: Record<string, Record<string, Record<string, MutationItem>>> = {};
+
+        transactions.forEach(tx => {
+          const catName = tx.kategori_persediaan || "Lainnya";
+          const unitName = tx.unit_kerja || "Tanpa Unit";
+          const itemName = tx.nama_barang;
+
+          if (!grouped[catName]) grouped[catName] = {};
+          if (!grouped[catName][unitName]) grouped[catName][unitName] = {};
+          
+          if (!grouped[catName][unitName][itemName]) {
+            grouped[catName][unitName][itemName] = {
+              id: tx.id.toString(),
+              name: itemName,
+              unit: tx.kategori_barang, // Assumption based on API
+              price: parseFloat(tx.harga_satuan),
+              initialQty: 0,
+              purchaseQty: 0,
+              usageQty: 0
+            };
+          }
+
+          const item = grouped[catName][unitName][itemName];
+          if (tx.sumber === 'SALDO_AWAL') item.initialQty += tx.qty;
+          if (tx.sumber === 'PEMBELIAN') item.purchaseQty += tx.qty;
+          if (tx.sumber === 'PEMAKAIAN') item.usageQty += tx.qty;
+        });
+
+        // Convert to UI structure
+        const finalReport: CategoryGroup[] = Object.keys(grouped).map(catName => ({
+          name: catName,
+          units: Object.keys(grouped[catName]).map(unitName => ({
+            name: unitName,
+            items: Object.values(grouped[catName][unitName])
+          }))
+        }));
+
+        setReportData(finalReport);
+        setExpandedCategories(finalReport.map(c => c.name));
+        setExpandedUnits(finalReport.flatMap(c => c.units.map(u => `${c.name}-${u.name}`)));
+      }
+    } catch (error) {
+      console.error(error);
+      toast({ variant: "destructive", title: "Error", description: "Gagal memuat data mutasi." });
+    } finally {
+      setIsLoadingReport(false);
+    }
+  }, [startDate, endDate, toast]);
 
   useEffect(() => {
+    fetchCategories();
+    fetchUnits();
     fetchDataMaster();
-  }, [fetchDataMaster]);
+  }, [fetchCategories, fetchUnits, fetchDataMaster]);
+
+  useEffect(() => {
+    fetchReportData();
+  }, [fetchReportData]);
 
   const toggleCategory = (catName: string) => {
     setExpandedCategories(prev => 
@@ -214,7 +276,7 @@ export default function MutasiPersediaanPage() {
   };
 
   const filteredData = useMemo(() => {
-    return DUMMY_MUTATION_DATA.map(cat => {
+    return reportData.map(cat => {
       if (filterKategori !== "all" && cat.name !== filterKategori) return null;
       
       const filteredUnits = cat.units.map(unit => {
@@ -233,7 +295,7 @@ export default function MutasiPersediaanPage() {
       
       return { ...cat, units: filteredUnits };
     }).filter(c => c !== null) as CategoryGroup[];
-  }, [filterKategori, filterUnit, searchTerm]);
+  }, [reportData, filterKategori, filterUnit, searchTerm]);
 
   const calculateSubtotal = (items: MutationItem[]) => {
     return items.reduce((acc, item) => ({
@@ -320,13 +382,30 @@ export default function MutasiPersediaanPage() {
     }
 
     setIsSubmitting(true);
-    // Simulasi Save ke API
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/inventory`, {
+        item_id: parseInt(formData.barang_id),
+        unit_kerja: formData.unit_kerja,
+        tipe: formData.tipe,
+        sumber: formData.sumber,
+        qty: formData.qty,
+        harga_satuan: formData.harga_satuan,
+        tanggal: formData.tanggal,
+        keterangan: formData.keterangan
+      }, {
+        headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+      });
+
       toast({ variant: "success", title: "Berhasil!", description: "Transaksi persediaan telah disimpan." });
       setIsModalOpen(false);
       handleResetForm();
-    }, 1000);
+      fetchReportData();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Gagal", description: "Gagal menyimpan transaksi." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -340,7 +419,7 @@ export default function MutasiPersediaanPage() {
           <div className="flex gap-2">
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90 shadow-sm" onClick={() => fetchDataMaster()}>
+                <Button className="bg-primary hover:bg-primary/90 shadow-sm">
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Tambah Transaksi
                 </Button>
@@ -351,7 +430,6 @@ export default function MutasiPersediaanPage() {
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Bagian 1: Informasi Barang */}
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold uppercase text-slate-500 flex items-center gap-2">
                         <Package className="h-3.5 w-3.5" /> Informasi Barang
@@ -375,7 +453,7 @@ export default function MutasiPersediaanPage() {
                         <Label className={cn(formErrors.kategori && "text-destructive")}>Kategori</Label>
                         <Select value={formData.kategori} onValueChange={(val) => handleInputChange('kategori', val)}>
                           <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.kategori && "border-destructive")}>
-                            <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Kategori"} />
+                            <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Pilih Kategori"} />
                           </SelectTrigger>
                           <SelectContent>
                             {categories.map(cat => (
@@ -390,7 +468,7 @@ export default function MutasiPersediaanPage() {
                         <Label className={cn(formErrors.unit_kerja && "text-destructive")}>Unit Kerja</Label>
                         <Select value={formData.unit_kerja} onValueChange={(val) => handleInputChange('unit_kerja', val)}>
                           <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.unit_kerja && "border-destructive")}>
-                            <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Unit Kerja"} />
+                            <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Pilih Unit Kerja"} />
                           </SelectTrigger>
                           <SelectContent>
                             {workUnits.map(unit => (
@@ -403,7 +481,6 @@ export default function MutasiPersediaanPage() {
                       </div>
                     </div>
 
-                    {/* Bagian 2: Informasi Transaksi */}
                     <div className="space-y-4">
                       <h4 className="text-xs font-bold uppercase text-slate-500 flex items-center gap-2">
                         <Info className="h-3.5 w-3.5" /> Informasi Transaksi
@@ -493,9 +570,9 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
-                <Select value={isLoadingMaster ? "loading" : filterKategori} onValueChange={setFilterKategori}>
+                <Select value={isLoadingCategories ? "loading" : filterKategori} onValueChange={setFilterKategori}>
                   <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
-                    <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Kategori"} />
+                    <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Semua Kategori"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="loading" disabled className="hidden">Memuat...</SelectItem>
@@ -508,9 +585,9 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
-                <Select value={isLoadingMaster ? "loading" : filterUnit} onValueChange={setFilterUnit}>
+                <Select value={isLoadingUnits ? "loading" : filterUnit} onValueChange={setFilterUnit}>
                   <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
-                    <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Unit Kerja"} />
+                    <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Semua Unit Kerja"} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="loading" disabled className="hidden">Memuat...</SelectItem>
@@ -538,7 +615,15 @@ export default function MutasiPersediaanPage() {
         </Card>
 
         {/* Report Table */}
-        <div className="rounded-xl border shadow-md overflow-x-auto bg-white overflow-hidden">
+        <div className="rounded-xl border shadow-md overflow-x-auto bg-white overflow-hidden relative">
+          {isLoadingReport && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] z-10 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">Memuat Laporan...</span>
+              </div>
+            </div>
+          )}
           <Table className="min-w-[1200px]">
             <TableHeader>
               <TableRow className="bg-slate-900 hover:bg-slate-900 border-none">
@@ -566,7 +651,11 @@ export default function MutasiPersediaanPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((cat, catIdx) => {
+              {filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={15} className="h-32 text-center text-slate-400 italic">Tidak ada data untuk periode ini.</TableCell>
+                </TableRow>
+              ) : filteredData.map((cat, catIdx) => {
                 const isCatExpanded = expandedCategories.includes(cat.name);
                 const catSubtotal = calculateSubtotal(cat.units.flatMap(u => u.items));
                 
@@ -583,7 +672,7 @@ export default function MutasiPersediaanPage() {
                             {isCatExpanded ? <ChevronDown className="h-3 w-3 text-white" /> : <ChevronRight className="h-3 w-3 text-white" />}
                           </div>
                           <Landmark className="h-4 w-4 opacity-50" />
-                          {cat.name.toUpperCase()}
+                          <span className="uppercase">{cat.name}</span>
                         </div>
                       </TableCell>
                       <TableCell className="border-r border-amber-100" colSpan={2}></TableCell>
@@ -627,7 +716,7 @@ export default function MutasiPersediaanPage() {
                           {isUnitExpanded && unit.items.map((item, itemIdx) => {
                             const finalQty = item.initialQty + item.purchaseQty - item.usageQty;
                             return (
-                              <TableRow key={item.id} className="hover:bg-slate-50 transition-colors">
+                              <TableRow key={`${unitKey}-${item.name}`} className="hover:bg-slate-50 transition-colors">
                                 <TableCell className="border-r border-slate-100 text-center text-[10px] text-muted-foreground">{catIdx + 1}.{itemIdx + 1}</TableCell>
                                 <TableCell className="border-r border-slate-100 pl-12 text-sm text-slate-700 font-medium">
                                   <div className="flex items-center gap-2">
@@ -658,17 +747,19 @@ export default function MutasiPersediaanPage() {
                 );
               })}
 
-              <TableRow className="bg-primary hover:bg-primary/95 text-white shadow-inner">
-                <TableCell colSpan={3} className="text-center font-black text-lg border-r border-white/10 py-6 tracking-widest">GRAND TOTAL</TableCell>
-                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
-                <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.initialVal)}</TableCell>
-                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
-                <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.purchaseVal)}</TableCell>
-                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
-                <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.usageVal)}</TableCell>
-                <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
-                <TableCell className="text-right font-black text-xl py-6 underline decoration-white/30 underline-offset-8">{formatCurrency(grandTotal.finalVal)}</TableCell>
-              </TableRow>
+              {filteredData.length > 0 && (
+                <TableRow className="bg-primary hover:bg-primary/95 text-white shadow-inner">
+                  <TableCell colSpan={3} className="text-center font-black text-lg border-r border-white/10 py-6 tracking-widest">GRAND TOTAL</TableCell>
+                  <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                  <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.initialVal)}</TableCell>
+                  <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                  <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.purchaseVal)}</TableCell>
+                  <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                  <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.usageVal)}</TableCell>
+                  <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
+                  <TableCell className="text-right font-black text-xl py-6 underline decoration-white/30 underline-offset-8">{formatCurrency(grandTotal.finalVal)}</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

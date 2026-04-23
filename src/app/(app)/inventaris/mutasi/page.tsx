@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect, useCallback } from "react"
@@ -217,7 +216,7 @@ export default function MutasiPersediaanPage() {
             grouped[catName][unitName][itemName] = {
               id: tx.id.toString(),
               name: itemName,
-              unit: tx.kategori_barang, // Assumption based on API
+              unit: tx.kategori_barang,
               price: parseFloat(tx.harga_satuan),
               initialQty: 0,
               purchaseQty: 0,
@@ -626,27 +625,27 @@ export default function MutasiPersediaanPage() {
           )}
           <Table className="min-w-[1200px]">
             <TableHeader>
-              <TableRow className="bg-slate-900 hover:bg-slate-900 border-none">
-                <TableHead rowSpan={2} className="w-[50px] text-center text-white border-r border-slate-700 font-bold">No</TableHead>
-                <TableHead rowSpan={2} className="min-w-[200px] text-white border-r border-slate-700 font-bold">Nama Barang</TableHead>
-                <TableHead rowSpan={2} className="w-[80px] text-center text-white border-r border-slate-700 font-bold">Satuan</TableHead>
-                <TableHead colSpan={3} className="text-center border-r border-slate-700 bg-blue-600/20 text-blue-100 font-bold py-2">SALDO AWAL</TableHead>
-                <TableHead colSpan={3} className="text-center border-r border-slate-700 bg-emerald-600/20 text-emerald-100 font-bold py-2">PEMBELIAN</TableHead>
-                <TableHead colSpan={3} className="text-center border-r border-slate-700 bg-rose-600/20 text-rose-100 font-bold py-2">PEMAKAIAN</TableHead>
-                <TableHead colSpan={3} className="text-center bg-amber-600/20 text-amber-100 font-bold py-2">SALDO AKHIR</TableHead>
+              <TableRow className="bg-slate-100 hover:bg-slate-100 border-b border-slate-200">
+                <TableHead rowSpan={2} className="w-[50px] text-center text-slate-900 border-r border-slate-200 font-bold">No</TableHead>
+                <TableHead rowSpan={2} className="min-w-[200px] text-slate-900 border-r border-slate-200 font-bold">Nama Barang</TableHead>
+                <TableHead rowSpan={2} className="w-[80px] text-center text-slate-900 border-r border-slate-200 font-bold">Satuan</TableHead>
+                <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-blue-50/80 text-blue-900 font-bold py-2">SALDO AWAL</TableHead>
+                <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-emerald-50/80 text-emerald-900 font-bold py-2">PEMBELIAN</TableHead>
+                <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-rose-50/80 text-rose-900 font-bold py-2">PEMAKAIAN</TableHead>
+                <TableHead colSpan={3} className="text-center bg-amber-50/80 text-amber-900 font-bold py-2">SALDO AKHIR</TableHead>
               </TableRow>
-              <TableRow className="bg-slate-800 hover:bg-slate-800 text-[10px] uppercase font-black tracking-widest text-slate-300">
-                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Jumlah</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Qty</TableHead>
-                <TableHead className="text-center border-r border-slate-700">Harga</TableHead>
+              <TableRow className="bg-slate-50 hover:bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-600 border-b border-slate-200">
+                <TableHead className="text-center border-r border-slate-200">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Harga</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Jumlah</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Harga</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Jumlah</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Harga</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Jumlah</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Qty</TableHead>
+                <TableHead className="text-center border-r border-slate-200">Harga</TableHead>
                 <TableHead className="text-center">Jumlah</TableHead>
               </TableRow>
             </TableHeader>

@@ -493,11 +493,12 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
-                <Select value={isLoadingMaster ? "" : filterKategori} onValueChange={setFilterKategori}>
+                <Select value={isLoadingMaster ? "loading" : filterKategori} onValueChange={setFilterKategori}>
                   <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
                     <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Kategori"} />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="loading" disabled className="hidden">Memuat...</SelectItem>
                     <SelectItem value="all">Semua Kategori</SelectItem>
                     {categories.map(cat => (
                       <SelectItem key={cat.id} value={cat.nama_kategori}>{cat.nama_kategori}</SelectItem>
@@ -507,11 +508,12 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
-                <Select value={isLoadingMaster ? "" : filterUnit} onValueChange={setFilterUnit}>
+                <Select value={isLoadingMaster ? "loading" : filterUnit} onValueChange={setFilterUnit}>
                   <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
                     <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Semua Unit Kerja"} />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="loading" disabled className="hidden">Memuat...</SelectItem>
                     <SelectItem value="all">Semua Unit Kerja</SelectItem>
                     {workUnits.map(unit => (
                       <SelectItem key={unit.id} value={unit.nama_unit}>{unit.nama_unit}</SelectItem>

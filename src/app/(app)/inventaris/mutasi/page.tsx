@@ -253,7 +253,7 @@ export default function MutasiPersediaanPage() {
               name: unitName,
               items: Object.values(grouped[catName][unitName])
             }))
-            .sort((a, b) => getUnitPriority(a.name) - getUnitPriority(b.name)) // CUSTOM SORTING APPLIED HERE
+            .sort((a, b) => getUnitPriority(a.name) - getUnitPriority(b.name))
         }));
 
         setReportData(finalReport);
@@ -336,7 +336,6 @@ export default function MutasiPersediaanPage() {
             "Kategori": cat.name,
             "Unit Kerja": unit.name,
             "Nama Barang": item.name,
-            "Satuan": item.unit,
             "Saldo Akhir Qty": item.initialQty + item.purchaseQty - item.usageQty,
             "Saldo Akhir Jml": (item.initialQty + item.purchaseQty - item.usageQty) * item.price
           });
@@ -453,45 +452,57 @@ export default function MutasiPersediaanPage() {
                       <div className="space-y-2">
                         <Label className={cn(formErrors.barang_id && "text-destructive")}>Nama Barang</Label>
                         <Select value={formData.barang_id} onValueChange={handleBarangChange}>
-                          <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.barang_id && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full text-left", formErrors.barang_id && "border-destructive")}>
                             <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Barang"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {masterItems.map(b => (
-                              <SelectItem key={b.item_id} value={b.item_id.toString()}>
-                                {b.item_name} ({b.unit})
-                              </SelectItem>
-                            ))}
+                            {isLoadingMaster ? (
+                                <SelectItem value="loading" disabled>Memuat...</SelectItem>
+                            ) : (
+                                masterItems.map(b => (
+                                  <SelectItem key={b.item_id} value={b.item_id.toString()}>
+                                    {b.item_name} ({b.unit})
+                                  </SelectItem>
+                                ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label className={cn(formErrors.kategori && "text-destructive")}>Kategori</Label>
                         <Select value={formData.kategori} onValueChange={(val) => handleInputChange('kategori', val)}>
-                          <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.kategori && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full text-left", formErrors.kategori && "border-destructive")}>
                             <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Pilih Kategori"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map(cat => (
-                              <SelectItem key={cat.id} value={cat.nama_kategori}>
-                                {cat.nama_kategori}
-                              </SelectItem>
-                            ))}
+                            {isLoadingCategories ? (
+                                <SelectItem value="loading" disabled>Memuat...</SelectItem>
+                            ) : (
+                                categories.map(cat => (
+                                  <SelectItem key={cat.id} value={cat.nama_kategori}>
+                                    {cat.nama_kategori}
+                                  </SelectItem>
+                                ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
                         <Label className={cn(formErrors.unit_kerja && "text-destructive")}>Unit Kerja</Label>
                         <Select value={formData.unit_kerja} onValueChange={(val) => handleInputChange('unit_kerja', val)}>
-                          <SelectTrigger className={cn("w-full [&>span]:truncate [&>span]:text-left", formErrors.unit_kerja && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full text-left", formErrors.unit_kerja && "border-destructive")}>
                             <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Pilih Unit Kerja"} />
                           </SelectTrigger>
                           <SelectContent>
-                            {workUnits.map(unit => (
-                              <SelectItem key={unit.id} value={unit.nama_unit}>
-                                {unit.nama_unit}
-                              </SelectItem>
-                            ))}
+                             {isLoadingUnits ? (
+                                <SelectItem value="loading" disabled>Memuat...</SelectItem>
+                            ) : (
+                                workUnits.map(unit => (
+                                  <SelectItem key={unit.id} value={unit.nama_unit}>
+                                    {unit.nama_unit}
+                                  </SelectItem>
+                                ))
+                             )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -505,7 +516,7 @@ export default function MutasiPersediaanPage() {
                         <div className="space-y-2">
                           <Label>Tipe</Label>
                           <Select value={formData.tipe} onValueChange={(val) => handleInputChange('tipe', val)}>
-                            <SelectTrigger className="w-full text-left truncate [&>span]:line-clamp-1"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full text-left"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="MASUK">MASUK</SelectItem>
                               <SelectItem value="KELUAR">KELUAR</SelectItem>
@@ -515,7 +526,7 @@ export default function MutasiPersediaanPage() {
                         <div className="space-y-2">
                           <Label>Sumber</Label>
                           <Select value={formData.sumber} onValueChange={(val) => handleInputChange('sumber', val)}>
-                            <SelectTrigger className="w-full text-left truncate [&>span]:line-clamp-1"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full text-left"><SelectValue /></SelectTrigger>
                             <SelectContent>
                               <SelectItem value="SALDO_AWAL">SALDO AWAL</SelectItem>
                               <SelectItem value="PEMBELIAN">PEMBELIAN</SelectItem>
@@ -586,8 +597,8 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
-                <Select value={isLoadingCategories ? "loading" : filterKategori} onValueChange={setFilterKategori}>
-                  <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
+                <Select value={filterKategori} onValueChange={setFilterKategori}>
+                  <SelectTrigger className="w-full h-9 text-left">
                     <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Semua Kategori"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -606,8 +617,8 @@ export default function MutasiPersediaanPage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
-                <Select value={isLoadingUnits ? "loading" : filterUnit} onValueChange={setFilterUnit}>
-                  <SelectTrigger className="w-full h-9 [&>span]:truncate [&>span]:text-left">
+                <Select value={filterUnit} onValueChange={setFilterUnit}>
+                  <SelectTrigger className="w-full h-9 text-left">
                     <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Semua Unit Kerja"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -655,7 +666,6 @@ export default function MutasiPersediaanPage() {
               <TableRow className="bg-slate-100 hover:bg-slate-100 border-b border-slate-200">
                 <TableHead rowSpan={2} className="w-[50px] text-center text-slate-900 border-r border-slate-200 font-bold">No</TableHead>
                 <TableHead rowSpan={2} className="min-w-[200px] text-center text-slate-900 border-r border-slate-200 font-bold">Nama Barang</TableHead>
-                <TableHead rowSpan={2} className="w-[80px] text-center text-slate-900 border-r border-slate-200 font-bold">Satuan</TableHead>
                 <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-blue-50/80 text-blue-900 font-bold py-2">SALDO AWAL</TableHead>
                 <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-emerald-50/80 text-emerald-900 font-bold py-2">PEMBELIAN</TableHead>
                 <TableHead colSpan={3} className="text-center border-r border-slate-200 bg-rose-50/80 text-rose-900 font-bold py-2">PEMAKAIAN</TableHead>
@@ -679,7 +689,7 @@ export default function MutasiPersediaanPage() {
             <TableBody>
               {filteredData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={15} className="h-32 text-center text-slate-400 italic">Tidak ada data untuk periode ini.</TableCell>
+                  <TableCell colSpan={14} className="h-32 text-center text-slate-400 italic">Tidak ada data untuk periode ini.</TableCell>
                 </TableRow>
               ) : filteredData.map((cat, catIdx) => {
                 const isCatExpanded = expandedCategories.includes(cat.name);
@@ -692,7 +702,7 @@ export default function MutasiPersediaanPage() {
                       onClick={() => toggleCategory(cat.name)}
                     >
                       <TableCell className="text-center border-r border-amber-100 font-black text-amber-900">{catIdx + 1}</TableCell>
-                      <TableCell colSpan={2} className="border-r border-amber-100 font-black text-amber-900">
+                      <TableCell className="border-r border-amber-100 font-black text-amber-900">
                         <div className="flex items-center gap-2">
                           <div className="bg-amber-500 rounded-md p-1">
                             {isCatExpanded ? <ChevronDown className="h-3 w-3 text-white" /> : <ChevronRight className="h-3 w-3 text-white" />}
@@ -723,7 +733,7 @@ export default function MutasiPersediaanPage() {
                             onClick={() => toggleUnit(cat.name, unit.name)}
                           >
                             <TableCell className="border-r border-indigo-100"></TableCell>
-                            <TableCell colSpan={2} className="border-r border-indigo-100 pl-8 font-bold text-indigo-900">
+                            <TableCell className="border-r border-indigo-100 pl-8 font-bold text-indigo-900">
                               <div className="flex items-center gap-2">
                                 {isUnitExpanded ? <ChevronDown className="h-3 w-3 opacity-50" /> : <ChevronRight className="h-3 w-3 opacity-50" />}
                                 {unit.name}
@@ -750,7 +760,6 @@ export default function MutasiPersediaanPage() {
                                     {item.name}
                                   </div>
                                 </TableCell>
-                                <TableCell className="border-r border-slate-100 text-center text-xs font-semibold text-slate-500">{item.unit}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-center bg-blue-50/30 font-medium">{item.initialQty}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-[10px] text-slate-400 italic bg-blue-50/30">{formatNumber(item.price)}</TableCell>
                                 <TableCell className="border-r border-slate-100 text-right text-xs font-semibold text-blue-600 bg-blue-50/30">{formatCurrency(item.initialQty * item.price)}</TableCell>
@@ -775,7 +784,7 @@ export default function MutasiPersediaanPage() {
 
               {filteredData.length > 0 && (
                 <TableRow className="bg-primary hover:bg-primary/95 text-white shadow-inner">
-                  <TableCell colSpan={3} className="text-center font-black text-lg border-r border-white/10 py-6 tracking-widest">GRAND TOTAL</TableCell>
+                  <TableCell colSpan={2} className="text-center font-black text-lg border-r border-white/10 py-6 tracking-widest">GRAND TOTAL</TableCell>
                   <TableCell className="border-r border-white/10" colSpan={2}></TableCell>
                   <TableCell className="text-right border-r border-white/10 font-bold text-sm">{formatCurrency(grandTotal.initialVal)}</TableCell>
                   <TableCell className="border-r border-white/10" colSpan={2}></TableCell>

@@ -394,7 +394,9 @@ export default function MutasiPersediaanPage() {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/inventory`, {
+      
+      // Sesuai dengan spesifikasi body API yang diharapkan
+      const payload = {
         barang_id: parseInt(formData.barang_id),
         kategori_id: parseInt(formData.kategori_id),
         unit_kerja_id: parseInt(formData.unit_kerja_id),
@@ -402,9 +404,10 @@ export default function MutasiPersediaanPage() {
         sumber: formData.sumber,
         qty: formData.qty,
         harga_satuan: formData.harga_satuan,
-        tanggal: formData.tanggal,
-        keterangan: formData.keterangan
-      }, {
+        tanggal: formData.tanggal
+      };
+
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/inventory`, payload, {
         headers: { Authorization: `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
       });
 
@@ -412,9 +415,10 @@ export default function MutasiPersediaanPage() {
       setIsModalOpen(false);
       handleResetForm();
       fetchReportData();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({ variant: "destructive", title: "Gagal", description: "Gagal menyimpan transaksi." });
+      const msg = error.response?.data?.message || "Gagal menyimpan transaksi.";
+      toast({ variant: "destructive", title: "Gagal (400)", description: msg });
     } finally {
       setIsSubmitting(false);
     }
@@ -452,7 +456,7 @@ export default function MutasiPersediaanPage() {
                       <div className="space-y-2">
                         <Label className={cn(formErrors.barang_id && "text-destructive")}>Nama Barang</Label>
                         <Select value={formData.barang_id} onValueChange={handleBarangChange}>
-                          <SelectTrigger className={cn("w-full text-left", formErrors.barang_id && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full text-left justify-start", formErrors.barang_id && "border-destructive")}>
                             <SelectValue placeholder={isLoadingMaster ? "Memuat..." : "Pilih Barang"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -471,7 +475,7 @@ export default function MutasiPersediaanPage() {
                       <div className="space-y-2">
                         <Label className={cn(formErrors.kategori_id && "text-destructive")}>Kategori</Label>
                         <Select value={formData.kategori_id} onValueChange={(val) => handleInputChange('kategori_id', val)}>
-                          <SelectTrigger className={cn("w-full text-left", formErrors.kategori_id && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full text-left justify-start", formErrors.kategori_id && "border-destructive")}>
                             <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Pilih Kategori"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -490,7 +494,7 @@ export default function MutasiPersediaanPage() {
                       <div className="space-y-2">
                         <Label className={cn(formErrors.unit_kerja_id && "text-destructive")}>Unit Kerja</Label>
                         <Select value={formData.unit_kerja_id} onValueChange={(val) => handleInputChange('unit_kerja_id', val)}>
-                          <SelectTrigger className={cn("w-full text-left", formErrors.unit_kerja_id && "border-destructive")}>
+                          <SelectTrigger className={cn("w-full text-left justify-start", formErrors.unit_kerja_id && "border-destructive")}>
                             <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Pilih Unit Kerja"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -598,7 +602,7 @@ export default function MutasiPersediaanPage() {
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Kategori Belanja</Label>
                 <Select value={filterKategori} onValueChange={setFilterKategori}>
-                  <SelectTrigger className="w-full h-9 text-left">
+                  <SelectTrigger className="w-full h-9 text-left justify-start">
                     <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Semua Kategori"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -618,7 +622,7 @@ export default function MutasiPersediaanPage() {
               <div className="space-y-2">
                 <Label className="text-[11px] font-bold uppercase text-slate-500">Unit Kerja</Label>
                 <Select value={filterUnit} onValueChange={setFilterUnit}>
-                  <SelectTrigger className="w-full h-9 text-left">
+                  <SelectTrigger className="w-full h-9 text-left justify-start">
                     <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Semua Unit Kerja"} />
                   </SelectTrigger>
                   <SelectContent>

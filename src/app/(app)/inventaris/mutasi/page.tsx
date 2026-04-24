@@ -41,7 +41,6 @@ import axios from "axios"
 interface MutationItem {
   id: string;
   name: string;
-  unit: string;
   price: number;
   initialQty: number;
   purchaseQty: number;
@@ -61,6 +60,7 @@ interface CategoryGroup {
 interface MasterItem {
   item_id: number;
   item_name: string;
+  id: number; // Ini adalah kategori_id dari API
   nama_kategori: string;
   unit: string;
   unit_price: string;
@@ -103,7 +103,6 @@ const formatNumber = (value: number) => {
   return new Intl.NumberFormat('id-ID').format(value);
 };
 
-// Define sorting order for unit_kerja
 const UNIT_ORDER = [
   "Sekretariat",
   "Bidang 1 - SKPK",
@@ -131,7 +130,7 @@ export default function MutasiPersediaanPage() {
   const [expandedUnits, setExpandedUnits] = useState<string[]>([]);
   const [isLoadingReport, setIsLoadingReport] = useState(false);
 
-  // Master Data from API
+  // Master Data
   const [masterItems, setMasterItems] = useState<MasterItem[]>([]);
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [workUnits, setWorkUnits] = useState<WorkUnit[]>([]);
@@ -144,8 +143,8 @@ export default function MutasiPersediaanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     barang_id: "",
-    kategori: "",
-    unit_kerja: "",
+    kategori_id: "",
+    unit_kerja_id: "",
     tipe: "MASUK",
     sumber: "PEMBELIAN",
     qty: 0,
@@ -215,8 +214,6 @@ export default function MutasiPersediaanPage() {
 
       if (response.data.code === 200) {
         const transactions: InventoryTransaction[] = response.data.data;
-        
-        // Grouping Logic
         const grouped: Record<string, Record<string, Record<string, MutationItem>>> = {};
 
         transactions.forEach(tx => {
@@ -231,7 +228,6 @@ export default function MutasiPersediaanPage() {
             grouped[catName][unitName][itemName] = {
               id: tx.id.toString(),
               name: itemName,
-              unit: tx.kategori_barang,
               price: parseFloat(tx.harga_satuan),
               initialQty: 0,
               purchaseQty: 0,
@@ -245,7 +241,6 @@ export default function MutasiPersediaanPage() {
           if (tx.sumber === 'PEMAKAIAN') item.usageQty += tx.qty;
         });
 
-        // Convert to UI structure with custom sorting
         const finalReport: CategoryGroup[] = Object.keys(grouped).map(catName => ({
           name: catName,
           units: Object.keys(grouped[catName])
@@ -359,7 +354,7 @@ export default function MutasiPersediaanPage() {
       setFormData(prev => ({
         ...prev,
         barang_id: val,
-        kategori: selectedItem.nama_kategori,
+        kategori_id: selectedItem.id.toString(), // ID Kategori dari master
         harga_satuan: parseFloat(selectedItem.unit_price) || 0
       }));
     } else {
@@ -370,8 +365,8 @@ export default function MutasiPersediaanPage() {
   const handleResetForm = () => {
     setFormData({
       barang_id: "",
-      kategori: "",
-      unit_kerja: "",
+      kategori_id: "",
+      unit_kerja_id: "",
       tipe: "MASUK",
       sumber: "PEMBELIAN",
       qty: 0,
@@ -385,8 +380,8 @@ export default function MutasiPersediaanPage() {
   const handleSubmit = async () => {
     const errors: Record<string, boolean> = {};
     if (!formData.barang_id) errors.barang_id = true;
-    if (!formData.kategori) errors.kategori = true;
-    if (!formData.unit_kerja) errors.unit_kerja = true;
+    if (!formData.kategori_id) errors.kategori_id = true;
+    if (!formData.unit_kerja_id) errors.unit_kerja_id = true;
     if (formData.qty <= 0) errors.qty = true;
     if (formData.harga_satuan < 0) errors.harga_satuan = true;
     
@@ -400,8 +395,9 @@ export default function MutasiPersediaanPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/inventory`, {
-        item_id: parseInt(formData.barang_id),
-        unit_kerja: formData.unit_kerja,
+        barang_id: parseInt(formData.barang_id),
+        kategori_id: parseInt(formData.kategori_id),
+        unit_kerja_id: parseInt(formData.unit_kerja_id),
         tipe: formData.tipe,
         sumber: formData.sumber,
         qty: formData.qty,
@@ -417,6 +413,7 @@ export default function MutasiPersediaanPage() {
       handleResetForm();
       fetchReportData();
     } catch (error) {
+      console.error(error);
       toast({ variant: "destructive", title: "Gagal", description: "Gagal menyimpan transaksi." });
     } finally {
       setIsSubmitting(false);
@@ -432,7 +429,10 @@ export default function MutasiPersediaanPage() {
             <p className="text-sm text-muted-foreground">Laporan rincian mutasi barang persediaan berdasarkan kategori dan unit kerja.</p>
           </div>
           <div className="flex gap-2">
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <Dialog open={isModalOpen} onOpenChange={(open) => {
+                setIsModalOpen(open);
+                if(!open) handleResetForm();
+            }}>
               <DialogTrigger asChild>
                 <Button className="bg-primary hover:bg-primary/90 shadow-sm">
                   <PlusCircle className="mr-2 h-4 w-4" />
@@ -461,7 +461,7 @@ export default function MutasiPersediaanPage() {
                             ) : (
                                 masterItems.map(b => (
                                   <SelectItem key={b.item_id} value={b.item_id.toString()}>
-                                    {b.item_name} ({b.unit})
+                                    {b.item_name}
                                   </SelectItem>
                                 ))
                             )}
@@ -469,9 +469,9 @@ export default function MutasiPersediaanPage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label className={cn(formErrors.kategori && "text-destructive")}>Kategori</Label>
-                        <Select value={formData.kategori} onValueChange={(val) => handleInputChange('kategori', val)}>
-                          <SelectTrigger className={cn("w-full text-left", formErrors.kategori && "border-destructive")}>
+                        <Label className={cn(formErrors.kategori_id && "text-destructive")}>Kategori</Label>
+                        <Select value={formData.kategori_id} onValueChange={(val) => handleInputChange('kategori_id', val)}>
+                          <SelectTrigger className={cn("w-full text-left", formErrors.kategori_id && "border-destructive")}>
                             <SelectValue placeholder={isLoadingCategories ? "Memuat..." : "Pilih Kategori"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -479,7 +479,7 @@ export default function MutasiPersediaanPage() {
                                 <SelectItem value="loading" disabled>Memuat...</SelectItem>
                             ) : (
                                 categories.map(cat => (
-                                  <SelectItem key={cat.id} value={cat.nama_kategori}>
+                                  <SelectItem key={cat.id} value={cat.id.toString()}>
                                     {cat.nama_kategori}
                                   </SelectItem>
                                 ))
@@ -488,9 +488,9 @@ export default function MutasiPersediaanPage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label className={cn(formErrors.unit_kerja && "text-destructive")}>Unit Kerja</Label>
-                        <Select value={formData.unit_kerja} onValueChange={(val) => handleInputChange('unit_kerja', val)}>
-                          <SelectTrigger className={cn("w-full text-left", formErrors.unit_kerja && "border-destructive")}>
+                        <Label className={cn(formErrors.unit_kerja_id && "text-destructive")}>Unit Kerja</Label>
+                        <Select value={formData.unit_kerja_id} onValueChange={(val) => handleInputChange('unit_kerja_id', val)}>
+                          <SelectTrigger className={cn("w-full text-left", formErrors.unit_kerja_id && "border-destructive")}>
                             <SelectValue placeholder={isLoadingUnits ? "Memuat..." : "Pilih Unit Kerja"} />
                           </SelectTrigger>
                           <SelectContent>
@@ -498,7 +498,7 @@ export default function MutasiPersediaanPage() {
                                 <SelectItem value="loading" disabled>Memuat...</SelectItem>
                             ) : (
                                 workUnits.map(unit => (
-                                  <SelectItem key={unit.id} value={unit.nama_unit}>
+                                  <SelectItem key={unit.id} value={unit.id.toString()}>
                                     {unit.nama_unit}
                                   </SelectItem>
                                 ))
